@@ -1,61 +1,61 @@
 # Semantic Organizer Bot
 
-A GitHub App (built with [Probot](https://probot.github.io/)) that goes through your repositories and helps organize or update **semantics** — meaning, structure, documentation, summaries of what the code actually does.
+A GitHub App (built with [Probot](https://probot.github.io/)) that rewrites **vague language** in pull requests and issues into clear, intelligible, academic-sounding but still simple text using an LLM.
 
-This is an open-source starter so people can use it, fork it, and extend it.
+It helps make descriptions, explanations, and notes easier to understand without losing meaning or becoming overly complicated.
 
-## What it can do (starter)
+## What it does
 
-- Listens for pull requests and comments with a note
-- Logs activity
-- Ready for you to add real semantic analysis (AST parsing, LLM calls, file reorganization suggestions, auto-updating docs, etc.)
+- When a pull request is opened, edited, or synchronized, the bot looks at the PR body.
+- When an issue is opened, it looks at the issue body.
+- It sends the text to an LLM (OpenAI) with a prompt that asks for a rewrite that is:
+  - Clear and intelligible
+  - Academic in tone (precise, formal, well-structured)
+  - Still simple and accessible (plain language, limited jargon)
+- It posts a comment with the rewritten version so you can copy it or use it as a suggestion.
 
-## Ideas for "organizes or updates semantics"
+## Setup
 
-- Parse code with tree-sitter or similar and extract function/class purposes from names + comments
-- Generate / update a `SEMANTICS.md` or docs folder with high-level meaning of modules
-- Suggest moving files into better semantic folders
-- Auto-label issues/PRs by topic
-- Call an AI API to rewrite comments or generate better names
-- Keep a knowledge graph of concepts in the repo
+### 1. Clone and install
+```bash
+git clone https://github.com/NousVolition/semantic-organizer-bot.git
+cd semantic-organizer-bot
+npm install
+```
 
-## Quick start (local development)
+### 2. Configure environment
+Copy `.env.example` to `.env` and fill in:
 
-1. Clone this repo:
-   ```bash
-   git clone https://github.com/NousVolition/semantic-organizer-bot.git
-   cd semantic-organizer-bot
-   ```
+- `APP_ID`, `PRIVATE_KEY` (or `PRIVATE_KEY_PATH`), `WEBHOOK_SECRET` — from your GitHub App registration
+- `OPENAI_API_KEY` — your OpenAI API key (required for rewriting)
+- Optional: `OPENAI_MODEL=gpt-4o-mini` (or `gpt-4o`)
 
-2. Install dependencies:
-   ```bash
-   npm install
-   ```
+### 3. Run locally
+```bash
+npm start
+```
 
-3. Start the app:
-   ```bash
-   npm start
-   ```
+Open http://localhost:3000 to register/install the GitHub App if you haven't already.
 
-4. Open http://localhost:3000 and click **Register a GitHub App**. Follow the prompts to create the app and install it on your repositories.
+### Permissions needed
+When registering the GitHub App, grant:
+- Issues: Read & write
+- Pull requests: Read & write
+- Metadata: Read
+- Contents: Read (optional, for future file scanning)
 
-   This writes a `.env` file with the credentials.
+Subscribe to events: `pull_request`, `issues`
 
-5. Restart the server (`npm start`) and open a test pull request in a repo where the app is installed. You should see a comment from the bot.
+## Example
 
-## Manual setup (if the auto-register doesn't work)
+Vague PR body:
+> this thing kinda fixes the weird bug where stuff sometimes doesn't work right when you click around
 
-1. Create a new GitHub App at https://github.com/settings/apps/new
-2. Set webhook URL to a proxy like https://smee.io (or your deployed URL)
-3. Give it permissions: Issues (write), Pull requests (write), Contents (read), Metadata (read)
-4. Subscribe to events: Pull request, Push
-5. Download the private key, put `APP_ID`, `PRIVATE_KEY`, `WEBHOOK_SECRET` in a `.env` file
-6. Use `npx smee-client -u https://smee.io/YOUR_CHANNEL -t http://localhost:3000/api/github/webhooks`
+Rewritten suggestion:
+> This change addresses an intermittent failure that occurs during user interaction with interactive elements. The underlying cause appears to be inconsistent state handling after certain click sequences.
 
 ## Deploy
-
-You can deploy to Render, Heroku, Railway, Fly.io, or any Node host. Set the same environment variables.
+Deploy to any Node host (Render, Railway, Fly.io, etc.). Set the same environment variables, including `OPENAI_API_KEY`.
 
 ## License
-
-MIT — use it, change it, share it.
+MIT

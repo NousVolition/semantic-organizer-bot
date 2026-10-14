@@ -1,8 +1,8 @@
 {
   "name": "semantic-organizer-bot",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
-  "description": "GitHub App that organizes or updates semantics in repositories",
+  "description": "GitHub App that organizes or updates semantics in repositories, rewriting vague language into clear academic-but-simple text",
   "author": "Nous Volition",
   "license": "MIT",
   "scripts": {
@@ -10,7 +10,8 @@
     "dev": "probot run ./index.js"
   },
   "dependencies": {
-    "probot": "^13.0.0"
+    "probot": "^13.0.0",
+    "openai": "^4.52.0"
   },
   "engines": {
     "node": ">=18"
