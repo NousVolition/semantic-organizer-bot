@@ -6,6 +6,7 @@
  * 3. Suggests better explanations.
  * 4. Points out lateral connections (related ideas that should be linked).
  *
+ * Works on pull requests, issues, and also in the background on pushes.
  * Requires OPENAI_API_KEY in .env
  */
 
@@ -26,7 +27,6 @@ module.exports = (app) => {
 
   async function rewriteVagueLanguage(text) {
     if (!openai || !text || text.trim().length < 20) return null;
-
     try {
       const response = await openai.chat.completions.create({
         model,
@@ -47,12 +47,8 @@ module.exports = (app) => {
     }
   }
 
-  /**
-   * Analyze text for inaccuracies, better explanations, and lateral connections.
-   */
   async function analyzeSemantics(text) {
     if (!openai || !text || text.trim().length < 30) return null;
-
     try {
       const response = await openai.chat.completions.create({
         model,
@@ -73,7 +69,31 @@ module.exports = (app) => {
     }
   }
 
-  // Pull requests
+  // Background scanning on pushes (no PR needed)
+  app.on("push", async (context) => {
+    if (!openai) return;
+    if (context.payload.ref !== "refs/heads/main") return;
+
+    const commits = context.payload.commits || [];
+    const messages = commits.map(c => c.message).filter(Boolean).join("\n\n");
+    if (!messages.trim()) return;
+
+    app.log.info(`Background scan on push to main in ${context.repo().owner}/${context.repo().repo}`);
+
+    const analysis = await analyzeSemantics(messages);
+    if (!analysis) return;
+
+    // Open a new issue with the findings so they stay visible
+    await context.octokit.issues.create({
+      owner: context.repo().owner,
+      repo: context.repo().repo,
+      title: "🤖 Semantic review from recent changes",
+      body: `Background scan of recent commit messages:\n\n${analysis}\n\n---\n*This was generated automatically when code was pushed to main.*`,
+      labels: ["semantic-review"],
+    });
+  });
+
+  // Pull requests (still supported)
   app.on(["pull_request.opened", "pull_request.edited", "pull_request.synchronize"], async (context) => {
     const pr = context.payload.pull_request;
     const body = pr.body || "";
@@ -91,7 +111,6 @@ module.exports = (app) => {
 
     app.log.info(`Analyzing PR #${pr.number}`);
 
-    // Rewrite suggestion
     const rewritten = await rewriteVagueLanguage(body || title);
     if (rewritten && rewritten !== (body || title)) {
       await context.octokit.issues.createComment(
@@ -101,7 +120,6 @@ module.exports = (app) => {
       );
     }
 
-    // Deeper analysis
     const analysis = await analyzeSemantics(source);
     if (analysis) {
       await context.octokit.issues.createComment(
