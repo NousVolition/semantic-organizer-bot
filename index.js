@@ -1,131 +1,120 @@
 /**
- * Semantic Organizer Bot
+ * Semantic Organizer Bot — Language Skill
  *
- * 1. Rewrites vague language into clear, academic-but-simple text.
- * 2. Scans for inaccurate words, math, or logic.
- * 3. Suggests better explanations.
- * 4. Points out lateral connections (related ideas that should be linked).
+ * Built for smart, organized, busy people who like language and exploring ideas with ease.
  *
- * Works on pull requests, issues, and also in the background on pushes.
- * Requires OPENAI_API_KEY in .env
+ * - Improves clarity and precision without extra work
+ * - Surfaces interesting lateral connections
+ * - Flags weak or inaccurate language/logic
+ * - Runs in the background and on PRs/issues
+ *
+ * Requires OPENAI_API_KEY
  */
 
 const OpenAI = require("openai");
 
 module.exports = (app) => {
-  app.log.info("Semantic Organizer Bot is loaded!");
+  app.log.info("Semantic Organizer Bot (Language Skill) is loaded!");
 
   let openai = null;
   if (process.env.OPENAI_API_KEY) {
     openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
     app.log.info("OpenAI client ready");
   } else {
-    app.log.warn("OPENAI_API_KEY not set — analysis disabled");
+    app.log.warn("OPENAI_API_KEY not set — language skill disabled");
   }
 
   const model = process.env.OPENAI_MODEL || "gpt-4o-mini";
 
-  async function rewriteVagueLanguage(text) {
+  async function improveLanguage(text) {
     if (!openai || !text || text.trim().length < 20) return null;
     try {
       const response = await openai.chat.completions.create({
         model,
-        temperature: 0.4,
-        max_tokens: 800,
+        temperature: 0.35,
+        max_tokens: 700,
         messages: [
           {
             role: "system",
-            content: `You are a careful editor. Rewrite the user's text so it is:\n- Clear and intelligible\n- Academic in tone (precise, formal, well-structured)\n- Still simple and accessible (avoid unnecessary jargon, explain ideas plainly)\n\nPreserve the original meaning. Do not add new claims. Keep it concise.\nIf the text is already clear, improve it only lightly.\nReturn only the rewritten text, nothing else.`,
+            content: `You are a precise, calm editor for busy, thoughtful people.\n\nRewrite the text so it is:\n- Clear and easy to read\n- Precise and well-structured (academic clarity without heaviness)\n- Simple where possible, elegant where it helps\n- Unchanged in meaning\n\nReturn only the improved version.`,
           },
           { role: "user", content: text.trim() },
         ],
       });
       return response.choices[0]?.message?.content?.trim() || null;
     } catch (err) {
-      app.log.error("LLM rewrite failed:", err.message);
+      app.log.error("Language improvement failed:", err.message);
       return null;
     }
   }
 
-  async function analyzeSemantics(text) {
+  async function exploreLanguage(text) {
     if (!openai || !text || text.trim().length < 30) return null;
     try {
       const response = await openai.chat.completions.create({
         model,
         temperature: 0.3,
-        max_tokens: 1000,
+        max_tokens: 900,
         messages: [
           {
             role: "system",
-            content: `You are a careful reviewer focused on accuracy and clarity.\n\nReview the text and respond in this exact structure:\n\n### Possible inaccuracies or weak logic\n- List any words, math, claims, or reasoning that look inaccurate, unsupported, or unclear. If none, say "None noted."\n\n### Clearer explanations\n- Suggest a simpler or more precise way to say the main points. Keep the tone academic but accessible.\n\n### Lateral connections\n- Point out related ideas, concepts, or topics that this text connects to (even if not explicitly mentioned). If none stand out, say "None noted."\n\nBe concise. Do not invent facts. If the text is short or already solid, keep the response brief.`,
+            content: `You help smart, organized people explore language and ideas with ease.\n\nRespond in this structure:\n\n### Precision notes\n- Any words, claims, or logic that could be tighter, more accurate, or clearer. If none: "Looks solid."\n\n### Clearer phrasing\n- One or two short suggestions that make the main idea easier to grasp.\n\n### Connections worth exploring\n- Lateral links to related ideas, fields, or questions this text naturally touches. Keep it light and interesting. If none: "None stand out."\n\nBe concise. Prefer insight over volume.`,
           },
           { role: "user", content: text.trim() },
         ],
       });
       return response.choices[0]?.message?.content?.trim() || null;
     } catch (err) {
-      app.log.error("Semantic analysis failed:", err.message);
+      app.log.error("Language exploration failed:", err.message);
       return null;
     }
   }
 
-  // Background scanning on pushes (no PR needed)
+  // Background scan on push
   app.on("push", async (context) => {
-    if (!openai) return;
-    if (context.payload.ref !== "refs/heads/main") return;
+    if (!openai || context.payload.ref !== "refs/heads/main") return;
 
-    const commits = context.payload.commits || [];
-    const messages = commits.map(c => c.message).filter(Boolean).join("\n\n");
+    const messages = (context.payload.commits || [])
+      .map(c => c.message)
+      .filter(Boolean)
+      .join("\n\n");
     if (!messages.trim()) return;
 
-    app.log.info(`Background scan on push to main in ${context.repo().owner}/${context.repo().repo}`);
+    app.log.info(`Language skill scanning push in ${context.repo().owner}/${context.repo().repo}`);
 
-    const analysis = await analyzeSemantics(messages);
-    if (!analysis) return;
+    const exploration = await exploreLanguage(messages);
+    if (!exploration) return;
 
-    // Open a new issue with the findings so they stay visible
     await context.octokit.issues.create({
       owner: context.repo().owner,
       repo: context.repo().repo,
-      title: "🤖 Semantic review from recent changes",
-      body: `Background scan of recent commit messages:\n\n${analysis}\n\n---\n*This was generated automatically when code was pushed to main.*`,
-      labels: ["semantic-review"],
+      title: "Language notes from recent changes",
+      body: `${exploration}\n\n---\n*Generated automatically on push to main.*`,
+      labels: ["language"],
     });
   });
 
-  // Pull requests (still supported)
+  // Pull requests
   app.on(["pull_request.opened", "pull_request.edited", "pull_request.synchronize"], async (context) => {
+    if (!openai) return;
+
     const pr = context.payload.pull_request;
-    const body = pr.body || "";
-    const title = pr.title || "";
-    const source = (title + "\n\n" + body).trim();
-
-    if (!openai) {
-      await context.octokit.issues.createComment(
-        context.issue({ body: "🤖 Semantic Organizer is installed but `OPENAI_API_KEY` is not set." })
-      );
-      return;
-    }
-
+    const source = `${pr.title || ""}\n\n${pr.body || ""}`.trim();
     if (source.length < 20) return;
 
-    app.log.info(`Analyzing PR #${pr.number}`);
+    app.log.info(`Language skill on PR #${pr.number}`);
 
-    const rewritten = await rewriteVagueLanguage(body || title);
-    if (rewritten && rewritten !== (body || title)) {
+    const improved = await improveLanguage(pr.body || pr.title);
+    if (improved && improved !== (pr.body || pr.title)) {
       await context.octokit.issues.createComment(
-        context.issue({
-          body: `### 🤖 Clearer rewrite\n\n---\n${rewritten}\n---`,
-        })
+        context.issue({ body: `### Clearer version\n\n---\n${improved}\n---` })
       );
     }
 
-    const analysis = await analyzeSemantics(source);
-    if (analysis) {
+    const exploration = await exploreLanguage(source);
+    if (exploration) {
       await context.octokit.issues.createComment(
-        context.issue({
-          body: `### 🤖 Semantic review\n\n${analysis}`,
-        })
+        context.issue({ body: `### Language notes\n\n${exploration}` })
       );
     }
   });
@@ -134,27 +123,22 @@ module.exports = (app) => {
   app.on("issues.opened", async (context) => {
     if (!openai) return;
 
-    const issue = context.payload.issue;
-    const body = issue.body || "";
+    const body = context.payload.issue.body || "";
     if (body.trim().length < 30) return;
 
-    app.log.info(`Analyzing issue #${issue.number}`);
+    app.log.info(`Language skill on issue #${context.payload.issue.number}`);
 
-    const rewritten = await rewriteVagueLanguage(body);
-    if (rewritten && rewritten !== body) {
+    const improved = await improveLanguage(body);
+    if (improved && improved !== body) {
       await context.octokit.issues.createComment(
-        context.issue({
-          body: `### 🤖 Clearer rewrite\n\n---\n${rewritten}\n---`,
-        })
+        context.issue({ body: `### Clearer version\n\n---\n${improved}\n---` })
       );
     }
 
-    const analysis = await analyzeSemantics(body);
-    if (analysis) {
+    const exploration = await exploreLanguage(body);
+    if (exploration) {
       await context.octokit.issues.createComment(
-        context.issue({
-          body: `### 🤖 Semantic review\n\n${analysis}`,
-        })
+        context.issue({ body: `### Language notes\n\n${exploration}` })
       );
     }
   });
