@@ -1,37 +1,35 @@
 # Semantic Organizer Bot
 
-A GitHub App that reviews pull requests and issues for:
+A GitHub App that reviews your projects in the background and on pull requests/issues. It looks for:
 
-- Vague or unclear language (rewrites it to be clear, academic-sounding, but still simple)
+- Vague or unclear language (and rewrites it clearly)
 - Words, math, or logic that look inaccurate or weak
 - Better ways to explain the ideas
-- Lateral connections (related concepts that should be linked)
+- Lateral connections (related concepts)
 
-It posts comments with the suggestions so you can review and use them.
+It posts the findings as comments or new issues.
 
-## What it does
+## Easiest way to turn it on (Render)
 
-On new or updated pull requests and new issues, the bot:
+1. Go to **https://render.com** and sign up (free) — you can use your GitHub account.
+2. Click **New** → **Blueprint**.
+3. Connect your GitHub account if asked, then choose the repo **semantic-organizer-bot**.
+4. Render will detect the config. Click **Apply**.
+5. On the service page, go to **Environment** and add these private variables (paste your values):
+   - `OPENAI_API_KEY` = your new OpenAI key
+   - `APP_ID` = from your GitHub App settings
+   - `PRIVATE_KEY` = the full private key text from your GitHub App
+   - `WEBHOOK_SECRET` = the secret you set when creating the GitHub App
+6. After it deploys, copy the service URL (ends in `.onrender.com`) and set it as the Webhook URL in your GitHub App settings.
 
-1. Offers a clearer rewrite of the description
-2. Flags possible inaccuracies or weak reasoning
-3. Suggests simpler or more precise explanations
-4. Points out related ideas or lateral connections
+## Permissions for the GitHub App
 
-## Setup
-
-The bot needs an OpenAI API key to work. Do **not** put the key in the GitHub files if the repo is public.
-
-When you run or deploy the bot, set the environment variable `OPENAI_API_KEY` to your key.
-
-Other required settings (from GitHub App registration): `APP_ID`, `PRIVATE_KEY`, `WEBHOOK_SECRET`.
-
-## Permissions
-
-When installing the GitHub App, give it:
 - Issues: Read & write
 - Pull requests: Read & write
+- Contents: Read
 - Metadata: Read
+
+Subscribe to: `push`, `pull_request`, `issues`
 
 ## License
 MIT
