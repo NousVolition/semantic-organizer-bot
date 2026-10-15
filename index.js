@@ -26,6 +26,17 @@ module.exports = (app, { getRouter } = {}) => {
 
   const model = process.env.OPENAI_MODEL || "gpt-4o-mini";
 
+  function logOpenAIError(message, error) {
+    // API messages can include credentials or submitted text. Log only diagnostics.
+    const safeCode = (value) => typeof value === "string" && /^[a-z_]{1,64}$/.test(value) ? value : undefined;
+    app.log.error({
+      provider: "openai",
+      status: Number.isInteger(error.status) ? error.status : undefined,
+      code: safeCode(error.code),
+      type: safeCode(error.type),
+    }, message);
+  }
+
   if (getRouter) {
     const router = getRouter();
     router.get("/healthz", (_req, res) => {
@@ -53,7 +64,7 @@ module.exports = (app, { getRouter } = {}) => {
       });
       return response.choices[0]?.message?.content?.trim() || null;
     } catch (err) {
-      app.log.error("Language improvement failed:", err.message);
+      logOpenAIError("Language improvement failed", err);
       return null;
     }
   }
@@ -75,7 +86,7 @@ module.exports = (app, { getRouter } = {}) => {
       });
       return response.choices[0]?.message?.content?.trim() || null;
     } catch (err) {
-      app.log.error("Language exploration failed:", err.message);
+      logOpenAIError("Language exploration failed", err);
       return null;
     }
   }
