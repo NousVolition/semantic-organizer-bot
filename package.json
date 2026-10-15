@@ -6,14 +6,19 @@
   "author": "Nous Volition",
   "license": "MIT",
   "scripts": {
-    "start": "node -e \"try { require('probot').run('./index.js') } catch(e) { console.error('Startup note:', e.message); require('http').createServer((req,res)=>{res.end('Bot loaded (limited mode)');}).listen(process.env.PORT||3000); }\"",
-    "dev": "probot run ./index.js"
+    "start": "node start.js",
+    "dev": "probot run ./index.js",
+    "test": "node --test"
   },
   "dependencies": {
-    "probot": "^13.0.0",
-    "openai": "^4.52.0"
+    "dotenv": "^16.4.5",
+    "openai": "^4.52.0",
+    "probot": "^13.0.0"
   },
   "engines": {
-    "node": ">=18"
+    "node": "24.x"
+  },
+  "devDependencies": {
+    "nock": "^14.0.17"
   }
 }
