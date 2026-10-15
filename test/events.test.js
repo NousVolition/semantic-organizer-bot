@@ -15,6 +15,7 @@ function recordUnmatched(request) {
 const originalKey = process.env.OPENAI_API_KEY;
 const originalModel = process.env.OPENAI_MODEL;
 const originalPushReviews = process.env.ENABLE_PUSH_REVIEWS;
+const originalTextReviews = process.env.ENABLE_TEXT_REVIEWS;
 beforeEach(async () => {
   unmatched = [];
   nock.emitter.on("no match", recordUnmatched);
@@ -22,6 +23,7 @@ beforeEach(async () => {
   process.env.OPENAI_API_KEY = "test-key";
   delete process.env.OPENAI_MODEL;
   delete process.env.ENABLE_PUSH_REVIEWS;
+  process.env.ENABLE_TEXT_REVIEWS = "true";
   probot = new Probot({ githubToken: "test-token", logLevel: "fatal" });
   await probot.load(app);
 });
@@ -36,6 +38,8 @@ afterEach(() => {
   else process.env.OPENAI_MODEL = originalModel;
   if (originalPushReviews === undefined) delete process.env.ENABLE_PUSH_REVIEWS;
   else process.env.ENABLE_PUSH_REVIEWS = originalPushReviews;
+  if (originalTextReviews === undefined) delete process.env.ENABLE_TEXT_REVIEWS;
+  else process.env.ENABLE_TEXT_REVIEWS = originalTextReviews;
   assert.deepEqual(pending, []);
   assert.deepEqual(unmatched, []);
 });
@@ -91,6 +95,12 @@ test("other branches, branch deletions, and empty pushes do not call any API", a
 
 test("push reviews are off by default so routine pushes do not create issues", async () => {
   await receive("push", { ref: "refs/heads/develop", commits: [{ message: source }] });
+});
+
+test("ordinary text reviews are off by default in discovery mode", async () => {
+  delete process.env.ENABLE_TEXT_REVIEWS;
+  await receive("issues", { action: "opened", issue: { number: 7, body: source } });
+  await receive("pull_request", { action: "opened", pull_request: { number: 8, body: source } });
 });
 
 test("a word-choice question in an issue title can be reviewed without a body", async () => {
