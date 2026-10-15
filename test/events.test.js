@@ -88,3 +88,23 @@ test("the bot ignores its own generated issues and other bot events", async () =
 test("short issue text does not call any API", async () => {
   await receive("issues", { action: "opened", issue: { number: 7, body: "Hi" } });
 });
+
+test("OpenAI failures retain diagnostic codes without logging credentials or submitted text", async (t) => {
+  const logged = [];
+  t.mock.method(probot.log, "error", (...args) => logged.push(args));
+  nock("https://api.openai.com").post("/v1/chat/completions").twice().reply(401, {
+    error: {
+      message: `Incorrect API key: test-credential-marker. Submitted text: ${source}`,
+      type: "invalid_request_error",
+      code: "invalid_api_key",
+    },
+  });
+  await receive("issues", { action: "opened", issue: { number: 7, body: source, user: { type: "User" } } });
+  assert.equal(logged.length, 2);
+  for (const [details, message] of logged) {
+    assert.deepEqual(details, { provider: "openai", status: 401, code: "invalid_api_key", type: "invalid_request_error" });
+    assert.match(message, /^Language (improvement|exploration) failed$/);
+  }
+  assert.doesNotMatch(JSON.stringify(logged), /test-credential-marker/);
+  assert.ok(!JSON.stringify(logged).includes(source));
+});
