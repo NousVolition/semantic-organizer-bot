@@ -3,6 +3,9 @@ const { test, beforeEach, afterEach } = require("node:test");
 const nock = require("nock");
 const { Probot } = require("probot");
 const app = require("../index");
+const { readFileSync } = require("node:fs");
+const { join } = require("node:path");
+const languageSkills = readFileSync(join(__dirname, "../language-skills.md"), "utf8");
 
 let probot;
 let unmatched;
@@ -11,12 +14,14 @@ function recordUnmatched(request) {
 }
 const originalKey = process.env.OPENAI_API_KEY;
 const originalModel = process.env.OPENAI_MODEL;
+const originalPushReviews = process.env.ENABLE_PUSH_REVIEWS;
 beforeEach(async () => {
   unmatched = [];
   nock.emitter.on("no match", recordUnmatched);
   nock.disableNetConnect();
   process.env.OPENAI_API_KEY = "test-key";
   delete process.env.OPENAI_MODEL;
+  delete process.env.ENABLE_PUSH_REVIEWS;
   probot = new Probot({ githubToken: "test-token", logLevel: "fatal" });
   await probot.load(app);
 });
@@ -29,6 +34,8 @@ afterEach(() => {
   else process.env.OPENAI_API_KEY = originalKey;
   if (originalModel === undefined) delete process.env.OPENAI_MODEL;
   else process.env.OPENAI_MODEL = originalModel;
+  if (originalPushReviews === undefined) delete process.env.ENABLE_PUSH_REVIEWS;
+  else process.env.ENABLE_PUSH_REVIEWS = originalPushReviews;
   assert.deepEqual(pending, []);
   assert.deepEqual(unmatched, []);
 });
@@ -37,37 +44,38 @@ const repository = { name: "demo", owner: { login: "example" }, default_branch: 
 const source = "This explanation could be clearer and more precise for readers.";
 function completion(output) {
   return nock("https://api.openai.com")
-    .post("/v1/chat/completions", (body) => body.model === "gpt-4o-mini" && body.messages.at(-1).content.includes(source))
+    .post("/v1/chat/completions", (body) => {
+      assert.equal(body.model, "gpt-4o-mini");
+      assert.ok(body.messages[0].content.includes(languageSkills));
+      assert.match(body.messages[0].content, /no dictionary, browsing, or external verification tool/);
+      assert.equal(body.messages.at(-1).role, "user");
+      return body.messages.at(-1).content.includes(source);
+    })
     .reply(200, { choices: [{ message: { content: output } }] });
 }
 function receive(name, payload) {
   return probot.receive({ id: `test-${name}`, name, payload: { repository, sender: { type: "User" }, ...payload } });
 }
 
-test("issues produce an improved version and language notes through the real SDKs", async () => {
-  completion("A clearer explanation.");
-  completion("Looks solid.");
+test("issues use the editable skills and produce one optional semantic review", async () => {
+  completion("Consider precise rather than polished if you mean exact in meaning.");
   nock("https://api.github.com").post("/repos/example/demo/issues/7/comments", {
-    body: "### Clearer version\n\n---\nA clearer explanation.\n---",
+    body: "### Optional semantic suggestions\n\nConsider precise rather than polished if you mean exact in meaning.\n\n---\n*Suggestions only. Your wording and decisions remain yours.*",
   }).reply(201, { id: 1 });
-  nock("https://api.github.com").post("/repos/example/demo/issues/7/comments", {
-    body: "### Language notes\n\nLooks solid.",
-  }).reply(201, { id: 2 });
   await receive("issues", { action: "opened", issue: { number: 7, body: source, user: { type: "User" } } });
 });
 
 test("pull requests produce comments on the correct PR", async () => {
-  completion("A clearer PR description.");
   completion("A related idea.");
-  nock("https://api.github.com").post("/repos/example/demo/issues/8/comments", (body) => body.body.includes("A clearer PR description.")).reply(201, { id: 1 });
   nock("https://api.github.com").post("/repos/example/demo/issues/8/comments", (body) => body.body.includes("A related idea.")).reply(201, { id: 2 });
   await receive("pull_request", { action: "opened", pull_request: { number: 8, title: "Clarify documentation", body: source } });
 });
 
 test("push scanning follows the repository's actual default branch", async () => {
+  process.env.ENABLE_PUSH_REVIEWS = "true";
   completion("Some language notes.");
   nock("https://api.github.com").post("/repos/example/demo/issues", (body) => {
-    assert.equal(body.title, "Language notes from recent changes");
+    assert.equal(body.title, "Optional semantic notes from recent changes");
     assert.match(body.body, /Some language notes/);
     return true;
   }).reply(201, { number: 9 });
@@ -75,9 +83,23 @@ test("push scanning follows the repository's actual default branch", async () =>
 });
 
 test("other branches, branch deletions, and empty pushes do not call any API", async () => {
+  process.env.ENABLE_PUSH_REVIEWS = "true";
   await receive("push", { ref: "refs/heads/main", commits: [{ message: source }] });
   await receive("push", { ref: "refs/heads/develop", deleted: true, commits: [{ message: source }] });
   await receive("push", { ref: "refs/heads/develop", commits: [] });
+});
+
+test("push reviews are off by default so routine pushes do not create issues", async () => {
+  await receive("push", { ref: "refs/heads/develop", commits: [{ message: source }] });
+});
+
+test("a word-choice question in an issue title can be reviewed without a body", async () => {
+  const title = "Should this feature be called precise or polished?";
+  nock("https://api.openai.com").post("/v1/chat/completions", (body) => body.messages.at(-1).content === title)
+    .reply(200, { choices: [{ message: { content: "Which property matters: exactness or presentation?" } }] });
+  nock("https://api.github.com").post("/repos/example/demo/issues/7/comments", (body) => body.body.includes("Which property matters"))
+    .reply(201, { id: 1 });
+  await receive("issues", { action: "opened", issue: { number: 7, title, body: null, user: { type: "User" } } });
 });
 
 test("the bot ignores its own generated issues and other bot events", async () => {
@@ -92,7 +114,7 @@ test("short issue text does not call any API", async () => {
 test("OpenAI failures retain diagnostic codes without logging credentials or submitted text", async (t) => {
   const logged = [];
   t.mock.method(probot.log, "error", (...args) => logged.push(args));
-  nock("https://api.openai.com").post("/v1/chat/completions").twice().reply(401, {
+  nock("https://api.openai.com").post("/v1/chat/completions").reply(401, {
     error: {
       message: `Incorrect API key: test-credential-marker. Submitted text: ${source}`,
       type: "invalid_request_error",
@@ -100,10 +122,10 @@ test("OpenAI failures retain diagnostic codes without logging credentials or sub
     },
   });
   await receive("issues", { action: "opened", issue: { number: 7, body: source, user: { type: "User" } } });
-  assert.equal(logged.length, 2);
+  assert.equal(logged.length, 1);
   for (const [details, message] of logged) {
     assert.deepEqual(details, { provider: "openai", status: 401, code: "invalid_api_key", type: "invalid_request_error" });
-    assert.match(message, /^Language (improvement|exploration) failed$/);
+    assert.equal(message, "Semantic review failed");
   }
   assert.doesNotMatch(JSON.stringify(logged), /test-credential-marker/);
   assert.ok(!JSON.stringify(logged).includes(source));
