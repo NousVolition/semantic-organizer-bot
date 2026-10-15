@@ -1,15 +1,43 @@
 # Semantic Organizer Bot
 
-A GitHub App that reviews your projects in the background and on pull requests/issues. It looks for:
+A GitHub App that offers optional semantic advice on issue and pull-request
+text. It focuses on meaning, word choice, connotation, and ambiguity while
+leaving decisions with the author. Each review uses one model request and posts
+one suggestion comment. It does not change the author's text or repository files.
 
-- Vague or unclear language (and rewrites it clearly)
-- Words, math, or logic that look inaccurate or weak
-- Better ways to explain the ideas
-- Lateral connections (related concepts)
+New issues and opened, edited, or synchronized PRs trigger reviews. Bot-created
+items are ignored. Repeated PR events can produce another review comment.
+Automatic issues after pushes are **off by default**. To opt in, set
+`ENABLE_PUSH_REVIEWS=true` in Render; this reviews commit messages on the
+repository's default branch, not file contents.
 
-It posts the findings as comments or new issues. It analyzes issue and PR text,
-and commit messages pushed to each repository's default branch. It does not
-currently read or rewrite repository files.
+## Program the language skills
+
+Edit [language-skills.md](language-skills.md) in this bot's repository. It is a
+plain-English rulebook: no JavaScript is needed for changing the writing rules.
+
+1. Open the file in GitHub and click the pencil to edit it.
+2. Add a rule, a glossary entry, or a before/after example with an explanation of
+   the distinction you care about. Templates are included in the file.
+3. Commit the change to `main` (or merge a PR). The connected Render service
+   redeploys automatically and loads the file when the new version starts.
+4. Open a small test issue with a real word-choice question and check the advice.
+
+For example, a rule can say: "When several words fit, explain the difference in
+meaning before suggesting one. Ask me for context if that difference matters."
+An example can teach the bot why you prefer one phrase in a particular context;
+it should not turn that preference into a universal correction.
+
+The same rulebook applies to all repositories served by this bot installation.
+The defaults ask it to quote the original phrase, offer at most three candidate
+words, preserve the author's voice, and flag uncertainty. These are model
+instructions, not guarantees of accuracy. It has no live dictionary or source
+verification tool. A curated glossary gives it explicit local definitions; a
+future dictionary integration would require JavaScript, a source, and tests.
+
+For a new code capability, put its logic in a separate module, connect the
+appropriate handler in `index.js`, and add mocked cases in `test/events.test.js`
+before deploying. Keep API keys in Render, never in the skill file.
 
 ## Easiest way to turn it on (Render)
 
