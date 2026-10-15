@@ -3,9 +3,14 @@ services:
     name: semantic-organizer-bot
     runtime: node
     plan: free
-    buildCommand: npm install
+    buildCommand: npm ci --omit=dev
     startCommand: npm start
+    healthCheckPath: /healthz
     envVars:
+      - key: NODE_VERSION
+        value: 24
+      - key: NODE_ENV
+        value: production
       - key: OPENAI_API_KEY
         sync: false
       - key: APP_ID

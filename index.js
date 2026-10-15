@@ -13,7 +13,7 @@
 
 const OpenAI = require("openai");
 
-module.exports = (app) => {
+module.exports = (app, { getRouter } = {}) => {
   app.log.info("Semantic Organizer Bot (Language Skill) is loaded!");
 
   let openai = null;
@@ -25,6 +25,16 @@ module.exports = (app) => {
   }
 
   const model = process.env.OPENAI_MODEL || "gpt-4o-mini";
+
+  if (getRouter) {
+    const router = getRouter();
+    router.get("/healthz", (_req, res) => {
+      res.status(openai ? 200 : 503).json({ status: openai ? "ok" : "unconfigured" });
+    });
+    router.get("/", (_req, res) => {
+      res.type("text").send("Semantic Organizer Bot. Health: /healthz. GitHub webhook: /api/github/webhooks.");
+    });
+  }
 
   async function improveLanguage(text) {
     if (!openai || !text || text.trim().length < 20) return null;
@@ -72,7 +82,8 @@ module.exports = (app) => {
 
   // Background scan on push
   app.on("push", async (context) => {
-    if (!openai || context.payload.ref !== "refs/heads/main") return;
+    const defaultBranch = context.payload.repository.default_branch;
+    if (!openai || !defaultBranch || context.payload.deleted || context.payload.ref !== `refs/heads/${defaultBranch}`) return;
 
     const messages = (context.payload.commits || [])
       .map(c => c.message)
@@ -89,14 +100,14 @@ module.exports = (app) => {
       owner: context.repo().owner,
       repo: context.repo().repo,
       title: "Language notes from recent changes",
-      body: `${exploration}\n\n---\n*Generated automatically on push to main.*`,
+      body: `${exploration}\n\n---\n*Generated automatically on push to the default branch.*`,
       labels: ["language"],
     });
   });
 
   // Pull requests
   app.on(["pull_request.opened", "pull_request.edited", "pull_request.synchronize"], async (context) => {
-    if (!openai) return;
+    if (!openai || context.payload.sender?.type === "Bot") return;
 
     const pr = context.payload.pull_request;
     const source = `${pr.title || ""}\n\n${pr.body || ""}`.trim();
@@ -121,7 +132,7 @@ module.exports = (app) => {
 
   // Issues
   app.on("issues.opened", async (context) => {
-    if (!openai) return;
+    if (!openai || context.payload.sender?.type === "Bot" || context.payload.issue.user?.type === "Bot") return;
 
     const body = context.payload.issue.body || "";
     if (body.trim().length < 30) return;
