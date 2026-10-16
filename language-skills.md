@@ -146,6 +146,18 @@ Do not rewrite the whole text unless a short optional rewrite is useful.
 - Automata (finite automata, pushdown automata, Turing machines) are models of computation that recognize or generate languages. Acceptance by an automaton does not by itself establish semantic content or intent.
 - Distinguish the language (the set of strings) from any interpretation assigned to those strings. A connection based only on shared formal structure is interpretive unless the sources explicitly equate the meanings.
 
+### Linear Type Systems
+
+- Linear types track resource usage: a value of linear type must be used exactly once. This is a discipline on how terms are consumed, not a claim about the meaning of the terms themselves.
+- Distinguish linearity (a syntactic or typing constraint) from any semantic interpretation of the resources being tracked.
+- When a passage equates linear use with a particular real-world or mathematical property, note that the type system enforces the usage pattern; the interpretation of what the resource represents remains a separate modeling choice.
+
+### Operational Semantics
+
+- Operational semantics defines meaning by how a program or expression evaluates or reduces step by step. It is a model of computation, not a direct description of external reality.
+- Separate the reduction rules (how terms transform) from any claim about what those transformations represent.
+- Shared operational behavior does not by itself establish shared meaning or intent across different systems unless the passage explicitly defines the correspondence.
+
 ## Response
 
 For a short text review, stay under 250 words. Focus on up to three useful observations. Use
