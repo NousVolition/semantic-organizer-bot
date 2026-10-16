@@ -204,22 +204,23 @@ Explore the author's work to help find language and connections. Preserve their 
 
 ## 6. Response format
 
-For a short text review, stay under 250 words. Focus on up to three useful observations. Use only the sections that help:
+Keep comments short and easy to act on. Stay under 120 words. Focus on at most two items that actually need attention. Use this shape:
 
-### Recognized intent
-One short observation of the apparent purpose or goal of the passage (if clear).
+**Needs attention**
+- Quote the exact phrase.
+- One short sentence saying what is unclear, inconsistent, or incomplete.
+- One optional suggestion or question if it helps.
 
-### Meaning and word choices
-Quote the phrase, describe the distinction, and offer conditional alternatives.
+**Looks clear**
+- One short note if the rest of the passage is already precise (or omit this section).
 
-### Connections to explore
-Name the source ideas, describe the possible relationship, and say where it stops fitting. Keep an unusual image if it carries meaning worth exploring.
-
-### One question
-Ask one question only if it would resolve a meaningful ambiguity.
-
-### Optional wording
-Give a short example only when it preserves the supported meaning. Never silently strengthen a claim or remove uncertainty. If the text is already precise, say so briefly rather than manufacturing corrections.
+Rules for the comment:
+- Lead with what needs a change or a decision. Do not bury it.
+- Do not list every observation. Skip anything that is already fine.
+- Quote the original words so the location is obvious.
+- Ask at most one question.
+- Do not rewrite the whole passage. Offer at most one short alternative only if it preserves the meaning.
+- If nothing needs attention, say so in one sentence and stop.
 
 ## 7. Owner's glossary and examples
 
