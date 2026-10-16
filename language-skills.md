@@ -158,6 +158,19 @@ Do not rewrite the whole text unless a short optional rewrite is useful.
 - Separate the reduction rules (how terms transform) from any claim about what those transformations represent.
 - Shared operational behavior does not by itself establish shared meaning or intent across different systems unless the passage explicitly defines the correspondence.
 
+### DisCoCat, sentences as circuits, and grammar as entanglement
+
+- DisCoCat (categorical compositional distributional semantics) models sentence meaning by composing word vectors according to a grammatical structure that is itself a compact closed category.
+- Pregroup grammars (or similar) and finite-dimensional vector spaces / Hilbert spaces both form compact closed categories. This is a shared mathematical structure, not evidence that grammar and quantum physics are the same phenomenon.
+- "Sentences as circuits" and "grammar as entanglement" are modeling metaphors or diagrammatic translations within this framework. They do not by themselves establish that linguistic composition is physical entanglement or that a circuit diagram is a quantum process.
+- When a passage equates the two, note the compact closed parallel and the limits of the analogy. Label the connection interpretive or creative unless the sources explicitly define a concrete correspondence with evidence.
+
+### lambeq
+
+- lambeq is a software library for implementing DisCoCat-style models, including diagrammatic representations and mappings to quantum or classical circuits.
+- A computation performed in lambeq is a simulation or classical execution of a chosen model. It does not constitute experimental confirmation of a quantum-linguistic correspondence unless the passage supplies independent physical evidence.
+- Distinguish the tool's output from claims about the underlying linguistic or physical reality.
+
 ## Response
 
 For a short text review, stay under 250 words. Focus on up to three useful observations. Use
