@@ -171,6 +171,18 @@ Do not rewrite the whole text unless a short optional rewrite is useful.
 - A computation performed in lambeq is a simulation or classical execution of a chosen model. It does not constitute experimental confirmation of a quantum-linguistic correspondence unless the passage supplies independent physical evidence.
 - Distinguish the tool's output from claims about the underlying linguistic or physical reality.
 
+### Receptive Language
+
+- Receptive language refers to the comprehension or understanding of language (spoken, written, or signed). It is distinct from expressive language (production).
+- A claim about receptive ability requires evidence of understanding, not merely of exposure or production. Surface recognition of words does not establish comprehension of meaning, intent, or relationships.
+- When a passage links receptive language to other domains, note the specific evidence of comprehension and the limits of what that evidence shows.
+
+### CAAP-2 and GFTA-3
+
+- The CAAP-2 (Clinical Assessment of Articulation and Phonology) and GFTA-3 (Goldman-Fristoe Test of Articulation) are standardized clinical tools that assess speech sound production (articulation and phonology).
+- Scores or results from these tests describe performance on the specific tasks administered. They do not by themselves establish overall language ability, receptive comprehension, cognitive status, or causal claims about underlying mechanisms.
+- Distinguish a test result (what the instrument measured under its conditions) from broader interpretations. Do not treat a score as proof of a diagnosis or as evidence beyond the scope of the assessment unless the passage supplies additional supporting information.
+
 ## Response
 
 For a short text review, stay under 250 words. Focus on up to three useful observations. Use
