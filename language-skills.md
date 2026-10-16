@@ -90,6 +90,34 @@ Do not rewrite the whole text unless a short optional rewrite is useful.
 - Do not invent transitive closures, inverses, symmetries, or inheritance chains that the text does not support. If the structure is incomplete for the claim, ask one focused question.
 - Connections across sources that rely on these properties are interpretive unless the texts explicitly align the relations and their characteristics.
 
+## Tableau Algorithm
+
+- The Tableau Algorithm is a procedure for checking the satisfiability of logical formulas by systematically applying expansion rules and looking for contradictions.
+- When a passage refers to a tableau or tableau-style reasoning, note whether it is describing the construction of a proof, a consistency check, or a search for a model.
+- Distinguish the algorithm's steps (rule applications, branch closures) from any claim that a particular conclusion has been formally established. A description of the method is not the same as a completed run of the method.
+- Do not invent tableau branches, closures, or results that the text does not supply.
+
+## Forward Chaining and Backward Chaining
+
+- **Forward Chaining (Data-Driven)**: starts from known facts and applies rules to derive new facts until a goal is reached or no more rules apply.
+- **Backward Chaining (Goal-Driven)**: starts from a goal and works backward to find facts or subgoals that would support it.
+- When a passage describes inference, note which direction it is using and whether the text makes the starting point (data or goal) explicit.
+- Do not treat a forward derivation as proof of a goal, or a backward search as confirmation that the supporting facts exist, unless the passage supplies the relevant steps.
+- Connections that rely on one chaining direction are interpretive unless the sources explicitly align the inference steps.
+
+## Consistency Checking (Finding Contradictions)
+
+- Consistency checking looks for contradictions: pairs of statements that cannot both be true under the stated assumptions.
+- When a passage contains or implies conflicting claims, quote the relevant statements and note the specific point of tension. Do not declare a contradiction unless the conflict is visible in the supplied text.
+- Distinguish a local inconsistency from a global one, and a contradiction under one set of assumptions from an absolute falsehood.
+- Do not invent missing premises to force a contradiction, and do not treat the absence of a detected contradiction as proof of consistency.
+
+## HermiT Reasoner
+
+- HermiT is a description-logic reasoner that uses a hypertableau algorithm to classify ontologies, check consistency, and compute inferences.
+- A result produced by HermiT (or any reasoner) is the output of a specific algorithm on a given ontology. It does not by itself establish that the ontology correctly models the domain or that the inferences hold outside the formal system.
+- When a passage cites a reasoner result, note the scope of what was checked and the limits of what the result shows. Do not treat a successful consistency check as validation of the underlying claims.
+
 ## Mathematical language, discrete structures, and logic
 
 - Review mathematical wording and logical structure alongside meaning. Identify
