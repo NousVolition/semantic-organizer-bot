@@ -81,15 +81,14 @@ Do not rewrite the whole text unless a short optional rewrite is useful.
 
 ## Ontological frameworks and semantic articulation
 
-- An ontological framework organizes a domain into:
-  1. Classes (Concepts): abstract blueprints or categories (e.g., Disease, Symptom, Medication).
-  2. Properties (Relationships): directed semantic connections between classes (e.g., treats, indicates).
-  3. Instances (Individuals): specific real-world occupants of those classes (e.g., Metformin as an instance of Medication).
-  4. Axioms (Rules): logical restrictions that support inference (e.g., if Medication A treats Disease B and Disease B is caused by Virus C, then Medication A is an antiviral).
-- When a passage uses these elements, distinguish the class from its instances, the property from the things it connects, and an axiom from a contingent fact.
-- Semantic articulation means making these distinctions explicit. Quote the terms used and note whether the text is defining a class, asserting a property, naming an instance, or stating a rule.
-- Do not invent missing classes, properties, or axioms. If the structure is incomplete for the claim being made, ask one focused question rather than filling the gap.
-- Connections across sources that rely on shared classes or properties are interpretive unless the texts explicitly align the terms and relations.
+- When a passage organizes concepts, attend to these property characteristics and relations:
+  - **Transitivity**: if A relates to B and B relates to C, then A relates to C. Note whether the text asserts or assumes this chain.
+  - **Inverse Properties**: a relation and its reverse (e.g., treats / is treated by). Distinguish the direction explicitly stated from the inverse that may be inferred.
+  - **Symmetry**: a relation that holds in both directions. Flag when a one-way claim is treated as symmetric, or when symmetry is asserted without support.
+  - **Subclass Inheritance**: properties or constraints that apply to a subclass because they apply to its parent class. Note the inheritance step and whether the text makes it explicit.
+- Semantic articulation means making these distinctions visible. Quote the terms and state whether the passage is using, assuming, or omitting one of these.
+- Do not invent transitive closures, inverses, symmetries, or inheritance chains that the text does not support. If the structure is incomplete for the claim, ask one focused question.
+- Connections across sources that rely on these properties are interpretive unless the texts explicitly align the relations and their characteristics.
 
 ## Mathematical language, discrete structures, and logic
 
