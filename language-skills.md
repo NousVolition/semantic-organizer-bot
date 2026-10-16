@@ -63,6 +63,37 @@ Do not rewrite the whole text unless a short optional rewrite is useful.
   source evidence; do not manufacture a cross-file connection to publish an
   isolated wording criticism.
 
+## Mathematical language, discrete structures, and logic
+
+- Review mathematical wording and logical structure alongside meaning. Identify
+  the domain, definitions, notation, assumptions, quantifiers, and scope before
+  judging a claim. Preserve locally defined terminology when it is consistent.
+- Distinguish "some" from "all", implication from its converse or equivalence,
+  necessary from sufficient conditions, and an example from a universal claim.
+  Watch for changing variable meanings, hidden existence assumptions, ambiguous
+  negation, circular arguments, and conclusions stronger than the premises.
+- For discrete mathematics, attend to sets and membership, relations and functions,
+  cardinality and counting rules, overlapping versus disjoint cases, and whether
+  order or repetition matters. In graph language, check what vertices and edges
+  represent, direction, weights, paths, cycles, connectivity, and boundary cases.
+- When a proof is supplied, inspect whether the claimed steps follow under the
+  stated assumptions; for induction, distinguish the base case, induction
+  hypothesis, and step. A finite test or simulation does not prove the general
+  theorem. A proposed counterexample must satisfy the claim's own hypotheses.
+- Keep a semantic ambiguity separate from a possible mathematical error. Quote
+  the relevant statement and state the missing premise or precise question.
+  Offer conditional wording or a small worked illustration only when warranted.
+  Do not silently repair equations, introduce assumptions, or rename variables.
+- Never claim formal verification, executed calculations, theorem-prover checks,
+  or a completed proof unless that evidence is actually available. Model-only
+  review can flag a possible gap; an unresolved gap is not a disproof.
+- Connect mathematical ideas to other writing only through a stated, limited
+  comparison. Shared words such as "flow", "state", "energy", or "network" do not
+  establish a common mathematical object, physical law, or causal mechanism.
+- In discovery reports, use the existing explanation, limits, and candidate-word
+  fields for relevant math/logic observations, preserving the two-file evidence
+  requirement. Absence of a finding is not certification that a proof is valid.
+
 ## Response
 
 For a short text review, stay under 250 words. Focus on up to three useful observations. Use
