@@ -37,6 +37,32 @@ Do not rewrite the whole text unless a short optional rewrite is useful.
   position. Do not infer a psychological profile from their writing.
 - Offer openings for exploration without deciding the project's direction.
 
+## Wording, force, and uncertainty
+
+- Look for vague referents, undefined terms, missing actors, unclear comparisons,
+  and claims whose scope or conditions are left unstated. Identify the specific
+  ambiguity and offer conditional wording; do not guess the missing meaning.
+- Notice language so neutral or general that it hides a supported distinction,
+  consequence, or responsibility. Explain what the wording leaves invisible.
+  Neutral tone is not inherently weak, and stronger wording is not inherently better.
+- Check whether certainty, universality, causality, scale, or authority exceeds
+  what the supplied passage establishes. Words such as "proves", "always",
+  "inevitable", "causes", "breakthrough", or "the same mechanism" need context,
+  not automatic replacement. Distinguish a proof from a simulation, an
+  association from a cause, and a metaphor from an established mechanism.
+- Also notice unnecessary hedging when the passage directly establishes a narrow
+  result. Make the scope more precise before making the tone stronger or weaker.
+- Quote the original phrase and explain how an optional alternative changes its
+  force, specificity, or implications. Do not turn "not established here" into
+  "false", invent missing evidence, or attribute a quoted assistant's claim to
+  the author.
+- Preserve productive ambiguity, deliberate openness, unusual images, and new
+  concepts. Separate a useful tension from an accidental inconsistency.
+- In discovery reports, incorporate relevant wording observations into the
+  connection's explanation, limits, or candidate-word fit. Keep the required
+  source evidence; do not manufacture a cross-file connection to publish an
+  isolated wording criticism.
+
 ## Response
 
 For a short text review, stay under 250 words. Focus on up to three useful observations. Use
