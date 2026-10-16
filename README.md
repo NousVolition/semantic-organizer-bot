@@ -31,6 +31,16 @@ credentials, so actual API usage can be checked after a run. Validation logs
 record acceptance counts and rejection categories without storing generated
 prose or source passages.
 
+Discovery defaults to `gpt-5.4-mini` with medium reasoning and a 6,000-token
+completion limit (including reasoning). `DISCOVERY_MODEL` overrides this;
+an existing `OPENAI_MODEL` setting is also respected. Optional short reviews
+retain their separate `OPENAI_MODEL` default. Each discovery run makes one
+model call. At the published GPT-5.4 mini rates of $0.75 per million input
+tokens and $4.50 per million output tokens, a 23,000-input-token batch with
+the full 6,000-token completion allowance costs about $0.044 before taxes.
+Actual usage varies; see the safe usage logs and
+[current model pricing](https://developers.openai.com/api/docs/models/gpt-5.4-mini).
+
 [discovery-config.json](discovery-config.json) selects the owner, reporting
 repository, source repositories, priority paths, and bounded batch sizes. The
 initial sources are the public `My-Sources-Project-ALL` and `Nous-Volition`
