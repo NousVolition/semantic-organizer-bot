@@ -121,6 +121,19 @@ Do not rewrite the whole text unless a short optional rewrite is useful.
 - Vector embeddings live in a linear-algebra space. Shared proximity does not imply shared meaning, causation, or a common mechanism unless the passage supplies the mapping and evaluation criteria.
 - When connecting embeddings or similarity scores to other ideas, label the link as interpretive or creative unless the sources explicitly define the correspondence.
 
+### Syntax vs. Semantics
+
+- Separate the form of an expression (syntax: how it is written, its structure, its symbols) from its meaning (semantics: what it refers to or entails).
+- A well-formed expression can still be meaningless, ambiguous, or false in context. Flag when a claim about form is being treated as a claim about meaning, or vice versa.
+- In logic or code-like passages, note whether the discussion is about parseability, well-formedness, or about interpretation and truth conditions.
+
+### Entity Extraction (NER)
+
+- Named entities (people, places, organizations, dates, technical terms) are surface mentions. Extraction does not by itself establish identity, relationships, or intent.
+- Distinguish a mention in the text from a confirmed referent. Shared names or surface forms do not prove the same entity across documents unless the passage supplies disambiguating context.
+- When linking entities across sources, label the connection as observed only if the texts explicitly equate them; otherwise treat it as interpretive.
+- Do not invent entity types, coreference, or attributes that the passage does not support.
+
 ## Response
 
 For a short text review, stay under 250 words. Focus on up to three useful observations. Use
