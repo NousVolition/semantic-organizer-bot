@@ -18,9 +18,14 @@ The owner opens an issue in this bot repository with one of these exact titles:
 
 The report appears as a bot comment on that issue. Connections are labeled
 **observed**, **interpretive**, or **creative**. Each published connection needs
-two exact quotations from distinct source files. The code verifies those quotes
-and builds links to the corresponding commit and line. That verifies the cited
-text, not the model's interpretation. Suggested coinages are explicitly labeled.
+two exact quotations from distinct source files. The model selects numbered
+source passages; the code copies their original text and builds links to the
+corresponding commit and line. Unknown passages and same-file-only evidence are
+rejected. A strict response schema constrains relationship labels. These checks
+verify the cited text, not the model's interpretation. Suggested coinages are
+explicitly labeled. Refused or incomplete model responses are not published as
+findings. Service logs record input/output token counts without source text or
+credentials, so actual API usage can be checked after a run.
 
 [discovery-config.json](discovery-config.json) selects the owner, reporting
 repository, source repositories, priority paths, and bounded batch sizes. The
