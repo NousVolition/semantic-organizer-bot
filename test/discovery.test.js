@@ -121,6 +121,26 @@ test("generation receives evidence as data and the editable language rules", asy
   assert.match(await generateDiscovery(client, "gpt-4o-mini", "Keep surprising metaphors", corpus()), /Traces carried forward/);
 });
 
+test("reasoning discovery uses compatible bounded parameters and requires word candidates", async () => {
+  let calls = 0;
+  const client = { chat: { completions: { create: async request => {
+    calls++;
+    assert.equal(request.model, "gpt-5.4-mini");
+    assert.equal(request.reasoning_effort, "medium");
+    assert.equal(request.max_completion_tokens, 6000);
+    assert.ok(!("temperature" in request));
+    assert.ok(!("max_tokens" in request));
+    const words = request.response_format.json_schema.schema.properties.connections.items.properties.words;
+    assert.equal(words.minItems, 1);
+    assert.equal(words.maxItems, 3);
+    const item = connection();
+    item.evidence = { S1: "S1P1", S2: "S2P1" };
+    return { choices: [{ finish_reason: "stop", message: { content: JSON.stringify({ connections: [item] }) } }] };
+  } } } };
+  assert.match(await generateDiscovery(client, "gpt-5.4-mini", "", corpus()), /meaning afterimage/);
+  assert.equal(calls, 1);
+});
+
 test("passage IDs preserve Markdown, punctuation and sampled line locations", () => {
   const source = corpus().sources[0];
   source.excerpts = [{ startLine: 30, text: "  **Meaning** isn't a \"fixed\" label.\n" + "A trace persists across changes.\n".repeat(30) },

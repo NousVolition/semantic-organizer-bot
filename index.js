@@ -25,8 +25,9 @@ module.exports = (app, { getRouter } = {}) => {
   }
 
   const model = process.env.OPENAI_MODEL || "gpt-4o-mini";
+  const discoveryModel = process.env.DISCOVERY_MODEL || process.env.OPENAI_MODEL || "gpt-5.4-mini";
   const languageSkills = readFileSync(join(__dirname, "language-skills.md"), "utf8");
-  const discovery = createDiscoveryHandler({ config: discoveryConfig, openai, model, skills: languageSkills, log: app.log });
+  const discovery = createDiscoveryHandler({ config: discoveryConfig, openai, model: discoveryModel, skills: languageSkills, log: app.log });
   app.on("issues.opened", discovery.handle);
 
   function logOpenAIError(message, error) {
