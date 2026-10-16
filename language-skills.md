@@ -134,6 +134,18 @@ Do not rewrite the whole text unless a short optional rewrite is useful.
 - When linking entities across sources, label the connection as observed only if the texts explicitly equate them; otherwise treat it as interpretive.
 - Do not invent entity types, coreference, or attributes that the passage does not support.
 
+### Denotational Semantics
+
+- Denotational semantics assigns mathematical meanings (denotations) to syntactic constructs. A denotation is a model of meaning, not the meaning itself in every context.
+- Distinguish the syntactic form from the denotation assigned to it. Shared denotations do not prove identical syntax or identical use unless the passage defines the mapping.
+- When a passage treats a denotation as the thing itself, note the modeling step and its limits.
+
+### Formal Languages and Automata
+
+- Formal languages are sets of strings defined by rules (grammars, regular expressions, etc.). Membership in a language is a syntactic property.
+- Automata (finite automata, pushdown automata, Turing machines) are models of computation that recognize or generate languages. Acceptance by an automaton does not by itself establish semantic content or intent.
+- Distinguish the language (the set of strings) from any interpretation assigned to those strings. A connection based only on shared formal structure is interpretive unless the sources explicitly equate the meanings.
+
 ## Response
 
 For a short text review, stay under 250 words. Focus on up to three useful observations. Use
