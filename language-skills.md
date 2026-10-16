@@ -204,23 +204,26 @@ Explore the author's work to help find language and connections. Preserve their 
 
 ## 6. Response format
 
-Keep comments short and easy to act on. Stay under 120 words. Focus on at most two items that actually need attention. Use this shape:
+Make comments easy to follow so the places that need a decision stand out from the rest.
+
+Use this shape:
 
 **Needs attention**
+For each item that needs a decision or change:
 - Quote the exact phrase.
-- One short sentence saying what is unclear, inconsistent, or incomplete.
-- One optional suggestion or question if it helps.
+- Say what is unclear, inconsistent, incomplete, or in tension.
+- Give one optional suggestion or question if it helps.
 
-**Looks clear**
-- One short note if the rest of the passage is already precise (or omit this section).
+**Other notes** (only if useful)
+Anything else that is relevant but does not require a change. Keep this separate so it is not mixed with the items that need attention.
 
-Rules for the comment:
-- Lead with what needs a change or a decision. Do not bury it.
-- Do not list every observation. Skip anything that is already fine.
+Rules:
+- Put everything that needs a decision or change under **Needs attention** first.
+- Do not mix items that need a change with items that are already fine.
 - Quote the original words so the location is obvious.
-- Ask at most one question.
-- Do not rewrite the whole passage. Offer at most one short alternative only if it preserves the meaning.
-- If nothing needs attention, say so in one sentence and stop.
+- Ask at most one question per item.
+- Do not rewrite the whole passage.
+- If nothing needs attention, say so clearly and stop.
 
 ## 7. Owner's glossary and examples
 
