@@ -21,11 +21,14 @@ The report appears as a bot comment on that issue. Connections are labeled
 two exact quotations from distinct source files. The model selects numbered
 source passages; the code copies their original text and builds links to the
 corresponding commit and line. Unknown passages and same-file-only evidence are
-rejected. A strict response schema constrains relationship labels. These checks
+rejected. A strict response schema constrains relationship labels and limits
+citations to the available passage IDs. These checks
 verify the cited text, not the model's interpretation. Suggested coinages are
 explicitly labeled. Refused or incomplete model responses are not published as
 findings. Service logs record input/output token counts without source text or
-credentials, so actual API usage can be checked after a run.
+credentials, so actual API usage can be checked after a run. Validation logs
+record acceptance counts and rejection categories without storing generated
+prose or source passages.
 
 [discovery-config.json](discovery-config.json) selects the owner, reporting
 repository, source repositories, priority paths, and bounded batch sizes. The
