@@ -72,6 +72,15 @@ Do not rewrite the whole text unless a short optional rewrite is useful.
   source evidence; do not manufacture a cross-file connection to publish an
   isolated wording criticism.
 
+## Spelling habits, variation, and articulation-related patterns
+
+- People have different spelling habits. Non-standard spelling is not automatically an error to be corrected. It can be a consistent personal style, a phonetic rendering, a dialect feature, or the result of difficulty with orthography.
+- When spelling varies, first check whether the intended word is still clear from context. If it is, preserve the author's form unless a change would meaningfully improve intelligibility for the recognized intent.
+- Offer an optional standard spelling only when the variation obscures meaning or when the author appears to be aiming for conventional written form. Present it as a choice, not a correction.
+- Distinguish one-off typos from recurring patterns. Recurring phonetic or simplified spellings may reflect habit or processing style; do not treat them as carelessness.
+- Do not pathologize spelling variation or infer clinical status from writing alone. Assessments such as the CAAP-2 or GFTA-3 measure specific speech-sound tasks; written spelling is a different domain.
+- In discovery or review, note a pattern if it affects readability across sources, and suggest a light, optional convention only if it serves the author's apparent purpose.
+
 ## Mathematical language, discrete structures, and logic
 
 - Review mathematical wording and logical structure alongside meaning. Identify
