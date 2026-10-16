@@ -10,6 +10,8 @@
 const OpenAI = require("openai");
 const { readFileSync } = require("node:fs");
 const { join } = require("node:path");
+const { createDiscoveryHandler } = require("./discovery");
+const discoveryConfig = require("./discovery-config.json");
 
 module.exports = (app, { getRouter } = {}) => {
   app.log.info("Semantic Organizer Bot (Language Skill) is loaded!");
@@ -24,6 +26,8 @@ module.exports = (app, { getRouter } = {}) => {
 
   const model = process.env.OPENAI_MODEL || "gpt-4o-mini";
   const languageSkills = readFileSync(join(__dirname, "language-skills.md"), "utf8");
+  const discovery = createDiscoveryHandler({ config: discoveryConfig, openai, model, skills: languageSkills, log: app.log });
+  app.on("issues.opened", discovery.handle);
 
   function logOpenAIError(message, error) {
     // API messages can include credentials or submitted text. Log only diagnostics.
@@ -95,7 +99,7 @@ module.exports = (app, { getRouter } = {}) => {
 
   // Pull requests
   app.on(["pull_request.opened", "pull_request.edited", "pull_request.synchronize"], async (context) => {
-    if (!openai || context.payload.sender?.type === "Bot") return;
+    if (process.env.ENABLE_TEXT_REVIEWS !== "true" || !openai || context.payload.sender?.type === "Bot") return;
 
     const pr = context.payload.pull_request;
     const source = `${pr.title || ""}\n\n${pr.body || ""}`.trim();
@@ -113,7 +117,8 @@ module.exports = (app, { getRouter } = {}) => {
 
   // Issues
   app.on("issues.opened", async (context) => {
-    if (!openai || context.payload.sender?.type === "Bot" || context.payload.issue.user?.type === "Bot") return;
+    if (process.env.ENABLE_TEXT_REVIEWS !== "true" || !openai || context.payload.sender?.type === "Bot" || context.payload.issue.user?.type === "Bot"
+      || /^\[discover language\]/i.test(context.payload.issue.title || "")) return;
 
     const issue = context.payload.issue;
     const source = `${issue.title || ""}\n\n${issue.body || ""}`.trim();

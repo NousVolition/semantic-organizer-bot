@@ -1,12 +1,56 @@
 # Semantic Organizer Bot
 
-A GitHub App that offers optional semantic advice on issue and pull-request
-text. It focuses on meaning, word choice, connotation, and ambiguity while
-leaving decisions with the author. Each review uses one model request and posts
-one suggestion comment. It does not change the author's text or repository files.
+A GitHub App that explores source documents for language and connections:
+recurring ideas, unusual metaphors, shifts of meaning, and possible names for
+concepts still forming. It offers possibilities and their limits, leaving the
+direction and wording with the author. It does not edit source files.
 
-New issues and opened, edited, or synchronized PRs trigger reviews. Bot-created
-items are ignored. Repeated PR events can produce another review comment.
+## Discover language across repositories
+
+The owner opens an issue in this bot repository with one of these exact titles:
+
+- `[Discover language] preview` — read the first source batch and show its
+  coverage without making an OpenAI request.
+- `[Discover language]` — read the first batch and generate a language and
+  connections report when API credits are available.
+- `[Discover language] batch 2` — examine the next batch; subsequent batch
+  numbers work the same way.
+
+The report appears as a bot comment on that issue. Connections are labeled
+**observed**, **interpretive**, or **creative**. Each published connection needs
+two exact quotations from distinct source files. The code verifies those quotes
+and builds links to the corresponding commit and line. That verifies the cited
+text, not the model's interpretation. Suggested coinages are explicitly labeled.
+
+[discovery-config.json](discovery-config.json) selects the owner, reporting
+repository, source repositories, priority paths, and bounded batch sizes. The
+initial sources are the public `My-Sources-Project-ALL` and `Nous-Volition`
+research repositories. The public reporting setup refuses private sources.
+Private research needs separate access approval and a private reporting setup.
+
+The collector indexes Markdown, plain text, reStructuredText and TeX paths on
+each repository's default branch. It excludes archives, common generated-data
+directories, credential paths, binaries, and files over the size limit. Identical
+file copies are counted once. Files are interleaved across repositories; each
+batch covers up to 16 files. Long files contribute up to 6,000 characters from
+several positions, with original line numbers. Reports state the selection and
+sampling; a batch is not an exhaustive reading of the account. Batch membership
+can change when source commits change. It does not search PDFs, images, issues,
+or every line of long documents.
+
+Only the configured owner's new issues in the reporting repository can trigger
+discovery. One job runs per service instance. The webhook records a status
+comment and returns before the scan finishes. A completed or recorded job is not
+repeated by webhook redelivery. Jobs execute in the web process: a restart can
+interrupt one, leaving its status comment unfinished. Open a new discovery issue
+to retry after correcting the problem. There is no unattended recurring scan.
+
+## Optional short reviews
+
+Ordinary issue/PR text reviews are off by default. Set `ENABLE_TEXT_REVIEWS=true`
+in Render to enable one suggestion comment on a new issue or an opened, edited,
+or synchronized PR. Bot-created items are ignored; repeated PR events can produce
+another review comment.
 Automatic issues after pushes are **off by default**. To opt in, set
 `ENABLE_PUSH_REVIEWS=true` in Render; this reviews commit messages on the
 repository's default branch, not file contents.
@@ -21,16 +65,17 @@ plain-English rulebook: no JavaScript is needed for changing the writing rules.
    the distinction you care about. Templates are included in the file.
 3. Commit the change to `main` (or merge a PR). The connected Render service
    redeploys automatically and loads the file when the new version starts.
-4. Open a small test issue with a real word-choice question and check the advice.
+4. Open a discovery issue and check the language findings. If short reviews are
+   enabled, a normal issue can also contain a word-choice question.
 
 For example, a rule can say: "When several words fit, explain the difference in
 meaning before suggesting one. Ask me for context if that difference matters."
 An example can teach the bot why you prefer one phrase in a particular context;
 it should not turn that preference into a universal correction.
 
-The same rulebook applies to all repositories served by this bot installation.
-The defaults ask it to quote the original phrase, offer at most three candidate
-words, preserve the author's voice, and flag uncertainty. These are model
+The same rulebook applies to discovery and optional short reviews. The defaults
+encourage unusual language, distinguish creative connections from observed ones,
+quote source phrases, preserve the author's voice, and flag uncertainty. These are model
 instructions, not guarantees of accuracy. It has no live dictionary or source
 verification tool. A curated glossary gives it explicit local definitions; a
 future dictionary integration would require JavaScript, a source, and tests.
@@ -53,7 +98,7 @@ before deploying. Keep API keys in Render, never in the skill file.
 6. After it deploys, open `https://YOUR-SERVICE.onrender.com/healthz`. It should return `{"status":"ok"}`. This confirms that the app loaded and has its required settings; it does not test the credentials against GitHub or OpenAI.
 7. Set the GitHub App's **Webhook URL** to `https://YOUR-SERVICE.onrender.com/api/github/webhooks`. The `/api/github/webhooks` path is required.
 8. Install the GitHub App on the repositories you want it to review. In the app settings, open **Advanced → Recent Deliveries**, send or redeliver a `ping`, and verify a successful response.
-9. Open an issue with a few sentences of text in an installed repository. Check for the bot's comments and inspect Render's logs if none appear.
+9. As the configured owner, open `[Discover language] preview` in the configured reporting repository to verify source reading and comment posting. Then open `[Discover language]` to test generation when API credits are available.
 
 For an existing Render service, use **Build Command** `npm ci --omit=dev`,
 **Start Command** `npm start`, **Health Check Path** `/healthz`, and Node.js 24

@@ -1,0 +1,14 @@
+{
+  "owner": "NousVolition",
+  "controlRepository": "semantic-organizer-bot",
+  "repositories": ["My-Sources-Project-ALL", "Nous-Volition"],
+  "filesPerBatch": 16,
+  "charactersPerFile": 6000,
+  "maximumFileBytes": 1000000,
+  "priorityPaths": [
+    "language/conversation-study/PATHS.md",
+    "language/conversation-study/CONTEXT.md",
+    "language/README.md",
+    "README.md"
+  ]
+}
