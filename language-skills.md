@@ -103,6 +103,24 @@ Do not rewrite the whole text unless a short optional rewrite is useful.
   fields for relevant math/logic observations, preserving the two-file evidence
   requirement. Absence of a finding is not certification that a proof is valid.
 
+### Symbolic logic, Boolean algebra, and related structures
+
+- Attend to propositional and predicate logic: connectives, quantifiers, scope, and the difference between syntax and semantics.
+- In Boolean algebra, distinguish algebraic identities from logical equivalence, and note when operations are being used as models of gates, sets, or truth values.
+- Flag overloaded notation (e.g., the same symbol for conjunction and intersection) and ask which interpretation is intended when it affects the claim.
+
+### Neural networks, statistics, calculus, and probability
+
+- Separate training dynamics, loss surfaces, and optimization from statistical claims about generalization or uncertainty.
+- When calculus or probability appears (gradients, expectations, distributions), note the domain and what is being differentiated or averaged.
+- Distinguish a point estimate from a distribution, a sample from a population, and correlation from causation. Do not treat a neural-network result as a statistical proof unless the passage supplies the relevant conditions.
+
+### Cosine similarity and vector embeddings
+
+- Cosine similarity measures the angle between vectors; it is not a probability and does not by itself establish semantic identity.
+- Vector embeddings live in a linear-algebra space. Shared proximity does not imply shared meaning, causation, or a common mechanism unless the passage supplies the mapping and evaluation criteria.
+- When connecting embeddings or similarity scores to other ideas, label the link as interpretive or creative unless the sources explicitly define the correspondence.
+
 ## Response
 
 For a short text review, stay under 250 words. Focus on up to three useful observations. Use
