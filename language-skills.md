@@ -79,6 +79,18 @@ Do not rewrite the whole text unless a short optional rewrite is useful.
 - If the intended word is clear from context, leave the form unchanged unless the author has indicated they want conventional spelling. In that case, offer the standard form as an optional note and ask if it should be used.
 - Do not silently correct. Do not explain why the spelling might differ. Simply surface the form and the question when it is useful.
 
+## Ontological frameworks and semantic articulation
+
+- An ontological framework organizes a domain into:
+  1. Classes (Concepts): abstract blueprints or categories (e.g., Disease, Symptom, Medication).
+  2. Properties (Relationships): directed semantic connections between classes (e.g., treats, indicates).
+  3. Instances (Individuals): specific real-world occupants of those classes (e.g., Metformin as an instance of Medication).
+  4. Axioms (Rules): logical restrictions that support inference (e.g., if Medication A treats Disease B and Disease B is caused by Virus C, then Medication A is an antiviral).
+- When a passage uses these elements, distinguish the class from its instances, the property from the things it connects, and an axiom from a contingent fact.
+- Semantic articulation means making these distinctions explicit. Quote the terms used and note whether the text is defining a class, asserting a property, naming an instance, or stating a rule.
+- Do not invent missing classes, properties, or axioms. If the structure is incomplete for the claim being made, ask one focused question rather than filling the gap.
+- Connections across sources that rely on shared classes or properties are interpretive unless the texts explicitly align the terms and relations.
+
 ## Mathematical language, discrete structures, and logic
 
 - Review mathematical wording and logical structure alongside meaning. Identify
