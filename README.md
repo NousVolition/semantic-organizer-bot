@@ -22,7 +22,8 @@ two exact quotations from distinct source files. The model selects numbered
 source passages; the code copies their original text and builds links to the
 corresponding commit and line. Unknown passages and same-file-only evidence are
 rejected. A strict response schema constrains relationship labels and limits
-citations to the available passage IDs. These checks
+citations to the available passage IDs, with one citation slot per source file.
+Each connection must select at least two different files. These checks
 verify the cited text, not the model's interpretation. Suggested coinages are
 explicitly labeled. Refused or incomplete model responses are not published as
 findings. Service logs record input/output token counts without source text or
