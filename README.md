@@ -64,6 +64,48 @@ repeated by webhook redelivery. Jobs execute in the web process: a restart can
 interrupt one, leaving its status comment unfinished. Open a new discovery issue
 to retry after correcting the problem. There is no unattended recurring scan.
 
+## Run HermiT or lambeq
+
+Use [New issue](../../issues/new/choose) and choose **Check an ontology with
+HermiT** or **Diagram a sentence with lambeq**. These commands accept new issues
+opened by `NousVolition` in this bot repository. Keep the exact template title.
+
+- `[Check ontology]`: replace the body with one self-contained OWL ontology in
+  RDF/XML (plain XML or one `xml` code block). The included example declares
+  Motif a subclass of Pattern. HermiT checks consistency and lists unsatisfiable
+  named classes. It cannot turn ordinary prose into verified axioms. External
+  imports and XML entities are rejected. Limit: 48,000 bytes and 5,000 triples.
+- `[Diagram sentence]`: replace the body with one English sentence, on one
+  line, up to 200 characters and 24 tokens including punctuation. lambeq's
+  Bobcat parser constructs a string diagram on CPU. It chooses one grammatical
+  analysis; it does not certify meaning or quality, and may misparse unusual
+  language. No quantum circuit or semantic comparison is executed.
+
+A `github-actions[bot]` comment reports the actual result and links to the
+run. The **language-tool-result** download contains JSON, diagnostics, the
+input hash and (for lambeq) an SVG diagram. Downloads expire after seven days;
+the comment remains. Failures and timeouts are reported as incomplete checks.
+To check revised input, open a new issue; editing an old issue does not rerun it.
+
+The tools install on disposable GitHub Actions runners, with dependencies
+pinned in `tools/requirements-*.txt` and the shared setup action. They do not
+run inside the Render web service. They use no OpenAI API credits and add no
+Render service. GitHub Actions usage is subject to the account's runner and
+billing settings. Each tool process has a four-minute limit; installation and
+model download can make a first run take several minutes. HermiT uses Java 17
+and the build distributed with Owlready2 0.51; lambeq uses version 0.5.0. Runtime
+metadata is recorded with each result. CI executes real consistent,
+inconsistent and unsatisfiable-class ontology checks and a real Bobcat parse.
+
+The plain-English rulebook guides model interpretation. These tool commands
+are separate, explicit executions; adding a tool name to that file does not
+install or invoke it. Discovery still finds words and connections without
+requiring a writing error. Both tools remain advisory and leave source files
+unchanged.
+
+Implementation references: [Owlready2 reasoning](https://owlready2.readthedocs.io/en/latest/reasoning.html),
+[lambeq sentence input](https://docs.quantinuum.com/lambeq/tutorials/sentence-input.html).
+
 ## Optional short reviews
 
 Ordinary issue/PR text reviews are off by default. Set `ENABLE_TEXT_REVIEWS=true`
@@ -170,3 +212,5 @@ Deployment references: [Probot](https://probot.github.io/docs/deployment/),
 
 ## License
 MIT
+
+

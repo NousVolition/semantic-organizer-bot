@@ -122,6 +122,12 @@ test("short issue text does not call any API", async () => {
   await receive("issues", { action: "opened", issue: { number: 7, body: "Hi" } });
 });
 
+test("explicit tool commands do not also spend OpenAI credits on a text review", async () => {
+  for (const title of ["[Check ontology]", "[Diagram sentence]"]) {
+    await receive("issues", { action: "opened", issue: { number: 7, title, body: source, user: { type: "User" } } });
+  }
+});
+
 test("OpenAI failures retain diagnostic codes without logging credentials or submitted text", async (t) => {
   const logged = [];
   t.mock.method(probot.log, "error", (...args) => logged.push(args));
@@ -141,4 +147,5 @@ test("OpenAI failures retain diagnostic codes without logging credentials or sub
   assert.doesNotMatch(JSON.stringify(logged), /test-credential-marker/);
   assert.ok(!JSON.stringify(logged).includes(source));
 });
+
 
