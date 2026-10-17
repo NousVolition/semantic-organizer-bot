@@ -37,9 +37,15 @@ function evaluateAudit(connections, review, catalog) {
       || typeof verdict.fields[key].reason !== "string" || !verdict.fields[key].reason.trim());
     failed.push(...failedFields);
     const reasons = failedFields.map(key => verdict?.fields?.[key]?.reason).filter(reason => typeof reason === "string" && reason.trim());
+    const fields = Object.fromEntries(Object.keys(reviewFields(item)).map(key => [key, {
+      status: ["pass", "fail", "uncertain"].includes(verdict?.fields?.[key]?.status) ? verdict.fields[key].status : "uncertain",
+      reason: String(verdict?.fields?.[key]?.reason || "Missing field review.").slice(0, 600)
+    }]));
     return { id: `C${i + 1}`, accepted: validPassages && validReason && failed.length === 0,
+      fields,
+      checks: Object.fromEntries(CHECKS.map(key => [key, ["pass", "fail", "uncertain"].includes(verdict?.checks?.[key]) ? verdict.checks[key] : "uncertain"])),
       failed: !validPassages || !validReason ? [...new Set([...failed, "review_evidence"])] : failed,
-      reason: reasons.length ? reasons.join(" ") : validReason ? verdict.reason : "The evidence review was incomplete." };
+      reason: (reasons.length ? reasons.join(" ") : validReason ? verdict.reason : "The evidence review was incomplete.").slice(0, 1800) };
   });
 }
 
