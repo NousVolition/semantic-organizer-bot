@@ -19,6 +19,14 @@ The owner opens an issue in this bot repository with one of these exact titles:
   the three corrected comparisons and three valid controls, using pinned public
   excerpts. Expected answers are not sent to the model. The report shows each
   expected/actual keep-or-withhold decision. Only the configured owner can run it.
+- `[Discover language] review report 45` — apply the current evidence review to
+  an existing completed bot report in issue #45. It rechecks the published claims
+  and each term/fit using the exact public source commits originally cited, with
+  the configured sampling budget. Citation text must match before a paid review
+  runs. It reports individual verdicts without changing the original report or
+  generating replacement findings. Sections already marked with a dated
+  correction are skipped. The owner-only command uses one bounded model call
+  for up to three saved findings and shares the discovery concurrency limit.
 
 The report appears as a bot comment on that issue. Connections are labeled
 **observed**, **interpretive**, or **creative**. Each published connection needs

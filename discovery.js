@@ -274,7 +274,7 @@ function createDiscoveryHandler({ octokitForContext, config, openai, model, skil
   const running = new Set();
   async function handle(context) {
     const { issue, repository, sender } = context.payload;
-    const match = /^\[discover language\](?:\s+(preview|check examples|batch\s+(\d+)))?\s*$/i.exec(issue?.title || "");
+    const match = /^\[discover language\](?:\s+(preview|check examples|batch\s+(\d+)|review report\s+(\d+)))?\s*$/i.exec(issue?.title || "");
     if (!match || issue?.user?.type === "Bot" || sender?.type === "Bot"
       || sender?.login?.toLowerCase() !== config.owner.toLowerCase()
       || repository?.owner?.login?.toLowerCase() !== config.owner.toLowerCase()
@@ -296,6 +296,7 @@ function createDiscoveryHandler({ octokitForContext, config, openai, model, skil
       if (comments.some(item => item.user?.type === "Bot" && item.body?.includes(marker))) { running.delete(key); return; }
       const status = match[1]?.toLowerCase() === "check examples"
         ? "Checking the pinned comparison examples and valid controls. The result will show expected and actual decisions."
+        : match[3] ? "Reviewing the existing findings against their pinned source passages. The result will show which comparisons and word suggestions pass the new checks."
         : "Reading the configured public source repositories. This is a bounded source batch; a coverage report will show what was read.";
       comment = await octokit.issues.createComment({ ...params, body: `${marker}\n${status}` });
     } catch (error) { running.delete(key); throw error; }
@@ -305,6 +306,10 @@ function createDiscoveryHandler({ octokitForContext, config, openai, model, skil
       try {
         if (match[1]?.toLowerCase() === "check examples") {
           body = await checkComparisonExamples(openai, model, log);
+        } else if (match[3]) {
+          const { reviewPublishedReport } = require("./report-review");
+          body = await reviewPublishedReport({ octokit, config, reportIssue: Number(match[3]), openai, model, log,
+            helpers: { eligible, passages, citationPassages, safeText } });
         } else {
         const collected = await collectSources(octokit, config, Number(match[2] || 1));
         body = match[1]?.toLowerCase() === "preview" ? `# Source preview\nNo model request was made.\n\n${coverage(collected)}`
@@ -326,5 +331,5 @@ function createDiscoveryHandler({ octokitForContext, config, openai, model, skil
   return { handle, waitForIdle: () => Promise.all([...jobs]) };
 }
 
-module.exports = { eligible, validateConfig, passages, collectSources, citationPassages, evidence, renderDiscovery, generateDiscovery, checkComparisonExamples, createDiscoveryHandler };
+module.exports = { eligible, validateConfig, passages, citationPassages, safeText, collectSources, evidence, renderDiscovery, generateDiscovery, checkComparisonExamples, createDiscoveryHandler };
 
