@@ -127,7 +127,7 @@ test("reasoning discovery uses compatible bounded parameters and requires word c
     calls++;
     assert.equal(request.model, "gpt-5.4-mini");
     assert.equal(request.reasoning_effort, "medium");
-    assert.equal(request.max_completion_tokens, 6000);
+    assert.equal(request.max_completion_tokens, 12000);
     assert.ok(!("temperature" in request));
     assert.ok(!("max_tokens" in request));
     const words = request.response_format.json_schema.schema.properties.connections.items.properties.words;

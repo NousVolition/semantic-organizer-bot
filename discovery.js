@@ -223,7 +223,9 @@ async function generateDiscovery(openai, model, skills, collected, log) {
   const catalog = citationPassages(collected.sources);
   if (new Set(catalog.filter(item => item.quote.length >= 15).map(item => item.source.id)).size < 2) return renderDiscovery({ connections: [] }, collected);
   const generation = /^gpt-5\.4-mini(?:-|$)/.test(model)
-    ? { reasoning_effort: "medium", max_completion_tokens: 6000 }
+    // Reasoning and JSON share this budget. Dense source batches exhausted 6,000
+    // tokens before completing a report; keep a finite allowance for both.
+    ? { reasoning_effort: "medium", max_completion_tokens: 12000 }
     : { temperature: 0.4, max_tokens: 3500 };
   const response = await openai.chat.completions.create({ model, ...generation,
     response_format: { type: "json_schema", json_schema: { name: "language_discovery", strict: true,
