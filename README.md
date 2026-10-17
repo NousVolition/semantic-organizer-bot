@@ -15,6 +15,10 @@ The owner opens an issue in this bot repository with one of these exact titles:
   connections report when API credits are available.
 - `[Discover language] batch 2` — examine the next batch; subsequent batch
   numbers work the same way.
+- `[Discover language] check examples` — run a paid regression check against
+  the three corrected comparisons and three valid controls, using pinned public
+  excerpts. Expected answers are not sent to the model. The report shows each
+  expected/actual keep-or-withhold decision. Only the configured owner can run it.
 
 The report appears as a bot comment on that issue. Connections are labeled
 **observed**, **interpretive**, or **creative**. Each published connection needs
@@ -23,22 +27,28 @@ source passages; the code copies their original text and builds links to the
 corresponding commit and line. Unknown passages and same-file-only evidence are
 rejected. A strict response schema constrains relationship labels and limits
 citations to the available passage IDs, with one citation slot per source file.
-Each connection must select at least two different files. These checks
-verify the cited text, not the model's interpretation. Suggested coinages are
+Each connection must select at least two different files. Citation matching
+verifies the cited text. A separate model call then reviews the whole proposed
+comparison against all collected context for its cited files, checking study
+provenance, construction/version, quantitative comparability and claim scope.
+Every check must pass with valid evidence references; failed, uncertain or
+missing reviews withhold that proposal. An incomplete/refused review fails the
+report closed. The report states the number withheld. This fallible model review
+is not a proof checker and may still miss mistakes. Suggested coinages are
 explicitly labeled. Refused or incomplete model responses are not published as
 findings. Service logs record input/output token counts without source text or
 credentials, so actual API usage can be checked after a run. Validation logs
 record acceptance counts and rejection categories without storing generated
 prose or source passages.
 
-Discovery defaults to `gpt-5.4-mini` with medium reasoning and a 6,000-token
+Discovery defaults to `gpt-5.4-mini` with medium reasoning and a 12,000-token
 completion limit (including reasoning). `DISCOVERY_MODEL` overrides this;
 an existing `OPENAI_MODEL` setting is also respected. Optional short reviews
-retain their separate `OPENAI_MODEL` default. Each discovery run makes one
-model call. At the published GPT-5.4 mini rates of $0.75 per million input
-tokens and $4.50 per million output tokens, a 23,000-input-token batch with
-the full 6,000-token completion allowance costs about $0.044 before taxes.
-Actual usage varies; see the safe usage logs and
+retain their separate `OPENAI_MODEL` default. A discovery run uses one draft
+call and, when proposals exist, one review call with the same output cap.
+There is no automatic repair/retry loop in the application. The review adds
+API cost; actual usage depends on source length and output. Both calls log
+token counts separately without source text. See the usage logs and
 [current model pricing](https://developers.openai.com/api/docs/models/gpt-5.4-mini).
 
 [discovery-config.json](discovery-config.json) selects the owner, reporting
@@ -221,4 +231,3 @@ Deployment references: [Probot](https://probot.github.io/docs/deployment/),
 
 ## License
 MIT
-

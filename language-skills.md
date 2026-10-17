@@ -239,6 +239,14 @@ Continue looking for useful, source-supported words and connections even when no
 - Keep the two-file evidence requirement. If no grounded, useful connection is found, an empty report is appropriate.
 - These are word choices and comparisons for the author to consider, not instructions or a proof certificate.
 
+Comparison lessons from source review:
+
+- Establish provenance before interpreting agreement: two documents may describe the same study. The Josephson audit and restart instructions use the same pilot and a coordinate transform of its original equations, not different physical models or independent replication. “Precision-aware restart” is narrower than “lossless restart.”
+- Keep results attached to their construction. The unwindowed smooth field has a finite-box face mismatch; the separately gated hug initial field vanishes near the faces and removes that seam. Do not carry the old defect into the corrected field or infer chronology from document order. Its initial-field boundary property does not establish evolution convergence.
+- Compare quantities only after checking the observable, units, model, settings and tolerance. The GFN1-xTB and GFN2-xTB diagnostic energies are different, and both Hamiltonian and displacement step change. They do not establish a shared energy endpoint or isolate a step-size effect. “Normal termination” is a narrower common observation and does not certify physical accuracy.
+- Review titles, limitations and candidate-word explanations as carefully as the main relationship. A cautious disclaimer cannot rescue an unsupported assertion. Keep useful same-study connections, explicit contrasts, and unusual but well-bounded analogies.
+- The application now performs a separate model review before publishing discovery findings. It withholds unsupported or uncertain comparisons; this is an additional fallible check, not formal verification by HermiT or lambeq.
+
 ## 7. Owner's glossary and examples
 
 ### Owner's glossary
@@ -265,5 +273,4 @@ Original: [a phrase you used]
 ```
 
 Bracketed entries above are templates, not definitions or review instructions.
-
 
