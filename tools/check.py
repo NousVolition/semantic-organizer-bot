@@ -76,10 +76,13 @@ def run_hermit(text, output):
     result = subprocess.run(command + ["--consistency=" + OWL + "Thing", source.as_uri()],
                             capture_output=True, text=True, timeout=90)
     (output / "hermit-consistency.txt").write_text(result.stdout + result.stderr, encoding="utf-8")
-    if result.returncode:
-        raise RuntimeError("HermiT could not complete the check; see the run's diagnostic artifact.")
     answer = result.stdout.strip()
-    if answer == OWL + "Thing is satisfiable.":
+    contradiction = 'Exception in thread "main" org.semanticweb.owlapi.reasoner.InconsistentOntologyException: Inconsistent ontology'
+    if result.returncode == 1 and result.stderr.splitlines()[:1] == [contradiction]:
+        consistent = False
+    elif result.returncode:
+        raise RuntimeError("HermiT could not complete the check; see the run's diagnostic artifact.")
+    elif answer == OWL + "Thing is satisfiable.":
         consistent = True
     elif answer == OWL + "Thing is not satisfiable.":
         consistent = False
@@ -208,3 +211,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
