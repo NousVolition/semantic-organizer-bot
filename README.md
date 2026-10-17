@@ -31,6 +31,9 @@ Each connection must select at least two different files. Citation matching
 verifies the cited text. A separate model call then reviews the whole proposed
 comparison against all collected context for its cited files, checking study
 provenance, construction/version, quantitative comparability and claim scope.
+The review must also give a separate verdict and reason for the title,
+relationship, limitation and every suggested term with its explanation. A true
+relationship cannot override a failed or missing field-level check.
 Every check must pass with valid evidence references; failed, uncertain or
 missing reviews withhold that proposal. An incomplete/refused review fails the
 report closed. The report states the number withheld. This fallible model review
