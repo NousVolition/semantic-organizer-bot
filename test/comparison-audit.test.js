@@ -50,6 +50,11 @@ test("a true relationship cannot hide a false limit, invented chronology or an o
 test("regression cases retain real values, version context, and valid same-study/contrast controls", () => {
   assert.equal(fixtures.examples.length, 6);
   assert.deepEqual(fixtures.examples.map(x => x.expectedAccept), [false, true, false, true, false, true]);
+  for (const example of fixtures.examples) {
+    const fields = Object.values(reviewFields(example.connection)).join("\n");
+    for (const [sourceId] of fields.matchAll(/\bS\d+\b/g))
+      assert.ok(example.connection.evidence[sourceId], `Fixture refers to an unrelated source: ${sourceId}`);
+  }
   const text = fixtures.sources.flatMap(s => s.excerpts.map(p => p.text)).join("\n");
   for (const needle of ["coordinate transform", "0.053709416", "**0 after**", "GFN1-xTB", "GFN2-xTB", "-5.768774918844", "-5.070544446870"])
     assert.ok(text.includes(needle), needle);
