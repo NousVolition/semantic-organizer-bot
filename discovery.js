@@ -270,7 +270,10 @@ function createDiscoveryHandler({ octokitForContext, config, openai, model, skil
     let comment;
     try {
       const comments = await octokit.paginate(octokit.issues.listComments, { ...params, per_page: 100 });
-      if (comments.some(item => item.user?.type === "Bot" && item.body?.includes(marker))) { running.delete(key); return; }
+      // The marker begins both the reserved status comment and the finished report. If a
+      // restart interrupted the job before publishing, a redelivery must not start a second
+      // run that would look like a fresh job once the unfinished comment is updated by hand.
+      if (comments.some(item => item.user?.type === "Bot" && item.body?.startsWith(marker))) { running.delete(key); return; }
       comment = await octokit.issues.createComment({ ...params, body: `${marker}\nReading the configured public source repositories. This is a bounded source batch; a coverage report will show what was read.` });
     } catch (error) { running.delete(key); throw error; }
     // Acknowledge the webhook after recording the job; do not hold it open for collection or generation.
