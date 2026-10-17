@@ -9,13 +9,20 @@ Keep useful unconventional metaphors and correctly bounded analogies. Different 
 
 const object = properties => ({ type: "object", properties, required: Object.keys(properties), additionalProperties: false });
 
+function reviewFields(connection) {
+  return { title: connection.title, relationship: connection.relationship, limit: connection.limit,
+    ...Object.fromEntries((connection.words || []).map((word, i) => [`word_${i + 1}`, `${word.term}: ${word.fit}`])) };
+}
+
 function auditSchema(connections, catalog) {
-  const verdict = object({
+  const fieldVerdict = object({ status: { type: "string", enum: ["pass", "fail", "uncertain"] }, reason: { type: "string" } });
+  const verdict = connection => object({
+    fields: object(Object.fromEntries(Object.keys(reviewFields(connection)).map(key => [key, fieldVerdict]))),
     checks: object(Object.fromEntries(CHECKS.map(key => [key, { type: "string", enum: ["pass", "fail", "uncertain"] }]))),
     reason: { type: "string" },
     passages: { type: "array", minItems: 1, maxItems: 8, items: { type: "string", enum: catalog.map(p => p.id) } }
   });
-  return object(Object.fromEntries(connections.map((_, i) => [`C${i + 1}`, verdict])));
+  return object(Object.fromEntries(connections.map((connection, i) => [`C${i + 1}`, verdict(connection)])));
 }
 
 function evaluateAudit(connections, review, catalog) {
@@ -26,9 +33,13 @@ function evaluateAudit(connections, review, catalog) {
       && verdict.passages.length <= 8 && verdict.passages.every(id => catalog.some(p => p.id === id && sourceIds.has(p.source.id)));
     const validReason = typeof verdict?.reason === "string" && verdict.reason.trim().length > 0;
     const failed = CHECKS.filter(key => verdict?.checks?.[key] !== "pass");
+    const failedFields = Object.keys(reviewFields(item)).filter(key => verdict?.fields?.[key]?.status !== "pass"
+      || typeof verdict.fields[key].reason !== "string" || !verdict.fields[key].reason.trim());
+    failed.push(...failedFields);
+    const reasons = failedFields.map(key => verdict?.fields?.[key]?.reason).filter(reason => typeof reason === "string" && reason.trim());
     return { id: `C${i + 1}`, accepted: validPassages && validReason && failed.length === 0,
       failed: !validPassages || !validReason ? [...new Set([...failed, "review_evidence"])] : failed,
-      reason: validReason ? verdict.reason : "The evidence review was incomplete." };
+      reason: reasons.length ? reasons.join(" ") : validReason ? verdict.reason : "The evidence review was incomplete." };
   });
 }
 
@@ -45,8 +56,8 @@ async function auditConnections(openai, model, connections, catalog, log) {
   const response = await openai.chat.completions.create({ model, ...generation,
     response_format: { type: "json_schema", json_schema: { name: "comparison_audit", strict: true, schema: auditSchema(connections, context) } },
     messages: [
-      { role: "system", content: `Review proposed language connections against the supplied evidence before publication. You are a separate checking pass. ${COMPARISON_RULES}\nFor each candidate, mark each check pass, fail, or uncertain. Pass means the candidate makes no unsupported claim on that dimension; a dimension not invoked by the candidate can pass. Fail means a claim is contradicted or unsupported. Uncertain means necessary context is missing. Do not rewrite a candidate or assume a missing qualification. Keep the reason concise and identify the decisive evidence or missing context. Cite passage IDs from that candidate's source files; examine adjacent supplied passages. Unknown facts stay unknown. Source paths provide context but do not alone establish the experimental facts. Check only the supplied claims, not every possible property of the study. A sound limited connection can pass despite unresolved scientific questions. Return the exact schema.` },
-      { role: "user", content: JSON.stringify({ candidates: connections.map((item, i) => ({ id: `C${i + 1}`, ...item })),
+      { role: "system", content: `Review proposed language connections against the supplied evidence before publication. You are a separate checking pass. ${COMPARISON_RULES}\nStart with the supplied fields, one at a time. For EVERY field (title, relationship, limit and each word+fit), give a verdict and a short evidence-based reason about THAT field's actual claims. A true main relationship must not hide a false limitation. Inspect temporal words such as later, still and remaining: when the text compares distinct constructions, these words can falsely transfer a defect or invent chronology. Do not silently reinterpret an overclaim into a defensible one. A word suggestion such as lossless also makes a claim even if the explanation is cautious. Then aggregate the four comparison checks. A failed or uncertain field must prevent an all-pass assessment. Pass means no unsupported assertion is made on that dimension; a dimension not invoked can pass. Fail means contradicted or unsupported; uncertain means necessary context is missing. Do not demand unrelated facts. Cite passage IDs from the candidate's files; inspect adjacent context. Paths alone do not establish experimental facts. Preserve sound, limited connections and unusual metaphors. Return the exact schema.` },
+      { role: "user", content: JSON.stringify({ candidates: connections.map((item, i) => ({ id: `C${i + 1}`, kind: item.kind, evidence: item.evidence, fields: reviewFields(item) })),
         passages: context.map(p => ({ id: p.id, source: p.source.id, repository: p.source.repository,
           path: p.source.path, commit: p.source.commit, startLine: p.line, text: p.quote })) }) }
     ] });
@@ -62,4 +73,4 @@ async function auditConnections(openai, model, connections, catalog, log) {
   return decisions;
 }
 
-module.exports = { CHECKS, COMPARISON_RULES, auditSchema, evaluateAudit, auditConnections };
+module.exports = { CHECKS, COMPARISON_RULES, reviewFields, auditSchema, evaluateAudit, auditConnections };

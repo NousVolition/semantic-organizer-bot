@@ -81,6 +81,7 @@ function connection() {
 function passingAudit(request) {
   const data = JSON.parse(request.messages[1].content);
   return { choices: [{ finish_reason: "stop", message: { content: JSON.stringify(Object.fromEntries(data.candidates.map(c => [c.id, {
+    fields: Object.fromEntries(Object.keys(c.fields).map(key => [key, { status: "pass", reason: "This field stays within the evidence." }])),
     checks: { provenance: "pass", configuration: "pass", quantities: "pass", claim_scope: "pass" },
     reason: "The limited analogy is supported by both passages.", passages: ["S1P1", "S2P1"]
   }]))) } }] };

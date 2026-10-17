@@ -1,6 +1,6 @@
 const { test } = require("node:test");
 const assert = require("node:assert/strict");
-const { CHECKS, evaluateAudit, auditConnections } = require("../comparison-audit");
+const { CHECKS, reviewFields, evaluateAudit, auditConnections } = require("../comparison-audit");
 const { citationPassages, generateDiscovery, checkComparisonExamples, createDiscoveryHandler } = require("../discovery");
 const fixtures = require("../fixtures/comparison-examples.json");
 const catalog = citationPassages(fixtures.sources);
@@ -8,6 +8,7 @@ const connections = fixtures.examples.map(x => x.connection);
 const response = content => ({ choices: [{ finish_reason: "stop", message: { content: JSON.stringify(content) } }], usage: { prompt_tokens: 123, completion_tokens: 456 } });
 function verdicts(items = connections) {
   return Object.fromEntries(items.map((c, i) => [`C${i + 1}`, {
+    fields: Object.fromEntries(Object.keys(reviewFields(c)).map(key => [key, { status: "pass", reason: "This field stays within the evidence." }])),
     checks: Object.fromEntries(CHECKS.map(key => [key, "pass"])), reason: "Evidence is limited to the stated comparison.",
     passages: Object.values(c.evidence).filter(Boolean)
   }]));
@@ -30,6 +31,19 @@ test("missing decisions, unknown citations and citations borrowed from another c
     { ...verdicts().C1, reason: "" }]) {
     const review = verdicts(); review.C1 = value;
     assert.equal(evaluateAudit(connections, review, catalog)[0].accepted, false);
+  }
+});
+
+test("a true relationship cannot hide a false limit, invented chronology or an overclaiming term", () => {
+  for (const field of ["title", "relationship", "limit", "word_1", "word_2", "word_3"]) {
+    for (const status of ["fail", "uncertain", undefined]) {
+      const review = verdicts();
+      review.C1.fields[field] = status ? { status, reason: "This individual claim is unsupported." } : undefined;
+      const decisions = evaluateAudit(connections, review, catalog);
+      assert.equal(decisions[0].accepted, false, `${field}/${status}`);
+      assert.ok(decisions[0].failed.includes(field));
+      assert.ok(decisions[1].accepted);
+    }
   }
 });
 
