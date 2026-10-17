@@ -122,7 +122,7 @@ module.exports = (app, { getRouter } = {}) => {
   // Issues
   app.on("issues.opened", async (context) => {
     if (process.env.ENABLE_TEXT_REVIEWS !== "true" || !openai || context.payload.sender?.type === "Bot" || context.payload.issue.user?.type === "Bot"
-      || /^\[(discover language|check ontology|diagram sentence)\]/i.test(context.payload.issue.title || "")) return;
+      || /^\[(discover language|check ontology|diagram word roles|diagram sentence)\]/i.test(context.payload.issue.title || "")) return;
 
     const issue = context.payload.issue;
     const source = `${issue.title || ""}\n\n${issue.body || ""}`.trim();

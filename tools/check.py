@@ -12,7 +12,7 @@ import sys
 
 REPOSITORY = "NousVolition/semantic-organizer-bot"
 OWNER = "NousVolition"
-TITLES = {"[Check ontology]": "hermit", "[Diagram sentence]": "lambeq"}
+TITLES = {"[Check ontology]": "hermit", "[Diagram word roles]": "lambeq"}
 MAX_INPUT = 48_000
 OWL = "http://www.w3.org/2002/07/owl#"
 
@@ -27,7 +27,7 @@ def request_from_event(event):
         raise ValueError("Only the repository owner's new tool issues are accepted.")
     tool = TITLES.get(issue.get("title"))
     if tool is None:
-        raise ValueError("Use exactly [Check ontology] or [Diagram sentence].")
+        raise ValueError("Use exactly [Check ontology] or [Diagram word roles].")
     body = issue.get("body") or ""
     if len(body.encode("utf-8")) > MAX_INPUT:
         raise ValueError("Input exceeds 48,000 bytes; please supply a smaller example.")
@@ -39,13 +39,26 @@ def request_from_event(event):
         if not body.startswith("<"):
             raise ValueError("Paste one self-contained RDF/XML ontology, optionally in an xml code block.")
     else:
-        if not body or len(body) > 200 or "\n" in body:
-            raise ValueError("Paste one English sentence on one line, up to 200 characters.")
-        if any(ord(char) < 32 for char in body):
-            raise ValueError("Sentence contains unsupported control characters.")
+        fenced = re.fullmatch(r"```json\s*\n([\s\S]*?)\n```", body)
+        if fenced:
+            body = fenced.group(1).strip()
+        word_roles(body)
     return {"tool": tool, "input": body,
             "input_sha256": hashlib.sha256(body.encode("utf-8")).hexdigest(),
             "issue": issue["number"]}
+
+
+def word_roles(text):
+    try:
+        roles = json.loads(text)
+    except ValueError as error:
+        raise ValueError('Supply JSON with subject, verb and object, for example {"subject":"Patterns","verb":"connect","object":"ideas"}.') from error
+    if not isinstance(roles, dict) or set(roles) != {"subject", "verb", "object"}:
+        raise ValueError("Supply exactly subject, verb and object; these roles are your explicit choices.")
+    if any(not isinstance(value, str) or not value.strip() or len(value) > 60
+           or any(ord(char) < 32 for char in value) for value in roles.values()):
+        raise ValueError("Each word or phrase must contain 1 to 60 characters on one line.")
+    return {key: value.strip() for key, value in roles.items()}
 
 
 def normalize_ontology(text):
@@ -111,28 +124,21 @@ def run_hermit(text, output):
 def run_lambeq(text, output):
     import matplotlib
     matplotlib.use("Agg")
-    import spacy
-    import torch
-    from lambeq import BobcatParser
-    torch.set_num_threads(2)
-    tokens = [token.text for token in spacy.blank("en").tokenizer(text) if not token.is_space]
-    if not 1 <= len(tokens) <= 24:
-        raise ValueError("Please shorten the sentence to at most 24 tokens (including punctuation).")
-    parser = BobcatParser(device="cpu", verbose="suppress")
-    diagram = parser.sentence2diagram(tokens, tokenised=True)
-    if diagram is None:
-        raise RuntimeError("Bobcat could not produce a diagram for this sentence.")
+    from lambeq.backend.grammar import Cup, Id, Ty, Word
+    roles = word_roles(text)
+    noun, sentence = Ty("n"), Ty("s")
+    words = (Word(roles["subject"], noun)
+             @ Word(roles["verb"], noun.r @ sentence @ noun.l)
+             @ Word(roles["object"], noun))
+    diagram = words >> (Cup(noun, noun.r) @ Id(sentence) @ Cup(noun.l, noun))
     diagram.draw(path=str(output / "sentence-diagram.svg"), figsize=(16, 5), fontsize=10)
-    version_file = Path(parser.model_dir) / "version.txt"
-    return {"status": "completed", "tool": "lambeq / Bobcat on CPU",
+    return {"status": "completed", "tool": "lambeq explicit word-role diagram",
             "lambeq_version": importlib.metadata.version("lambeq"),
-            "torch_version": importlib.metadata.version("torch"),
-            "transformers_version": importlib.metadata.version("transformers"),
-            "bobcat_model_version": version_file.read_text().strip() if version_file.exists() else "not supplied by upstream",
-            "tokens": tokens, "output_type": str(diagram.cod),
+            "roles": roles, "sentence": " ".join(roles[key] for key in ("subject", "verb", "object")),
+            "output_type": str(diagram.cod),
             "boxes": [{"name": str(box.name), "input_type": str(box.dom),
                        "output_type": str(box.cod)} for box in diagram.boxes],
-            "limits": "One model-selected English grammatical analysis and a string diagram, not a verdict on meaning, truth, style, or originality. Unconventional language may be misparsed. No trained semantic comparison, quantum simulation, or quantum hardware execution was performed."}
+            "limits": "A subject-verb-object diagram using the roles you supplied, not automatic sentence parsing or confirmation that these roles are correct. The noun and verb types are assigned by this explicit template. No trained semantic comparison, truth check, quantum simulation, or quantum hardware execution was performed. Bobcat automatic parsing is unavailable because the official pretrained model download is offline."}
 
 
 def escaped(value):
@@ -155,9 +161,9 @@ def report(result):
         lines += ["", "An inconsistent result means these axioms cannot all hold together; this check does not identify a minimal explanation."] if not result["consistent"] else []
         lines += ["", escaped(result["limits"]), "", "Runtime: Owlready2 " + result["owlready2_version"] + "; bundled HermiT jar SHA-256: `" + result["jar_sha256"] + "`."]
     else:
-        lines += ["**lambeq ran:** Bobcat parsed the sentence and constructed a string diagram on CPU.", "", "> " + escaped(result["input"]), "", "Output type: " + escaped(result["output_type"]) + ".", "", "| Diagram element | Input type | Output type |", "| --- | --- | --- |"]
+        lines += ["**lambeq ran:** constructed a string diagram from your explicitly supplied word roles.", "", "> " + escaped(result["sentence"]), "", "Output type: " + escaped(result["output_type"]) + ". The two noun wires connect to the verb's two argument positions, leaving one sentence wire.", "", "| Diagram element | Input type | Output type |", "| --- | --- | --- |"]
         lines += ["| " + " | ".join(escaped(box[key]) for key in ("name", "input_type", "output_type")) + " |" for box in result["boxes"][:50]]
-        lines += ["", "Download **sentence-diagram.svg** from the run's **language-tool-result** artifact for the picture.", "", escaped(result["limits"]), "", "Runtime: lambeq " + result["lambeq_version"] + "; Bobcat model " + escaped(result["bobcat_model_version"]) + "."]
+        lines += ["", "Download **sentence-diagram.svg** from the run's **language-tool-result** artifact for the picture.", "", escaped(result["limits"]), "", "Runtime: lambeq " + result["lambeq_version"] + "."]
     if "input_sha256" in result:
         lines += ["", "Input SHA-256: `" + result["input_sha256"] + "`."]
     lines += ["", "These are tool results for the supplied input. The author decides what to do with them. No OpenAI API request was made."]

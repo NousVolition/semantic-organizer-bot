@@ -188,7 +188,7 @@ Explore the author's work to help find language and connections. Preserve their 
 - lambeq is a software library for implementing DisCoCat-style models, including diagrammatic representations and mappings to quantum or classical circuits.
 - A lambeq computation may construct a diagram, evaluate a classical model, simulate a quantum circuit, or run a circuit on quantum hardware, depending on the chosen backend. Identify what actually ran. None of these alone establishes that natural language is a physical quantum process.
 - Distinguish the tool's output from claims about the underlying linguistic or physical reality.
-- This application's separate `[Diagram sentence]` command runs lambeq's Bobcat parser on CPU and creates a grammatical string diagram. It does not train or evaluate semantic similarity, simulate a quantum circuit, or use quantum hardware. Discovery and direct-review model requests do not execute lambeq. Unconventional writing can be misparsed; a parser result is not a reason to erase the author's voice.
+- This application's separate `[Diagram word roles]` command runs lambeq to build a subject-verb-object string diagram from roles the owner explicitly supplies. It does not parse free text or validate those role choices. Bobcat automatic parsing is unavailable while its official pretrained-model download is offline. The command does not train or evaluate semantic similarity, simulate a quantum circuit, or use quantum hardware. Discovery and direct-review model requests do not execute lambeq. A diagram is not a reason to erase the author's voice.
 
 ## 5. Language assessment notes
 

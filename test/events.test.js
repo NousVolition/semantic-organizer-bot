@@ -123,7 +123,7 @@ test("short issue text does not call any API", async () => {
 });
 
 test("explicit tool commands do not also spend OpenAI credits on a text review", async () => {
-  for (const title of ["[Check ontology]", "[Diagram sentence]"]) {
+  for (const title of ["[Check ontology]", "[Diagram word roles]", "[Diagram sentence]"]) {
     await receive("issues", { action: "opened", issue: { number: 7, title, body: source, user: { type: "User" } } });
   }
 });

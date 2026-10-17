@@ -7,6 +7,7 @@ from check import request_from_event, normalize_ontology, run_hermit, run_lambeq
 ROOT = Path(__file__).parent
 CONSISTENT = (ROOT / "examples/consistent.owl").read_text()
 INCONSISTENT = (ROOT / "examples/inconsistent.owl").read_text()
+ROLES = '{"subject":"Patterns","verb":"connect","object":"ideas"}'
 
 
 class Requests(unittest.TestCase):
@@ -14,7 +15,7 @@ class Requests(unittest.TestCase):
         self.event = {"action": "opened", "repository": {"full_name": "NousVolition/semantic-organizer-bot"},
                       "sender": {"login": "NousVolition"},
                       "issue": {"number": 1, "user": {"login": "NousVolition"},
-                                "title": "[Diagram sentence]", "body": "Patterns connect ideas."}}
+                                "title": "[Diagram word roles]", "body": ROLES}}
 
     def test_owner_sentence(self):
         request = request_from_event(self.event)
@@ -23,7 +24,7 @@ class Requests(unittest.TestCase):
 
     def test_untrusted_events_rejected(self):
         for field, key, value in [("repository", "full_name", "other/repo"),
-                                  ("sender", "login", "other"), ("issue", "title", "[Diagram sentence] extra")]:
+                                  ("sender", "login", "other"), ("issue", "title", "[Diagram word roles] extra")]:
             event = copy.deepcopy(self.event)
             event[field][key] = value
             with self.assertRaises(ValueError):
@@ -40,7 +41,7 @@ class Requests(unittest.TestCase):
             request_from_event(self.event)
 
     def test_sentence_limits_and_no_false_success(self):
-        for text in ("", "a\nb", "x" * 201, "a\tb"):
+        for text in ("", "a\nb", '{"subject":"a"}', ROLES.replace('"connect"', '42'), ROLES.replace('"ideas"', '"' + 'x' * 61 + '"')):
             self.event["issue"]["body"] = text
             with self.assertRaises(ValueError):
                 request_from_event(self.event)
@@ -82,16 +83,19 @@ class HermiT(unittest.TestCase):
 
 @unittest.skipUnless(os.environ.get("TEST_LANGUAGE_TOOL") == "lambeq", "lambeq integration job only")
 class Lambeq(unittest.TestCase):
-    def test_real_parser_and_diagram(self):
+    def test_real_explicit_diagram(self):
         output = Path("tool-smoke/lambeq").resolve()
         output.mkdir(parents=True, exist_ok=True)
-        result = run_lambeq("Patterns connect ideas.", output)
+        result = run_lambeq(ROLES, output)
         self.assertEqual(result["status"], "completed")
         self.assertEqual(result["output_type"], "s")
         self.assertTrue(any(box["name"] == "connect" for box in result["boxes"]))
         self.assertIn("<svg", (output / "sentence-diagram.svg").read_text())
         self.assertIn("No trained semantic comparison", result["limits"])
+        self.assertIn("not automatic sentence parsing", result["limits"])
+        self.assertEqual(result["roles"], {"subject":"Patterns", "verb":"connect", "object":"ideas"})
 
 
 if __name__ == "__main__":
     unittest.main()
+

@@ -1,6 +1,9 @@
 ---
-name: Diagram a sentence with lambeq
-about: Request a real Bobcat parse and sentence diagram (repository owner only).
-title: '[Diagram sentence]'
+name: Diagram word roles with lambeq
+about: Build a subject-verb-object diagram from roles you supply (no automatic parsing).
+title: '[Diagram word roles]'
 ---
-Patterns connect ideas.
+```json
+{"subject":"Patterns","verb":"connect","object":"ideas"}
+```
+
