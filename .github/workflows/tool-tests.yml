@@ -1,0 +1,39 @@
+name: Language tool tests
+
+on:
+  pull_request:
+    paths: ['tools/**', '.github/actions/setup-language-tool/**', '.github/workflows/*tools*', '.github/workflows/tool-tests.yml']
+  push:
+    branches: [main]
+    paths: ['tools/**', '.github/actions/setup-language-tool/**', '.github/workflows/*tools*', '.github/workflows/tool-tests.yml']
+
+permissions:
+  contents: read
+
+jobs:
+  real-tools:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        tool: [hermit, lambeq]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup-language-tool
+        with:
+          tool: ${{ matrix.tool }}
+      - run: python -m unittest discover -s tools -p 'test_*.py' -v
+        env:
+          TEST_LANGUAGE_TOOL: ${{ matrix.tool }}
+          MPLBACKEND: Agg
+          TOKENIZERS_PARALLELISM: 'false'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: tool-smoke-${{ matrix.tool }}
+          path: tool-smoke/
+          if-no-files-found: warn
+          retention-days: 7

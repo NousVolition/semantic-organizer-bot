@@ -105,6 +105,7 @@ Explore the author's work to help find language and connections. Preserve their 
 
 - HermiT is a description-logic reasoner that uses a hypertableau algorithm to classify ontologies, check consistency, and compute inferences.
 - A result produced by HermiT (or any reasoner) is the output of a specific algorithm on a given ontology. It does not by itself establish that the ontology correctly models the domain or that the inferences hold outside the formal system.
+- This application's separate `[Check ontology]` issue command executes bundled HermiT on explicitly supplied, self-contained OWL in RDF/XML. It reports consistency and unsatisfiable named classes. The ordinary language-review and discovery model requests do not execute HermiT. Never imply a passage has been formally checked without a corresponding successful tool report for that input.
 - When a passage cites a reasoner result, note the scope of what was checked and the limits of what the result shows. Do not treat a successful consistency check as validation of the underlying claims.
 
 ## 4. Math, logic, and formal systems
@@ -187,6 +188,7 @@ Explore the author's work to help find language and connections. Preserve their 
 - lambeq is a software library for implementing DisCoCat-style models, including diagrammatic representations and mappings to quantum or classical circuits.
 - A lambeq computation may construct a diagram, evaluate a classical model, simulate a quantum circuit, or run a circuit on quantum hardware, depending on the chosen backend. Identify what actually ran. None of these alone establishes that natural language is a physical quantum process.
 - Distinguish the tool's output from claims about the underlying linguistic or physical reality.
+- This application's separate `[Diagram word roles]` command runs lambeq to build a subject-verb-object string diagram from roles the owner explicitly supplies. It does not parse free text or validate those role choices. Bobcat automatic parsing is unavailable while its official pretrained-model download is offline. The command does not train or evaluate semantic similarity, simulate a quantum circuit, or use quantum hardware. Discovery and direct-review model requests do not execute lambeq. A diagram is not a reason to erase the author's voice.
 
 ## 5. Language assessment notes
 
@@ -263,4 +265,5 @@ Original: [a phrase you used]
 ```
 
 Bracketed entries above are templates, not definitions or review instructions.
+
 

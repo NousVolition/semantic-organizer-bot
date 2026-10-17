@@ -1,0 +1,18 @@
+---
+name: Check an ontology with HermiT
+about: Check a self-contained RDF/XML ontology for consistency (repository owner only).
+title: '[Check ontology]'
+---
+```xml
+<?xml version="1.0"?>
+<rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+         xmlns:owl="http://www.w3.org/2002/07/owl#"
+         xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"
+         xml:base="https://example.org/concepts">
+  <owl:Ontology rdf:about="https://example.org/concepts"/>
+  <owl:Class rdf:about="#Pattern"/>
+  <owl:Class rdf:about="#Motif">
+    <rdfs:subClassOf rdf:resource="#Pattern"/>
+  </owl:Class>
+</rdf:RDF>
+```
