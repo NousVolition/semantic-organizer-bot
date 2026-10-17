@@ -141,7 +141,7 @@
           {
             "term": "lossless restart state",
             "kind": "candidate",
-            "fit": "Emphasizes that the representation is chosen to preserve information when resuming; it leaves out the numerical-failure motivation in S6."
+            "fit": "Emphasizes that the representation is chosen to preserve information when resuming; it leaves out the numerical-failure motivation in S1."
           }
         ]
       }
