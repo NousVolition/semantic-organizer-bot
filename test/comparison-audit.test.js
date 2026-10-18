@@ -17,7 +17,7 @@ function requestVerdicts(request) {
   const { candidates } = JSON.parse(request.messages[1].content);
   assert.ok(!request.messages[1].content.includes('expectedNotPass'));
   assert.ok(!request.messages[1].content.includes('expectedStances'));
-  assert.ok(candidates.length <= 4);
+  assert.equal(candidates.length, 1);
   return Object.fromEntries(candidates.map(c => [c.id, {
     fields: Object.fromEntries(Object.keys(c.fields).map(key => [key, { stance: key === 'word_3' ? 'contrast' : 'asserted',
       proposition: 'The complete field preserves the stated scope.', status: 'pass', reason: 'Mock supported field.' }])),
@@ -108,20 +108,22 @@ test("regression cases retain real values, version context, and valid same-study
 });
 
 test("review sees adjacent context, not expected answers, and logs only counts/categories", async () => {
-  const entries = [];
+  const entries = []; let calls = 0;
   const client = { chat: { completions: { create: async request => {
     const data = JSON.parse(request.messages[1].content);
     assert.ok(!request.messages[1].content.includes("expectedAccept"));
-    assert.deepEqual(Object.keys(request.response_format.json_schema.schema.properties), ["C1", "C2", "C3", "C4", "C5", "C6"]);
-    assert.ok(data.passages.some(p => p.text.includes("coordinate transform")));
-    assert.ok(data.passages.some(p => p.text.includes("GFN1-xTB")));
-    assert.ok(data.passages.some(p => p.text.includes("**0 after**")));
-    assert.equal(request.max_completion_tokens, 12000);
+    assert.deepEqual(Object.keys(request.response_format.json_schema.schema.properties), ["C1"]);
+    const c = connections[calls++];
+    assert.equal(data.candidates[0].fields.title, c.title);
+    assert.ok(data.passages.every(p => c.evidence[p.source]));
+    assert.ok(data.passages.length > Object.values(c.evidence).filter(Boolean).length);
+    assert.equal(request.max_completion_tokens, 16000);
+    assert.equal(request.reasoning_effort, 'high');
     assert.equal(request.temperature, undefined);
-    return response(verdicts());
+    return response(requestVerdicts(request));
   } } } };
   await auditConnections(client, "gpt-5.4-mini", connections, catalog, { info: (...args) => entries.push(args) });
-  assert.equal(entries.length, 2);
+  assert.equal(calls, 6); assert.equal(entries.length, 12);
   assert.ok(!JSON.stringify(entries).includes("coordinate transform"));
   assert.ok(!JSON.stringify(entries).includes("Evidence is limited"));
 });
@@ -132,11 +134,12 @@ test("a failed comparison never reaches the published discovery report", async (
   const client = { chat: { completions: { create: async request => {
     calls++;
     if (request.response_format.json_schema.name === "language_discovery") return response({ connections: items });
-    const review = verdicts(items); review.C1.checks.provenance = "fail";
+    const review = requestVerdicts(request);
+    if (JSON.parse(request.messages[1].content).candidates[0].fields.title === items[0].title) review.C1.checks.provenance = "fail";
     return response(review);
   } } } };
   const report = await generateDiscovery(client, "gpt-5.4-mini", "", { batch: 1, totalFiles: 6, totalBatches: 1, duplicateFiles: 0, sources: fixtures.sources });
-  assert.equal(calls, 2);
+  assert.equal(calls, 3);
   assert.ok(!report.includes(items[0].title));
   assert.ok(report.includes(items[1].title));
   assert.match(report, /1 of 2 proposals were withheld/);
@@ -165,7 +168,7 @@ test("an empty draft spends no review call; example checks report mismatches hon
   const report = await checkComparisonExamples(client, "gpt-5.4-mini");
   assert.match(report, /11 of 22 expected decisions matched/);
   assert.equal((report.match(/\*\*FAIL\*\*/g) || []).length, 11);
-  assert.equal(calls, 7);
+  assert.equal(calls, 23);
   const record = JSON.parse(Buffer.from(report.match(/comparison-example-data:([A-Za-z0-9+/=]+)/)[1], 'base64'));
   assert.equal(record.total, 22); assert.equal(record.passed, 11);
 });
@@ -186,7 +189,7 @@ test("example-check command obeys owner/repository authorization and avoids repo
   await handler.handle(context); assert.equal(posted.length, 0);
   context.payload.repository.name = "bot";
   await handler.handle(context); await handler.waitForIdle();
-  assert.equal(calls, 6); assert.match(updated[0], /Comparison regression check/);
+  assert.equal(calls, 22); assert.match(updated[0], /Comparison regression check/);
 });
 
 test('rejecting a bad example for the wrong reason does not pass its targeted regression check', async () => {

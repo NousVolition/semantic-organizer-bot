@@ -136,8 +136,9 @@ test("reasoning discovery uses compatible bounded parameters and requires word c
   const client = { chat: { completions: { create: async request => {
     calls++;
     assert.equal(request.model, "gpt-5.4-mini");
-    assert.equal(request.reasoning_effort, "medium");
-    assert.equal(request.max_completion_tokens, 12000);
+    const audit = request.response_format.json_schema.name === "comparison_audit";
+    assert.equal(request.reasoning_effort, audit ? "high" : "medium");
+    assert.equal(request.max_completion_tokens, audit ? 16000 : 12000);
     assert.ok(!("temperature" in request));
     assert.ok(!("max_tokens" in request));
     if (request.response_format.json_schema.name === "comparison_audit") return passingAudit(request);
