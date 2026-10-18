@@ -69,11 +69,16 @@ completion limit (including reasoning). `DISCOVERY_MODEL` overrides this;
 an existing `OPENAI_MODEL` setting is also respected. Optional short reviews
 retain their separate `OPENAI_MODEL` default. A discovery run uses one draft
 call and one independent review call per proposed connection (at most three).
-For `gpt-5.4-mini`, each review uses high reasoning and a 16,000-token output cap.
+When discovery uses `gpt-5.4-mini`, the separate comparison review uses `gpt-5.4`.
+`COMPARISON_MODEL` overrides only this checking model; otherwise a custom discovery
+model is also used for checking. GPT-5.4 and GPT-5.4-mini reviews use medium
+reasoning and a 12,000-token completion cap (including reasoning).
 There is no automatic repair/retry loop in the application. The review adds
 API cost; actual usage depends on source length and output. All calls log
 token counts separately without source text. See the usage logs and
-[current model pricing](https://developers.openai.com/api/docs/models/gpt-5.4-mini).
+[discovery pricing](https://developers.openai.com/api/docs/models/gpt-5.4-mini)
+and [comparison-review pricing](https://developers.openai.com/api/docs/models/gpt-5.4).
+The 22-case regression check makes 22 paid review calls and reports the model used.
 
 [discovery-config.json](discovery-config.json) selects the owner, reporting
 repository, source repositories, priority paths, and bounded batch sizes. The
