@@ -1,6 +1,6 @@
 const { test } = require("node:test");
 const assert = require("node:assert/strict");
-const { CHECKS, reviewFields, auditSchema, evaluateAudit, auditConnections } = require("../comparison-audit");
+const { CHECKS, comparisonModel, reviewFields, auditSchema, evaluateAudit, auditConnections } = require("../comparison-audit");
 const { citationPassages, generateDiscovery, checkComparisonExamples, createDiscoveryHandler } = require("../discovery");
 const fixtures = require("../fixtures/comparison-examples.json");
 const catalog = citationPassages(fixtures.sources);
@@ -117,8 +117,9 @@ test("review sees adjacent context, not expected answers, and logs only counts/c
     assert.equal(data.candidates[0].fields.title, c.title);
     assert.ok(data.passages.every(p => c.evidence[p.source]));
     assert.ok(data.passages.length > Object.values(c.evidence).filter(Boolean).length);
-    assert.equal(request.max_completion_tokens, 16000);
-    assert.equal(request.reasoning_effort, 'high');
+    assert.equal(request.model, 'gpt-5.4');
+    assert.equal(request.max_completion_tokens, 12000);
+    assert.equal(request.reasoning_effort, 'medium');
     assert.equal(request.temperature, undefined);
     return response(requestVerdicts(request));
   } } } };
@@ -133,7 +134,11 @@ test("a failed comparison never reaches the published discovery report", async (
   let calls = 0;
   const client = { chat: { completions: { create: async request => {
     calls++;
-    if (request.response_format.json_schema.name === "language_discovery") return response({ connections: items });
+    if (request.response_format.json_schema.name === "language_discovery") {
+      assert.equal(request.model, 'gpt-5.4-mini');
+      return response({ connections: items });
+    }
+    assert.equal(request.model, 'gpt-5.4');
     const review = requestVerdicts(request);
     if (JSON.parse(request.messages[1].content).candidates[0].fields.title === items[0].title) review.C1.checks.provenance = "fail";
     return response(review);
@@ -171,6 +176,21 @@ test("an empty draft spends no review call; example checks report mismatches hon
   assert.equal(calls, 23);
   const record = JSON.parse(Buffer.from(report.match(/comparison-example-data:([A-Za-z0-9+/=]+)/)[1], 'base64'));
   assert.equal(record.total, 22); assert.equal(record.passed, 11);
+  assert.equal(record.model, 'gpt-5.4');
+});
+
+test('comparison model override stays separate from the discovery model', () => {
+  const previous = process.env.COMPARISON_MODEL;
+  try {
+    delete process.env.COMPARISON_MODEL;
+    assert.equal(comparisonModel('gpt-5.4-mini'), 'gpt-5.4');
+    assert.equal(comparisonModel('custom-model'), 'custom-model');
+    process.env.COMPARISON_MODEL = ' gpt-5.4-mini ';
+    assert.equal(comparisonModel('gpt-5.4-mini'), 'gpt-5.4-mini');
+  } finally {
+    if (previous === undefined) delete process.env.COMPARISON_MODEL;
+    else process.env.COMPARISON_MODEL = previous;
+  }
 });
 
 test("example-check command obeys owner/repository authorization and avoids repository collection", async () => {

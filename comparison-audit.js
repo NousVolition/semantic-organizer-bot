@@ -21,6 +21,12 @@ const SCOPE_READING = `Literal scope checklist, before assigning any verdict:
 
 const object = properties => ({ type: "object", properties, required: Object.keys(properties), additionalProperties: false });
 
+// Discovery can stay inexpensive while the publication gate uses a stronger reader.
+function comparisonModel(model) {
+  return process.env.COMPARISON_MODEL?.trim()
+    || (/^gpt-5\.4-mini(?:-|$)/.test(model) ? "gpt-5.4" : model);
+}
+
 function reviewFields(connection) {
   return { title: connection.title, relationship: connection.relationship, limit: connection.limit,
     ...Object.fromEntries((connection.words || []).map((word, i) => [`word_${i + 1}`, `${word.term}: ${word.fit}`])) };
@@ -72,7 +78,7 @@ async function auditConnections(openai, model, connections, catalog, log) {
   const decisions = [];
   // Similar good/bad candidates can contaminate one another's readings. Review independently.
   for (const [i, connection] of connections.entries()) {
-    const [decision] = await auditOneConnection(openai, model, [connection], catalog, log);
+    const [decision] = await auditOneConnection(openai, comparisonModel(model), [connection], catalog, log);
     decisions.push({ ...decision, id: `C${i + 1}` });
   }
   return decisions;
@@ -83,8 +89,8 @@ async function auditOneConnection(openai, model, connections, catalog, log) {
   // Send all already-collected context for the cited files, not only selected quotes.
   const context = catalog.filter(p => usedSources.has(p.source.id));
   if (!context.length) return evaluateAudit(connections, {}, catalog);
-  const generation = /^gpt-5\.4-mini(?:-|$)/.test(model)
-    ? { reasoning_effort: "high", max_completion_tokens: 16000 }
+  const generation = /^gpt-5\.4(?:-mini)?(?:-\d{4}-\d{2}-\d{2})?$/.test(model)
+    ? { reasoning_effort: "medium", max_completion_tokens: 12000 }
     : { temperature: 0, max_tokens: 3500 };
   const response = await openai.chat.completions.create({ model, ...generation,
     response_format: { type: "json_schema", json_schema: { name: "comparison_audit", strict: true, schema: auditSchema(connections, context) } },
@@ -106,4 +112,4 @@ async function auditOneConnection(openai, model, connections, catalog, log) {
   return decisions;
 }
 
-module.exports = { CHECKS, STANCES, COMPARISON_RULES, reviewFields, auditSchema, evaluateAudit, auditConnections };
+module.exports = { CHECKS, STANCES, COMPARISON_RULES, comparisonModel, reviewFields, auditSchema, evaluateAudit, auditConnections };

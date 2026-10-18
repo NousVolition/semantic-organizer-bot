@@ -1,5 +1,5 @@
 const { createHash } = require("node:crypto");
-const { COMPARISON_RULES, auditConnections } = require("./comparison-audit");
+const { COMPARISON_RULES, comparisonModel, auditConnections } = require("./comparison-audit");
 
 function eligible(path) {
   return /\.(md|txt|rst|tex)$/i.test(path)
@@ -268,6 +268,7 @@ async function checkComparisonExamples(openai, model, log) {
   });
   const passed = matches.filter(Boolean).length;
   const output = ["# Comparison regression check", `${passed} of ${fixtures.examples.length} expected decisions matched.`,
+    `Comparison checker: ${safeText(comparisonModel(model), 100)}.`,
     `This paid, on-demand check uses pinned public excerpts, historical mistakes, corrected controls and assertion-scope probes in ${fixtures.examples.length} independent bounded calls. Expected answers and field targets are kept out of model requests. A match requires the expected decision and any targeted failure or assertion stance. It tests the publication review, not a fresh search or a formal proof.`];
   for (const [i, d] of decisions.entries()) {
     const example = fixtures.examples[i];
@@ -277,7 +278,7 @@ async function checkComparisonExamples(openai, model, log) {
   }
   output.push("\n## Pinned sources");
   for (const source of fixtures.sources) output.push(`- [${safeText(source.path, 250)}](${source.url})`);
-  const record = { version: 2, passed, total: decisions.length, results: decisions.map((d, i) => ({ case: fixtures.examples[i].case,
+  const record = { version: 2, model: comparisonModel(model), passed, total: decisions.length, results: decisions.map((d, i) => ({ case: fixtures.examples[i].case,
     expectedAccept: fixtures.examples[i].expectedAccept, actualAccept: d.accepted, matched: matches[i], failed: d.failed,
     fields: Object.fromEntries(Object.entries(d.fields).map(([key, field]) => [key, { status: field.status, stance: field.stance }])) })) };
   output.push(`\n<!-- comparison-example-data:${Buffer.from(JSON.stringify(record)).toString("base64")} -->`);
