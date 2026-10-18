@@ -1,6 +1,6 @@
 const { test } = require("node:test");
 const assert = require("node:assert/strict");
-const { CHECKS, reviewFields, evaluateAudit, auditConnections } = require("../comparison-audit");
+const { CHECKS, reviewFields, auditSchema, evaluateAudit, auditConnections } = require("../comparison-audit");
 const { citationPassages, generateDiscovery, checkComparisonExamples, createDiscoveryHandler } = require("../discovery");
 const fixtures = require("../fixtures/comparison-examples.json");
 const catalog = citationPassages(fixtures.sources);
@@ -8,11 +8,53 @@ const connections = fixtures.examples.map(x => x.connection);
 const response = content => ({ choices: [{ finish_reason: "stop", message: { content: JSON.stringify(content) } }], usage: { prompt_tokens: 123, completion_tokens: 456 } });
 function verdicts(items = connections) {
   return Object.fromEntries(items.map((c, i) => [`C${i + 1}`, {
-    fields: Object.fromEntries(Object.keys(reviewFields(c)).map(key => [key, { status: "pass", reason: "This field stays within the evidence." }])),
+    fields: Object.fromEntries(Object.keys(reviewFields(c)).map(key => [key, { stance: "asserted", proposition: "A bounded claim about the stated evidence.", status: "pass", reason: "This field stays within the evidence." }])),
     checks: Object.fromEntries(CHECKS.map(key => [key, "pass"])), reason: "Evidence is limited to the stated comparison.",
     passages: Object.values(c.evidence).filter(Boolean)
   }]));
 }
+function requestVerdicts(request) {
+  const { candidates } = JSON.parse(request.messages[1].content);
+  assert.ok(!request.messages[1].content.includes('expectedNotPass'));
+  assert.ok(!request.messages[1].content.includes('expectedStances'));
+  assert.ok(candidates.length <= 4);
+  return Object.fromEntries(candidates.map(c => [c.id, {
+    fields: Object.fromEntries(Object.keys(c.fields).map(key => [key, { stance: key === 'word_3' ? 'contrast' : 'asserted',
+      proposition: 'The complete field preserves the stated scope.', status: 'pass', reason: 'Mock supported field.' }])),
+    checks: Object.fromEntries(CHECKS.map(key => [key, 'pass'])), reason: 'Mock supported comparison.',
+    passages: Object.values(c.evidence).filter(Boolean)
+  }]));
+}
+
+test('missing assertion readings fail closed without keyword-based acceptance', () => {
+  for (const change of [field => delete field.stance, field => field.stance = 'not', field => delete field.proposition, field => field.proposition = ' ']) {
+    const review = verdicts(); change(review.C1.fields.word_1);
+    const result = evaluateAudit(connections, review, catalog)[0];
+    assert.equal(result.accepted, false); assert.ok(result.failed.includes('word_1'));
+  }
+  const review = verdicts();
+  review.C1.fields.word_1 = { stance: 'withheld', proposition: 'Proof of evolution is not established.', status: 'fail', reason: 'A separate unsupported assertion remains.' };
+  assert.equal(evaluateAudit(connections, review, catalog)[0].accepted, false);
+});
+
+test('each candidate schema excludes citations from other candidates', () => {
+  const schema = auditSchema(connections, catalog);
+  assert.ok(schema.properties.C1.properties.passages.items.enum.includes('S1P1'));
+  assert.ok(!schema.properties.C1.properties.passages.items.enum.includes('S5P1'));
+  assert.ok(schema.properties.C5.properties.passages.items.enum.includes('S5P1'));
+});
+
+test('scope examples contain valid evidence and both positive and negative controls', () => {
+  const scope = require('../fixtures/scope-examples.json');
+  const passages = citationPassages(scope.sources);
+  assert.equal(scope.examples.length, 16);
+  assert.equal(scope.examples.filter(e => e.expectedAccept).length, 8);
+  for (const e of scope.examples) for (const [source,id] of Object.entries(e.connection.evidence))
+    assert.ok(passages.some(p => p.id === id && p.source.id === source));
+  assert.deepEqual(scope.examples.find(e => e.case === 'unsaved-state-preservation').expectedNotPass, ['relationship','word_2']);
+  assert.equal(scope.examples.find(e => e.case === 'proof-explicitly-withheld').expectedAccept, true);
+  assert.equal(scope.examples.find(e => e.case === 'not-only-is-affirmative').expectedAccept, false);
+});
 
 test("each comparison dimension independently blocks publication; uncertainty never becomes acceptance", () => {
   for (const key of CHECKS) for (const status of ["fail", "uncertain", undefined]) {
@@ -116,14 +158,16 @@ test("an empty draft spends no review call; example checks report mismatches hon
   let calls = 0;
   const client = { chat: { completions: { create: async request => {
     calls++;
-    return request.response_format.json_schema.name === "language_discovery" ? response({ connections: [] }) : response(verdicts());
+    return request.response_format.json_schema.name === "language_discovery" ? response({ connections: [] }) : response(requestVerdicts(request));
   } } } };
   await generateDiscovery(client, "gpt-5.4-mini", "", { batch: 1, totalFiles: 6, totalBatches: 1, duplicateFiles: 0, sources: fixtures.sources });
   assert.equal(calls, 1);
   const report = await checkComparisonExamples(client, "gpt-5.4-mini");
-  assert.match(report, /3 of 6 expected decisions matched/);
-  assert.equal((report.match(/\*\*FAIL\*\*/g) || []).length, 3);
-  assert.equal(calls, 2);
+  assert.match(report, /11 of 22 expected decisions matched/);
+  assert.equal((report.match(/\*\*FAIL\*\*/g) || []).length, 11);
+  assert.equal(calls, 7);
+  const record = JSON.parse(Buffer.from(report.match(/comparison-example-data:([A-Za-z0-9+/=]+)/)[1], 'base64'));
+  assert.equal(record.total, 22); assert.equal(record.passed, 11);
 });
 
 test("example-check command obeys owner/repository authorization and avoids repository collection", async () => {
@@ -135,12 +179,28 @@ test("example-check command obeys owner/repository authorization and avoids repo
   const context = { octokit, issue: () => ({ owner: "example", repo: "bot", issue_number: 1 }),
     payload: { sender: { login: "stranger", type: "User" }, repository: { owner: { login: "example" }, name: "bot" },
       issue: { number: 1, title: "[Discover language] check examples", user: { type: "User" } } } };
-  const openai = { chat: { completions: { create: async () => { calls++; return response(verdicts()); } } } };
+  const openai = { chat: { completions: { create: async request => { calls++; return response(requestVerdicts(request)); } } } };
   const handler = createDiscoveryHandler({ octokitForContext: () => octokit, config, openai, model: "gpt-5.4-mini", log: { error() {} } });
   await handler.handle(context); assert.equal(calls, 0); assert.equal(posted.length, 0);
   context.payload.sender.login = "example"; context.payload.repository.name = "other";
   await handler.handle(context); assert.equal(posted.length, 0);
   context.payload.repository.name = "bot";
   await handler.handle(context); await handler.waitForIdle();
-  assert.equal(calls, 1); assert.match(updated[0], /Comparison regression check/);
+  assert.equal(calls, 6); assert.match(updated[0], /Comparison regression check/);
+});
+
+test('rejecting a bad example for the wrong reason does not pass its targeted regression check', async () => {
+  const all = [...fixtures.examples, ...require('../fixtures/scope-examples.json').examples];
+  let offset = 0;
+  const client = { chat: { completions: { create: async request => {
+    const result = requestVerdicts(request);
+    for (const value of Object.values(result)) {
+      if (!all[offset++].expectedAccept) value.checks.provenance = 'fail';
+    }
+    return response(result);
+  } } } };
+  const report = await checkComparisonExamples(client, 'gpt-5.4-mini');
+  const record = JSON.parse(Buffer.from(report.match(/comparison-example-data:([A-Za-z0-9+/=]+)/)[1], 'base64'));
+  const preservation = record.results.find(r => r.case === 'unsaved-state-preservation');
+  assert.equal(preservation.actualAccept, false); assert.equal(preservation.matched, false);
 });

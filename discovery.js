@@ -253,19 +253,37 @@ async function generateDiscovery(openai, model, skills, collected, log) {
 }
 
 async function checkComparisonExamples(openai, model, log) {
-  const fixtures = require("./fixtures/comparison-examples.json");
+  const suites = [require("./fixtures/comparison-examples.json"), require("./fixtures/scope-examples.json")];
+  const fixtures = { sources: suites.flatMap(s => s.sources), examples: suites.flatMap(s => s.examples) };
   const catalog = citationPassages(fixtures.sources);
-  const decisions = await auditConnections(openai, model, fixtures.examples.map(x => x.connection), catalog, log);
-  const passed = decisions.filter((d, i) => d.accepted === fixtures.examples[i].expectedAccept).length;
+  const decisions = [];
+  // Keep model work bounded even as the regression corpus grows. Calls are sequential.
+  for (let start = 0; start < fixtures.examples.length; start += 4)
+    decisions.push(...await auditConnections(openai, model, fixtures.examples.slice(start, start + 4).map(x => x.connection), catalog, log));
+  const matches = decisions.map((d, i) => {
+    const e = fixtures.examples[i];
+    return d.accepted === e.expectedAccept
+      && (e.expectedNotPass || []).every(key => d.failed.includes(key))
+      && Object.entries(e.expectedStances || {}).every(([key, allowed]) => allowed.includes(d.fields[key]?.stance));
+  });
+  const passed = matches.filter(Boolean).length;
   const output = ["# Comparison regression check", `${passed} of ${fixtures.examples.length} expected decisions matched.`,
-    "This paid, on-demand check uses pinned excerpts from the three corrected comparisons, plus sound controls. Expected answers are kept out of the model request. It tests the publication review, not a fresh search or a formal proof."];
+    `This paid, on-demand check uses pinned public excerpts, historical mistakes, corrected controls and assertion-scope probes in ${Math.ceil(fixtures.examples.length / 4)} bounded calls. Expected answers and field targets are kept out of model requests. A match requires the expected decision and any targeted failure or assertion stance. It tests the publication review, not a fresh search or a formal proof.`];
   for (const [i, d] of decisions.entries()) {
     const example = fixtures.examples[i];
-    output.push(`\n## ${safeText(example.connection.title, 120)}\nExpected: ${example.expectedAccept ? "keep" : "withhold"}. Actual: ${d.accepted ? "keep" : "withhold"}. **${d.accepted === example.expectedAccept ? "PASS" : "FAIL"}**\n\n${safeText(d.reason)}`);
+    output.push(`\n## ${safeText(example.case, 120)}: ${safeText(example.connection.title, 120)}\nExpected: ${example.expectedAccept ? "keep" : "withhold"}. Actual: ${d.accepted ? "keep" : "withhold"}. **${matches[i] ? "PASS" : "FAIL"}**\n\n${safeText(d.reason, 700)}`);
+    if (example.expectedNotPass?.length) output.push(`Targeted checks: ${safeText(example.expectedNotPass.join(", "))}. Flagged: ${safeText(d.failed.join(", ") || "none")}.`);
+    if (example.expectedStances) for (const key of Object.keys(example.expectedStances)) output.push(`Assertion stance for ${safeText(key)}: ${safeText(d.fields[key]?.stance || "missing")}.`);
   }
   output.push("\n## Pinned sources");
   for (const source of fixtures.sources) output.push(`- [${safeText(source.path, 250)}](${source.url})`);
-  return output.join("\n");
+  const record = { version: 2, passed, total: decisions.length, results: decisions.map((d, i) => ({ case: fixtures.examples[i].case,
+    expectedAccept: fixtures.examples[i].expectedAccept, actualAccept: d.accepted, matched: matches[i], failed: d.failed,
+    fields: Object.fromEntries(Object.entries(d.fields).map(([key, field]) => [key, { status: field.status, stance: field.stance }])) })) };
+  output.push(`\n<!-- comparison-example-data:${Buffer.from(JSON.stringify(record)).toString("base64")} -->`);
+  const body = output.join("\n");
+  if (body.length > 60000) throw Object.assign(new Error("Example report exceeds comment limit"), { code: "review_too_large" });
+  return body;
 }
 
 function createDiscoveryHandler({ octokitForContext, config, openai, model, skills, log }) {
@@ -332,4 +350,3 @@ function createDiscoveryHandler({ octokitForContext, config, openai, model, skil
 }
 
 module.exports = { eligible, validateConfig, passages, citationPassages, safeText, collectSources, evidence, renderDiscovery, generateDiscovery, checkComparisonExamples, createDiscoveryHandler };
-

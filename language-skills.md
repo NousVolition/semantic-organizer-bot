@@ -51,6 +51,8 @@ Explore the author's work to help find language and connections. Preserve their 
 
 ### Wording, force, and uncertainty
 
+- Read the whole claim before judging a strong word. Identify what is asserted, explicitly withheld, conditional, attributed to someone else, or offered as a contrast. “Proof” in “the stronger status this evidence does not establish” is a useful contrast term. It does not claim a proof. “Not established here” does not mean false; “not disproven” does not mean proved; “not only proves” is affirmative. Mixed sentences still require checking every affirmative clause.
+- Keep the object of proof attached: analytic identities can establish properties of initial data while a theorem about later time evolution remains unproved. Different claims about a model do not imply different models.
 - Look for vague referents, undefined terms, missing actors, unclear comparisons, and claims whose scope or conditions are left unstated. Identify the specific ambiguity and offer conditional wording; do not guess the missing meaning.
 - Notice language so neutral or general that it hides a supported distinction, consequence, or responsibility. Explain what the wording leaves invisible. Neutral tone is not inherently weak, and stronger wording is not inherently better.
 - Check whether certainty, universality, causality, scale, or authority exceeds what the supplied passage establishes. Words such as "proves", "always", "inevitable", "causes", "breakthrough", or "the same mechanism" need context, not automatic replacement. Distinguish a proof from a simulation, an association from a cause, and a metaphor from an established mechanism.
@@ -245,6 +247,10 @@ Comparison lessons from source review:
 - Keep results attached to their construction. The unwindowed smooth field has a finite-box face mismatch; the separately gated hug initial field vanishes near the faces and removes that seam. Do not carry the old defect into the corrected field or infer chronology from document order. Its initial-field boundary property does not establish evolution convergence.
 - Compare quantities only after checking the observable, units, model, settings and tolerance. The GFN1-xTB and GFN2-xTB diagnostic energies are different, and both Hamiltonian and displacement step change. They do not establish a shared energy endpoint or isolate a step-size effect. “Normal termination” is a narrower common observation and does not certify physical accuracy.
 - Review titles, limitations and candidate-word explanations as carefully as the main relationship. A cautious disclaimer cannot rescue an unsupported assertion. Keep useful same-study connections, explicit contrasts, and unusual but well-bounded analogies.
+- Match each selected quotation to the claim it supports. A prediction-score table is not a citation for a convergence warning elsewhere in the same file. Preserve the narrower connection and select the supporting passage; do not invent a time window to justify “windowed comparison.”
+- Expand “both” and “each” into separate claims. A rerun folder and an archive-restoration tool can preserve reference material without both providing live rerun spaces. A frozen plan or a record of an attempt is not a saved computational state. Do not call explicitly unsaved partial states “preserved” or “frozen attempts,” even when the surrounding non-result distinction is sound.
+- A companion correction can match a review's requested mathematical form without establishing when it was written or that it was a direct response. An envelope exp(P(r²)) is an exponential of a polynomial; scope “polynomial in r²” to its exponent rather than to the entire envelope.
+- The reviewer records each field's proposition and assertion stance before judging it. It checks selected-citation support separately from broader source context. Explicitly withheld proof claims and valid unconventional phrases should survive; unsupported affirmative clauses should not.
 - The application now performs a separate model review before publishing discovery findings. It withholds unsupported or uncertain comparisons; this is an additional fallible check, not formal verification by HermiT or lambeq.
 
 ## 7. Owner's glossary and examples
@@ -273,4 +279,3 @@ Original: [a phrase you used]
 ```
 
 Bracketed entries above are templates, not definitions or review instructions.
-

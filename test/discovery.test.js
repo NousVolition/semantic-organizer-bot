@@ -81,8 +81,8 @@ function connection() {
 function passingAudit(request) {
   const data = JSON.parse(request.messages[1].content);
   return { choices: [{ finish_reason: "stop", message: { content: JSON.stringify(Object.fromEntries(data.candidates.map(c => [c.id, {
-    fields: Object.fromEntries(Object.keys(c.fields).map(key => [key, { status: "pass", reason: "This field stays within the evidence." }])),
-    checks: { provenance: "pass", configuration: "pass", quantities: "pass", claim_scope: "pass" },
+    fields: Object.fromEntries(Object.keys(c.fields).map(key => [key, { stance: "asserted", proposition: "A bounded claim about the stated evidence.", status: "pass", reason: "This field stays within the evidence." }])),
+    checks: { provenance: "pass", configuration: "pass", quantities: "pass", claim_scope: "pass", citation_support: "pass" },
     reason: "The limited analogy is supported by both passages.", passages: ["S1P1", "S2P1"]
   }]))) } }] };
 }
@@ -303,4 +303,3 @@ test("quota failures publish a clear status without leaking provider messages", 
   assert.match(state.updated[0], /no available credit/);
   assert.ok(!state.updated[0].includes("sensitive-provider-message"));
 });
-

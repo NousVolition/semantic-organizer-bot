@@ -26,7 +26,7 @@ function state() {
     calls++;
     assert.equal(request.response_format.json_schema.name, "comparison_audit");
     const candidates = JSON.parse(request.messages[1].content).candidates;
-    const result = Object.fromEntries(candidates.map(c => [c.id, { fields: Object.fromEntries(Object.keys(c.fields).map(key => [key, { status: "pass", reason: "Supported in the supplied context." }])),
+    const result = Object.fromEntries(candidates.map(c => [c.id, { fields: Object.fromEntries(Object.keys(c.fields).map(key => [key, { stance: "asserted", proposition: "A bounded claim about the stated evidence.", status: "pass", reason: "Supported in the supplied context." }])),
       checks: Object.fromEntries(CHECKS.map(key => [key, "pass"])), reason: "The bounded analogy holds.", passages: ["S1P1", "S2P1"] }]));
     return { choices: [{ finish_reason: "stop", message: { content: JSON.stringify(result) } }] };
   } } } };

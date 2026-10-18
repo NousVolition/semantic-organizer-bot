@@ -16,9 +16,11 @@ The owner opens an issue in this bot repository with one of these exact titles:
 - `[Discover language] batch 2` — examine the next batch; subsequent batch
   numbers work the same way.
 - `[Discover language] check examples` — run a paid regression check against
-  the three corrected comparisons and three valid controls, using pinned public
-  excerpts. Expected answers are not sent to the model. The report shows each
-  expected/actual keep-or-withhold decision. Only the configured owner can run it.
+  22 examples using pinned public excerpts in six sequential bounded calls.
+  These include the seven corrected comparisons, sound controls, withheld proof
+  claims, negation traps and polynomial/exponential scope. Expected answers and
+  targeted failure fields are not sent to the model. The report checks decisions,
+  specific mistake locations and assertion stance. Only the owner can run it.
 - `[Discover language] review report 45` — apply the current evidence review to
   an existing completed bot report in issue #45. It rechecks the published claims
   and each term/fit using the exact public source commits originally cited, with
@@ -39,9 +41,18 @@ Each connection must select at least two different files. Citation matching
 verifies the cited text. A separate model call then reviews the whole proposed
 comparison against all collected context for its cited files, checking study
 provenance, construction/version, quantitative comparability and claim scope.
-The review must also give a separate verdict and reason for the title,
+The review first records a proposition and assertion stance (asserted, withheld,
+conditional, attributed, contrast or mixed) for each field. It then gives a separate verdict and reason for the title,
 relationship, limitation and every suggested term with its explanation. A true
 relationship cannot override a failed or missing field-level check.
+Selected-citation support is checked separately from broader context. An accurate
+claim with a misplaced supporting quote is withheld for citation repair. Each
+review's citation schema is restricted to that candidate's source files.
+The rules distinguish retained plans from unsaved states, archive restoration
+from reruns, structural agreement from chronology, and a polynomial exponent
+from an exponential envelope. A word such as “proof” used as the stronger status
+explicitly withheld is preserved; negation is not a blanket exemption for a
+mixed sentence's unsupported affirmative claims.
 Every check must pass with valid evidence references; failed, uncertain or
 missing reviews withhold that proposal. An incomplete/refused review fails the
 report closed. The report states the number withheld. This fallible model review
