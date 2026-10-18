@@ -16,7 +16,7 @@ The owner opens an issue in this bot repository with one of these exact titles:
 - `[Discover language] batch 2` — examine the next batch; subsequent batch
   numbers work the same way.
 - `[Discover language] check examples` — run a paid regression check against
-  22 examples using pinned public excerpts in six sequential bounded calls.
+  22 examples using pinned public excerpts in 22 independent bounded calls.
   These include the seven corrected comparisons, sound controls, withheld proof
   claims, negation traps and polynomial/exponential scope. Expected answers and
   targeted failure fields are not sent to the model. The report checks decisions,
@@ -27,7 +27,7 @@ The owner opens an issue in this bot repository with one of these exact titles:
   the configured sampling budget. Citation text must match before a paid review
   runs. It reports individual verdicts without changing the original report or
   generating replacement findings. Sections already marked with a dated
-  correction are skipped. The owner-only command uses one bounded model call
+  correction are skipped. The owner-only command uses one independent model call per finding
   for up to three saved findings and shares the discovery concurrency limit.
 
 The report appears as a bot comment on that issue. Connections are labeled
@@ -38,9 +38,10 @@ corresponding commit and line. Unknown passages and same-file-only evidence are
 rejected. A strict response schema constrains relationship labels and limits
 citations to the available passage IDs, with one citation slot per source file.
 Each connection must select at least two different files. Citation matching
-verifies the cited text. A separate model call then reviews the whole proposed
+verifies the cited text. A separate high-reasoning model call for each connection reviews the whole proposed
 comparison against all collected context for its cited files, checking study
 provenance, construction/version, quantitative comparability and claim scope.
+Each comparison is reviewed alone so a nearby corrected example cannot replace its claims.
 The review first records a proposition and assertion stance (asserted, withheld,
 conditional, attributed, contrast or mixed) for each field. It then gives a separate verdict and reason for the title,
 relationship, limitation and every suggested term with its explanation. A true
@@ -67,9 +68,10 @@ Discovery defaults to `gpt-5.4-mini` with medium reasoning and a 12,000-token
 completion limit (including reasoning). `DISCOVERY_MODEL` overrides this;
 an existing `OPENAI_MODEL` setting is also respected. Optional short reviews
 retain their separate `OPENAI_MODEL` default. A discovery run uses one draft
-call and, when proposals exist, one review call with the same output cap.
+call and one independent review call per proposed connection (at most three).
+For `gpt-5.4-mini`, each review uses high reasoning and a 16,000-token output cap.
 There is no automatic repair/retry loop in the application. The review adds
-API cost; actual usage depends on source length and output. Both calls log
+API cost; actual usage depends on source length and output. All calls log
 token counts separately without source text. See the usage logs and
 [current model pricing](https://developers.openai.com/api/docs/models/gpt-5.4-mini).
 

@@ -156,7 +156,7 @@
         "limit": "This is a connection between implementation repair and restart practice within one study, not independent evidence from different physical models. The accepted equations are a coordinate transform of the original conditional model; no new physical memory term is added. Preserving z addresses this precision problem without promising an entirely error-free or lossless computation.",
         "evidence": {
           "S1": "S1P1",
-          "S2": "S2P1",
+          "S2": "S2P2",
           "S3": null,
           "S4": null,
           "S5": null,
@@ -227,8 +227,8 @@
         "evidence": {
           "S1": null,
           "S2": null,
-          "S3": "S3P1",
-          "S4": "S4P1",
+          "S3": "S3P9",
+          "S4": "S4P3",
           "S5": null,
           "S6": null
         },
@@ -299,8 +299,8 @@
           "S2": null,
           "S3": null,
           "S4": null,
-          "S5": "S5P1",
-          "S6": "S6P1"
+          "S5": "S5P3",
+          "S6": "S6P3"
         },
         "words": [
           {

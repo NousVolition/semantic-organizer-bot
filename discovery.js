@@ -268,7 +268,7 @@ async function checkComparisonExamples(openai, model, log) {
   });
   const passed = matches.filter(Boolean).length;
   const output = ["# Comparison regression check", `${passed} of ${fixtures.examples.length} expected decisions matched.`,
-    `This paid, on-demand check uses pinned public excerpts, historical mistakes, corrected controls and assertion-scope probes in ${Math.ceil(fixtures.examples.length / 4)} bounded calls. Expected answers and field targets are kept out of model requests. A match requires the expected decision and any targeted failure or assertion stance. It tests the publication review, not a fresh search or a formal proof.`];
+    `This paid, on-demand check uses pinned public excerpts, historical mistakes, corrected controls and assertion-scope probes in ${fixtures.examples.length} independent bounded calls. Expected answers and field targets are kept out of model requests. A match requires the expected decision and any targeted failure or assertion stance. It tests the publication review, not a fresh search or a formal proof.`];
   for (const [i, d] of decisions.entries()) {
     const example = fixtures.examples[i];
     output.push(`\n## ${safeText(example.case, 120)}: ${safeText(example.connection.title, 120)}\nExpected: ${example.expectedAccept ? "keep" : "withhold"}. Actual: ${d.accepted ? "keep" : "withhold"}. **${matches[i] ? "PASS" : "FAIL"}**\n\n${safeText(d.reason, 700)}`);
