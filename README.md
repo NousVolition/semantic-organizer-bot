@@ -30,6 +30,9 @@ The owner opens an issue in this bot repository with one of these exact titles:
   correction are skipped. The owner-only command uses one independent model call per finding
   for up to three saved findings and shares the discovery concurrency limit.
 
+Batch 3 has run; its report is on the matching issue. Open the next numbered
+issue (for example, `[Discover language] batch 4`) to continue the scan.
+
 The report appears as a bot comment on that issue. Connections are labeled
 **observed**, **interpretive**, or **creative**. Each published connection needs
 two exact quotations from distinct source files. The model selects numbered
