@@ -3,9 +3,6 @@ const { test, beforeEach, afterEach } = require("node:test");
 const nock = require("nock");
 const { Probot } = require("probot");
 const app = require("../index");
-const { readFileSync } = require("node:fs");
-const { join } = require("node:path");
-const languageSkills = readFileSync(join(__dirname, "../language-skills.md"), "utf8");
 
 let probot;
 let unmatched;
@@ -50,7 +47,11 @@ function completion(output) {
   return nock("https://api.openai.com")
     .post("/v1/chat/completions", (body) => {
       assert.equal(body.model, "gpt-4o-mini");
-      assert.ok(body.messages[0].content.includes(languageSkills));
+      assert.match(body.messages[0].content, /Role: adviser, not decision-maker/);
+      assert.match(body.messages[0].content, /Owner's glossary/);
+      assert.match(body.messages[0].content, /\*\*Needs attention\*\*/);
+      assert.match(body.messages[0].content, /If nothing needs attention in this direct review/);
+      assert.doesNotMatch(body.messages[0].content, /### Discovery reports/);
       assert.match(body.messages[0].content, /no dictionary, browsing, or external verification tool/);
       assert.equal(body.messages.at(-1).role, "user");
       return body.messages.at(-1).content.includes(source);
@@ -121,6 +122,12 @@ test("short issue text does not call any API", async () => {
   await receive("issues", { action: "opened", issue: { number: 7, body: "Hi" } });
 });
 
+test("explicit tool commands do not also spend OpenAI credits on a text review", async () => {
+  for (const title of ["[Check ontology]", "[Diagram word roles]", "[Diagram sentence]"]) {
+    await receive("issues", { action: "opened", issue: { number: 7, title, body: source, user: { type: "User" } } });
+  }
+});
+
 test("OpenAI failures retain diagnostic codes without logging credentials or submitted text", async (t) => {
   const logged = [];
   t.mock.method(probot.log, "error", (...args) => logged.push(args));
@@ -140,3 +147,5 @@ test("OpenAI failures retain diagnostic codes without logging credentials or sub
   assert.doesNotMatch(JSON.stringify(logged), /test-credential-marker/);
   assert.ok(!JSON.stringify(logged).includes(source));
 });
+
+

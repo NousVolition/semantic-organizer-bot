@@ -15,6 +15,23 @@ The owner opens an issue in this bot repository with one of these exact titles:
   connections report when API credits are available.
 - `[Discover language] batch 2` — examine the next batch; subsequent batch
   numbers work the same way.
+- `[Discover language] check examples` — run a paid regression check against
+  22 examples using pinned public excerpts in 22 independent bounded calls.
+  These include the seven corrected comparisons, sound controls, withheld proof
+  claims, negation traps and polynomial/exponential scope. Expected answers and
+  targeted failure fields are not sent to the model. The report checks decisions,
+  specific mistake locations and assertion stance. Only the owner can run it.
+- `[Discover language] review report 45` — apply the current evidence review to
+  an existing completed bot report in issue #45. It rechecks the published claims
+  and each term/fit using the exact public source commits originally cited, with
+  the configured sampling budget. Citation text must match before a paid review
+  runs. It reports individual verdicts without changing the original report or
+  generating replacement findings. Sections already marked with a dated
+  correction are skipped. The owner-only command uses one independent model call per finding
+  for up to three saved findings and shares the discovery concurrency limit.
+
+Batch 3 has run; its report is on the matching issue. Open the next numbered
+issue (for example, `[Discover language] batch 4`) to continue the scan.
 
 The report appears as a bot comment on that issue. Connections are labeled
 **observed**, **interpretive**, or **creative**. Each published connection needs
@@ -23,23 +40,48 @@ source passages; the code copies their original text and builds links to the
 corresponding commit and line. Unknown passages and same-file-only evidence are
 rejected. A strict response schema constrains relationship labels and limits
 citations to the available passage IDs, with one citation slot per source file.
-Each connection must select at least two different files. These checks
-verify the cited text, not the model's interpretation. Suggested coinages are
+Each connection must select at least two different files. Citation matching
+verifies the cited text. A separate high-reasoning model call for each connection reviews the whole proposed
+comparison against all collected context for its cited files, checking study
+provenance, construction/version, quantitative comparability and claim scope.
+Each comparison is reviewed alone so a nearby corrected example cannot replace its claims.
+The review first records a proposition and assertion stance (asserted, withheld,
+conditional, attributed, contrast or mixed) for each field. It then gives a separate verdict and reason for the title,
+relationship, limitation and every suggested term with its explanation. A true
+relationship cannot override a failed or missing field-level check.
+Selected-citation support is checked separately from broader context. An accurate
+claim with a misplaced supporting quote is withheld for citation repair. Each
+review's citation schema is restricted to that candidate's source files.
+The rules distinguish retained plans from unsaved states, archive restoration
+from reruns, structural agreement from chronology, and a polynomial exponent
+from an exponential envelope. A word such as “proof” used as the stronger status
+explicitly withheld is preserved; negation is not a blanket exemption for a
+mixed sentence's unsupported affirmative claims.
+Every check must pass with valid evidence references; failed, uncertain or
+missing reviews withhold that proposal. An incomplete/refused review fails the
+report closed. The report states the number withheld. This fallible model review
+is not a proof checker and may still miss mistakes. Suggested coinages are
 explicitly labeled. Refused or incomplete model responses are not published as
 findings. Service logs record input/output token counts without source text or
 credentials, so actual API usage can be checked after a run. Validation logs
 record acceptance counts and rejection categories without storing generated
 prose or source passages.
 
-Discovery defaults to `gpt-5.4-mini` with medium reasoning and a 6,000-token
+Discovery defaults to `gpt-5.4-mini` with medium reasoning and a 12,000-token
 completion limit (including reasoning). `DISCOVERY_MODEL` overrides this;
 an existing `OPENAI_MODEL` setting is also respected. Optional short reviews
-retain their separate `OPENAI_MODEL` default. Each discovery run makes one
-model call. At the published GPT-5.4 mini rates of $0.75 per million input
-tokens and $4.50 per million output tokens, a 23,000-input-token batch with
-the full 6,000-token completion allowance costs about $0.044 before taxes.
-Actual usage varies; see the safe usage logs and
-[current model pricing](https://developers.openai.com/api/docs/models/gpt-5.4-mini).
+retain their separate `OPENAI_MODEL` default. A discovery run uses one draft
+call and one independent review call per proposed connection (at most three).
+When discovery uses `gpt-5.4-mini`, the separate comparison review uses `gpt-5.4`.
+`COMPARISON_MODEL` overrides only this checking model; otherwise a custom discovery
+model is also used for checking. GPT-5.4 and GPT-5.4-mini reviews use medium
+reasoning and a 12,000-token completion cap (including reasoning).
+There is no automatic repair/retry loop in the application. The review adds
+API cost; actual usage depends on source length and output. All calls log
+token counts separately without source text. See the usage logs and
+[discovery pricing](https://developers.openai.com/api/docs/models/gpt-5.4-mini)
+and [comparison-review pricing](https://developers.openai.com/api/docs/models/gpt-5.4).
+The 22-case regression check makes 22 paid review calls and reports the model used.
 
 [discovery-config.json](discovery-config.json) selects the owner, reporting
 repository, source repositories, priority paths, and bounded batch sizes. The
@@ -63,6 +105,57 @@ comment and returns before the scan finishes. A completed or recorded job is not
 repeated by webhook redelivery. Jobs execute in the web process: a restart can
 interrupt one, leaving its status comment unfinished. Open a new discovery issue
 to retry after correcting the problem. There is no unattended recurring scan.
+
+## Run HermiT or lambeq
+
+Use [New issue](../../issues/new/choose) and choose **Check an ontology with
+HermiT** or **Diagram word roles with lambeq**. These commands accept new issues
+opened by `NousVolition` in this bot repository. Keep the exact template title.
+
+- `[Check ontology]`: replace the body with one self-contained OWL ontology in
+  RDF/XML (plain XML or one `xml` code block). The included example declares
+  Motif a subclass of Pattern. HermiT checks consistency and lists unsatisfiable
+  named classes. It cannot turn ordinary prose into verified axioms. External
+  imports and XML entities are rejected. Limit: 48,000 bytes and 5,000 triples.
+- `[Diagram word roles]`: supply a JSON object with exactly `subject`, `verb`
+  and `object`, each a word or phrase up to 60 characters. Example:
+  `{"subject":"Patterns","verb":"connect","object":"ideas"}`. lambeq builds
+  a real subject-verb-object string diagram from those explicit assignments.
+  It does not choose or verify the roles. No quantum circuit or semantic
+  comparison is executed. The JSON may be placed in one `json` code block.
+
+**Automatic sentence parsing is currently unavailable.** The Bobcat model
+download host does not resolve, and no verified working official replacement
+was found. See [upstream issue 257](https://github.com/Quantinuum/lambeq/issues/257).
+The installed lambeq diagram engine works without those pretrained weights.
+There is no silent fallback from automatic parsing to a manually typed diagram.
+Restoring Bobcat requires a trustworthy complete model and a successful real
+parse test before exposing an automatic-parsing command.
+
+A `github-actions[bot]` comment reports the actual result and links to the
+run. The **language-tool-result** download contains JSON, diagnostics, the
+input hash and (for lambeq) an SVG diagram. Downloads expire after seven days;
+the comment remains. Failures and timeouts are reported as incomplete checks.
+To check revised input, open a new issue; editing an old issue does not rerun it.
+
+The tools install on disposable GitHub Actions runners, with dependencies
+pinned in `tools/requirements-*.txt` and the shared setup action. They do not
+run inside the Render web service. They use no OpenAI API credits and add no
+Render service. GitHub Actions usage is subject to the account's runner and
+billing settings. Each tool process has a four-minute limit; installation
+can make a first run take several minutes. HermiT uses Java 17
+and the build distributed with Owlready2 0.51; lambeq uses version 0.5.0. Runtime
+metadata is recorded with each result. CI executes real consistent,
+inconsistent and unsatisfiable-class ontology checks and a real lambeq diagram.
+
+The plain-English rulebook guides model interpretation. These tool commands
+are separate, explicit executions; adding a tool name to that file does not
+install or invoke it. Discovery still finds words and connections without
+requiring a writing error. Both tools remain advisory and leave source files
+unchanged.
+
+Implementation references: [Owlready2 reasoning](https://owlready2.readthedocs.io/en/latest/reasoning.html),
+[lambeq sentence input](https://docs.quantinuum.com/lambeq/tutorials/sentence-input.html).
 
 ## Optional short reviews
 

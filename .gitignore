@@ -1,5 +1,9 @@
 node_modules/
+__pycache__/
+tool-output/
+tool-smoke/
 .env
 *.pem
 *.log
 .DS_Store
+

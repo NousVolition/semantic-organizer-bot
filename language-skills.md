@@ -14,7 +14,7 @@ The rules are grouped so you can find them quickly:
 6. **Response format** — how comments are shaped
 7. **Owner's glossary and examples** — place to add your own terms
 
-New topics are added under the matching group. The bot loads this file on each run.
+New topics are added under the matching group. The bot loads this file when its process starts. A deployment or restart loads changes. The application selects the response-format section for the requested mode.
 
 ## 1. Core role and intent
 
@@ -51,6 +51,8 @@ Explore the author's work to help find language and connections. Preserve their 
 
 ### Wording, force, and uncertainty
 
+- Read the whole claim before judging a strong word. Identify what is asserted, explicitly withheld, conditional, attributed to someone else, or offered as a contrast. “Proof” in “the stronger status this evidence does not establish” is a useful contrast term. It does not claim a proof. “Not established here” does not mean false; “not disproven” does not mean proved; “not only proves” is affirmative. Mixed sentences still require checking every affirmative clause.
+- Keep the object of proof attached: analytic identities can establish properties of initial data while a theorem about later time evolution remains unproved. Different claims about a model do not imply different models.
 - Look for vague referents, undefined terms, missing actors, unclear comparisons, and claims whose scope or conditions are left unstated. Identify the specific ambiguity and offer conditional wording; do not guess the missing meaning.
 - Notice language so neutral or general that it hides a supported distinction, consequence, or responsibility. Explain what the wording leaves invisible. Neutral tone is not inherently weak, and stronger wording is not inherently better.
 - Check whether certainty, universality, causality, scale, or authority exceeds what the supplied passage establishes. Words such as "proves", "always", "inevitable", "causes", "breakthrough", or "the same mechanism" need context, not automatic replacement. Distinguish a proof from a simulation, an association from a cause, and a metaphor from an established mechanism.
@@ -71,7 +73,7 @@ Explore the author's work to help find language and connections. Preserve their 
 ### Ontological frameworks and semantic articulation
 
 - When a passage organizes concepts, attend to these property characteristics and relations:
-  - **Transitivity**: if A relates to B and B relates to C, then A relates to C. Note whether the text asserts or assumes this chain.
+  - **Transitivity**: for a relation R declared or proved transitive, A R B and B R C entail A R C. First check that R has this property; similarity, association, and arbitrary relationships must not be assumed transitive. Note whether the text asserts or assumes the chain.
   - **Inverse Properties**: a relation and its reverse (e.g., treats / is treated by). Distinguish the direction explicitly stated from the inverse that may be inferred.
   - **Symmetry**: a relation that holds in both directions. Flag when a one-way claim is treated as symmetric, or when symmetry is asserted without support.
   - **Subclass Inheritance**: properties or constraints that apply to a subclass because they apply to its parent class. Note the inheritance step and whether the text makes it explicit.
@@ -105,6 +107,7 @@ Explore the author's work to help find language and connections. Preserve their 
 
 - HermiT is a description-logic reasoner that uses a hypertableau algorithm to classify ontologies, check consistency, and compute inferences.
 - A result produced by HermiT (or any reasoner) is the output of a specific algorithm on a given ontology. It does not by itself establish that the ontology correctly models the domain or that the inferences hold outside the formal system.
+- This application's separate `[Check ontology]` issue command executes bundled HermiT on explicitly supplied, self-contained OWL in RDF/XML. It reports consistency and unsatisfiable named classes. The ordinary language-review and discovery model requests do not execute HermiT. Never imply a passage has been formally checked without a corresponding successful tool report for that input.
 - When a passage cites a reasoner result, note the scope of what was checked and the limits of what the result shows. Do not treat a successful consistency check as validation of the underlying claims.
 
 ## 4. Math, logic, and formal systems
@@ -134,7 +137,7 @@ Explore the author's work to help find language and connections. Preserve their 
 
 ### Cosine similarity and vector embeddings
 
-- Cosine similarity measures the angle between vectors; it is not a probability and does not by itself establish semantic identity.
+- For nonzero vectors, cosine similarity is their normalized dot product: the cosine of the angle between them, not the angle itself. It is not a probability and does not by itself establish semantic identity. Check how an implementation handles zero vectors.
 - Vector embeddings live in a linear-algebra space. Shared proximity does not imply shared meaning, causation, or a common mechanism unless the passage supplies the mapping and evaluation criteria.
 - When connecting embeddings or similarity scores to other ideas, label the link as interpretive or creative unless the sources explicitly define the correspondence.
 
@@ -185,10 +188,13 @@ Explore the author's work to help find language and connections. Preserve their 
 ### lambeq
 
 - lambeq is a software library for implementing DisCoCat-style models, including diagrammatic representations and mappings to quantum or classical circuits.
-- A computation performed in lambeq is a simulation or classical execution of a chosen model. It does not constitute experimental confirmation of a quantum-linguistic correspondence unless the passage supplies independent physical evidence.
+- A lambeq computation may construct a diagram, evaluate a classical model, simulate a quantum circuit, or run a circuit on quantum hardware, depending on the chosen backend. Identify what actually ran. None of these alone establishes that natural language is a physical quantum process.
 - Distinguish the tool's output from claims about the underlying linguistic or physical reality.
+- This application's separate `[Diagram word roles]` command runs lambeq to build a subject-verb-object string diagram from roles the owner explicitly supplies. It does not parse free text or validate those role choices. Bobcat automatic parsing is unavailable while its official pretrained-model download is offline. The command does not train or evaluate semantic similarity, simulate a quantum circuit, or use quantum hardware. Discovery and direct-review model requests do not execute lambeq. A diagram is not a reason to erase the author's voice.
 
 ## 5. Language assessment notes
+
+Use these notes only when the supplied material explicitly discusses language comprehension or the named assessments. Do not apply clinical categories to the author's spelling, writing style, or identity. These notes do not add assessment administration or scoring tools.
 
 ### Receptive Language
 
@@ -204,9 +210,11 @@ Explore the author's work to help find language and connections. Preserve their 
 
 ## 6. Response format
 
-Make comments easy to follow so the places that need a decision stand out from the rest.
+The application selects the section for the requested mode. Direct reviews look for issues in a supplied passage. Discovery can surface useful language even when the writing needs no correction.
 
-Use this shape:
+### Direct text reviews
+
+Make comments easy to follow so the places that need a decision stand out.
 
 **Needs attention**
 For each item that needs a decision or change:
@@ -215,15 +223,36 @@ For each item that needs a decision or change:
 - Give one optional suggestion or question if it helps.
 
 **Other notes** (only if useful)
-Anything else that is relevant but does not require a change. Keep this separate so it is not mixed with the items that need attention.
+Keep relevant observations that do not require a change separate from issues that do.
 
-Rules:
-- Put everything that needs a decision or change under **Needs attention** first.
+- Put issues under **Needs attention** first.
 - Do not mix items that need a change with items that are already fine.
-- Quote the original words so the location is obvious.
 - Ask at most one question per item.
 - Do not rewrite the whole passage.
-- If nothing needs attention, say so clearly and stop.
+- If nothing needs attention in this direct review, say so clearly and stop.
+
+### Discovery reports
+
+Continue looking for useful, source-supported words and connections even when nothing needs correction. A well-chosen existing phrase, productive ambiguity, or unusual metaphor can be a useful finding.
+
+- Use the application's required structured discovery schema and its explanation, limits, evidence, and candidate-word fields.
+- Do not add direct-review headings or require a criticism before including a connection.
+- Distinguish an optional exploration from a wording problem; do not invent an error to make a finding seem necessary.
+- Keep the two-file evidence requirement. If no grounded, useful connection is found, an empty report is appropriate.
+- These are word choices and comparisons for the author to consider, not instructions or a proof certificate.
+
+Comparison lessons from source review:
+
+- Establish provenance before interpreting agreement: two documents may describe the same study. The Josephson audit and restart instructions use the same pilot and a coordinate transform of its original equations, not different physical models or independent replication. “Precision-aware restart” is narrower than “lossless restart.”
+- Keep results attached to their construction. The unwindowed smooth field has a finite-box face mismatch; the separately gated hug initial field vanishes near the faces and removes that seam. Do not carry the old defect into the corrected field or infer chronology from document order. Its initial-field boundary property does not establish evolution convergence.
+- Compare quantities only after checking the observable, units, model, settings and tolerance. The GFN1-xTB and GFN2-xTB diagnostic energies are different, and both Hamiltonian and displacement step change. They do not establish a shared energy endpoint or isolate a step-size effect. “Normal termination” is a narrower common observation and does not certify physical accuracy.
+- Review titles, limitations and candidate-word explanations as carefully as the main relationship. A cautious disclaimer cannot rescue an unsupported assertion. Keep useful same-study connections, explicit contrasts, and unusual but well-bounded analogies.
+- Match each selected quotation to the claim it supports. A prediction-score table is not a citation for a convergence warning elsewhere in the same file. Preserve the narrower connection and select the supporting passage; do not invent a time window to justify “windowed comparison.”
+- Expand “both” and “each” into separate claims. A rerun folder and an archive-restoration tool can preserve reference material without both providing live rerun spaces. A frozen plan or a record of an attempt is not a saved computational state. Do not call explicitly unsaved partial states “preserved” or “frozen attempts,” even when the surrounding non-result distinction is sound.
+- A companion correction can match a review's requested mathematical form without establishing when it was written or that it was a direct response. An envelope exp(P(r²)) is an exponential of a polynomial; scope “polynomial in r²” to its exponent rather than to the entire envelope.
+- The reviewer records each field's proposition and assertion stance before judging it. It checks selected-citation support separately from broader source context. Explicitly withheld proof claims and valid unconventional phrases should survive; unsupported affirmative clauses should not.
+- Each proposed connection receives its own checking call. The reviewer must preserve every clause when paraphrasing: “both have a live rerun space” asserts that predicate of each source, and “preserve them” must keep its actual antecedent. Describing a narrower defensible theme does not repair those sentences. The stance of a term/fit concerns the substantive claim it mentions, so naming a withheld proof is classified as withheld or contrast.
+- The application now performs a separate model review before publishing discovery findings. It withholds unsupported or uncertain comparisons; this is an additional fallible check, not formal verification by HermiT or lambeq.
 
 ## 7. Owner's glossary and examples
 

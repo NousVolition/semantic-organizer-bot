@@ -78,6 +78,15 @@ function connection() {
     words: [{ term: "meaning afterimage", kind: "coined", fit: "A possible name for the lingering frame, not a physical claim." }] };
 }
 
+function passingAudit(request) {
+  const data = JSON.parse(request.messages[1].content);
+  return { choices: [{ finish_reason: "stop", message: { content: JSON.stringify(Object.fromEntries(data.candidates.map(c => [c.id, {
+    fields: Object.fromEntries(Object.keys(c.fields).map(key => [key, { stance: "asserted", proposition: "A bounded claim about the stated evidence.", status: "pass", reason: "This field stays within the evidence." }])),
+    checks: { provenance: "pass", configuration: "pass", quantities: "pass", claim_scope: "pass", citation_support: "pass" },
+    reason: "The limited analogy is supported by both passages.", passages: ["S1P1", "S2P1"]
+  }]))) } }] };
+}
+
 test("reports verify quotations and build pinned line citations", () => {
   const report = renderDiscovery({ connections: [connection()] }, corpus());
   assert.match(report, /interpretive connection/);
@@ -102,6 +111,7 @@ test("fabricated quotations, single-source connections and untrusted links are r
 
 test("generation receives evidence as data and the editable language rules", async () => {
   const client = { chat: { completions: { create: async request => {
+    if (request.response_format.json_schema.name === "comparison_audit") return passingAudit(request);
     assert.equal(request.response_format.type, "json_schema");
     assert.equal(request.response_format.json_schema.strict, true);
     assert.deepEqual(request.response_format.json_schema.schema.properties.connections.items.properties.kind.enum, ["observed", "interpretive", "creative"]);
@@ -125,11 +135,13 @@ test("reasoning discovery uses compatible bounded parameters and requires word c
   let calls = 0;
   const client = { chat: { completions: { create: async request => {
     calls++;
-    assert.equal(request.model, "gpt-5.4-mini");
+    const audit = request.response_format.json_schema.name === "comparison_audit";
+    assert.equal(request.model, audit ? "gpt-5.4" : "gpt-5.4-mini");
     assert.equal(request.reasoning_effort, "medium");
-    assert.equal(request.max_completion_tokens, 6000);
+    assert.equal(request.max_completion_tokens, 12000);
     assert.ok(!("temperature" in request));
     assert.ok(!("max_tokens" in request));
+    if (request.response_format.json_schema.name === "comparison_audit") return passingAudit(request);
     const words = request.response_format.json_schema.schema.properties.connections.items.properties.words;
     assert.equal(words.minItems, 1);
     assert.equal(words.maxItems, 3);
@@ -138,7 +150,7 @@ test("reasoning discovery uses compatible bounded parameters and requires word c
     return { choices: [{ finish_reason: "stop", message: { content: JSON.stringify({ connections: [item] }) } }] };
   } } } };
   assert.match(await generateDiscovery(client, "gpt-5.4-mini", "", corpus()), /meaning afterimage/);
-  assert.equal(calls, 1);
+  assert.equal(calls, 2);
 });
 
 test("passage IDs preserve Markdown, punctuation and sampled line locations", () => {

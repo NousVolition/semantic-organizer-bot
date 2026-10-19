@@ -1,0 +1,325 @@
+{
+  "description": "Pinned public-source excerpts and historical incorrect comparisons with corrected controls. Expected answers are for evaluation only; never include them in the review prompt.",
+  "sources": [
+    {
+      "id": "S1",
+      "repository": "NousVolition/Nous-Volition",
+      "path": "studies/fluid-organization/extensions/josephson-sweep/audit/README.txt",
+      "commit": "f84619b33198d9c86e2edf8d1f5aab3c9c952fda",
+      "url": "https://github.com/NousVolition/Nous-Volition/blob/f84619b33198d9c86e2edf8d1f5aab3c9c952fda/studies/fluid-organization/extensions/josephson-sweep/audit/README.txt",
+      "sampled": true,
+      "excerpts": [
+        {
+          "startLine": 1,
+          "text": "INITIAL DIRECT-PHASE NUMERICAL CHECKS: FAILED, NOT FINAL RESULTS\n\nThe first implementation integrated phi1 and phi2 directly in double precision.\nIts energy budget passed but time-step and independent-solver voltage gates\nfailed. Near the critical current, phase separations can become much smaller\nthan machine spacing and later regrow. Subtracting two rounded phases loses\nthis state information and can artificially synchronize a pair.\n\nThe final model preserves p=(phi1+phi2)/2 and z=log|tan((phi1-phi2)/4)|.\nIts exact equations are p'=(i+sin(p)*tanh(z))/(1+2alpha), z'=-cos(p).\nSee the report and diagnose_precision.py for a small reproducible demonstration.\nThe initial gates were not relaxed. Initial sources, protocol and failed-check\nsummaries are archived here. The bulky superseded direct-phase trace files\nare excluded from the published package; final accepted traces are in data/."
+        }
+      ]
+    },
+    {
+      "id": "S2",
+      "repository": "NousVolition/Nous-Volition",
+      "path": "studies/fluid-organization/extensions/josephson-sweep/README.txt",
+      "commit": "f84619b33198d9c86e2edf8d1f5aab3c9c952fda",
+      "url": "https://github.com/NousVolition/Nous-Volition/blob/f84619b33198d9c86e2edf8d1f5aab3c9c952fda/studies/fluid-organization/extensions/josephson-sweep/README.txt",
+      "sampled": true,
+      "excerpts": [
+        {
+          "startLine": 27,
+          "text": "The accepted equations use a mean/log-separation coordinate transform of the\noriginal conditional circuit_rhs in the fluid pilot. No new physical memory\nterm is added. audit/ preserves the initial failed direct-phase checks and\ninstructions to reproduce them separately. Their raw traces are superseded.\n\nArray layout in base/half_step/double_settle/both.npz:\n  voltage: [bias index, mode, alpha, initialization, junction]\n  states: [bias index, recorded time, mode, alpha, initialization, (p,z)]\n  sign: [mode, alpha, initialization]; initial/settled/endpoint store (p,z).\n  bias_order[:,0:3]: actual fresh/up/down current sequences.\nDescending mode is reversed only when forming increasing-current tables.\nwindows.npz: states [recorded time, bias index, mode, alpha, initialization, (p,z)].\nUse model.from_state(states,sign) to reconstruct unwrapped phases. Preserve z\nwhen restarting: reconstructing it from rounded output phases loses precision.\nEvery primary and window trajectory is sampled every 5 dimensionless time units;\nintegration uses the separately recorded .05/.025 steps. Voltages use exact"
+        }
+      ]
+    },
+    {
+      "id": "S3",
+      "repository": "NousVolition/My-Sources-Project-ALL",
+      "path": "math/notes/hug-boundary.md",
+      "commit": "3301eb4ef9493aa62afd21616729811ab16d48a9",
+      "url": "https://github.com/NousVolition/My-Sources-Project-ALL/blob/3301eb4ef9493aa62afd21616729811ab16d48a9/math/notes/hug-boundary.md",
+      "sampled": true,
+      "excerpts": [
+        {
+          "startLine": 1,
+          "text": "# The hug now prepares the ring's boundary\n\n**Latest:** [Quarter-time-step check](#quarter-time-step-check-for-the-averaging-method).\n\n**Completed:** the existing closed hug shapes the existing smooth ring's initial field. Velocity becomes zero smoothly before every cube face, so opposite faces and all their derivatives match. The continuum field remains divergence-free. The Navier–Stokes equation and zero-external-force choice remain unchanged.\n\n## Direct connection to the existing work\n\n- Starting field: `box_experiment.SMOOTH`, the maintained `SmoothRingField` with ring radius 1.5, radial scale √3, axial scale 1, and both rates 1.\n- Hug geometry: the actual `hug_envelope.state_at(4.0)` closed pose, including its reciprocal axis stretch.\n- Mapping: interpret the hug's horizontal and vertical axes as radial distance and height in a meridional section; rotate the closed ellipse about the z axis.\n- Scale: its largest semiaxis is 90% of the cube half-width. For the length-6 cube the radial and axial semiaxes are 2.7 and approximately 2.314815.\n- The inner ellipse scaled by 0.7 is an unchanged core. The surrounding layer provides a smooth transition to rest. These spatial scale choices are explicit construction parameters.\n\nThe hug's four-second pose is sampled once to prepare fluid time `t=0`. The subsequent fluid motion is governed by Navier–Stokes; the earlier timed animation and imposed pressure-opening rule are not applied during evolution."
+        },
+        {
+          "startLine": 25,
+          "text": "Define `b(t)=exp(-1/t)` for `t>0`, and `b(t)=0` otherwise. Let `W(s)=1` for `s≤a`, `W(s)=0` for `s≥1`, and in between set\n\n$$\nt=\\frac{s-a}{1-a},\\qquad\nW(s)=\\frac{b(1-t)}{b(t)+b(1-t)}.\n$$\n\nAll derivatives match at both joins: this is a C∞ spatial gate. The old quintic interpolation was a timing rule for the animation; it is not substituted for this all-orders spatial smoothness.\n\nApply the hug to the stream function before taking derivatives:\n\n$$\n\\psi_h=W\\psi_0,\\qquad\nu_r^h=-\\frac1r\\partial_z\\psi_h,\\qquad\nu_z^h=\\frac1r\\partial_r\\psi_h,\\qquad\nu_\\theta^h=Wu_\\theta^0.\n$$\n\nThe existing ring uses `ψ₀=A r² z φ`. Writing `q=x²+y²` and `W_s=dW/ds`, the implementation evaluates the smooth Cartesian formula\n\n$$\nu_x^h=Wu_x^0-\\frac{2A xz^2\\phi W_s}{Z_h^2},\\quad\nu_y^h=Wu_y^0-\\frac{2A yz^2\\phi W_s}{Z_h^2},\\quad\nu_z^h=Wu_z^0+\\frac{2A qz\\phi W_s}{R_h^2}.\n$$\n\nIt has no division by radius. The meridional divergence vanishes by equality of mixed stream-function derivatives, and axisymmetric swirl adds no divergence. This identity extends smoothly through the axis. Simply multiplying the old velocity by W would generally add divergence; a negative-control check detects that error.\n\nThe field is identically zero in an open strip next to every cube face. Consequently its periodic extension is C∞, including edges and corners. Viewed on all of space, it is also a smooth, compactly supported, finite-energy initial field. The whole-space and periodic evolutions remain distinct domain choices; the recorded runs use the periodic cube.\n\n## Verification and saved runs\n\n<!-- RESULTS_START -->\n**Boundary mismatch:** 0.053709416 before the hug; **0 after**. The zero value follows from the field vanishing in a neighborhood of every face, as well as the sampled face check."
+        },
+        {
+          "startLine": 71,
+          "text": "The initial grid correction drops from 13.26% to 3.31% to 0.78% as the grid is refined. It modifies the sampled velocity, including the core; the exact unchanged-core statement applies to the analytic construction before this discrete correction. The gradient values still change with grid resolution, so evolution accuracy is not yet established. The zero seam and analytic smoothness do not rely on that evolution comparison."
+        }
+      ]
+    },
+    {
+      "id": "S4",
+      "repository": "NousVolition/My-Sources-Project-ALL",
+      "path": "math/notes/smooth-initial-field.tex",
+      "commit": "3301eb4ef9493aa62afd21616729811ab16d48a9",
+      "url": "https://github.com/NousVolition/My-Sources-Project-ALL/blob/3301eb4ef9493aa62afd21616729811ab16d48a9/math/notes/smooth-initial-field.tex",
+      "sampled": true,
+      "excerpts": [
+        {
+          "startLine": 448,
+          "text": "A second comparison uses the smooth field with\n$R=1.5$, $a=\\sqrt3$, $b=1$, $A=B=1$, matching the original local ring width.\nIt projects the sampled start once, then copies that same start to both\nbranches. At $L=6$, $N=32$, this initial correction has relative grid\n$L^2$ size $0.009636$. At time $0.08$, the divergence maxima are\n$1.05212$ without projection and $1.33\\times10^{-15}$ with projection.\nThe maximum gradient norms are $4.05142$ and $4.08213$ respectively.\nProjection enforces the chosen discrete divergence; it need not lower the\nmaximum gradient.\n\nHalving the time step to $0.01$ and taking eight steps to the same time\ngives $1.03447$ and $1.33\\times10^{-15}$ for the two divergence maxima.\nThe projected maximum gradient changes from $4.08213$ to $4.07891$,\nand its discrete energy from $38.80037$ to $38.77337$.\nThis is one time-resolution check, not a convergence or stability proof.\n\nEven the smooth field has a small nonzero periodic face mismatch on $L=6$.\nThe next spatial-accuracy experiment should make the boundary treatment\nexplicit (for example, periodize the rapidly decreasing field), then refine\nspace and time with that choice fixed. A finite grid and four time steps\ncannot establish continuum regularity or singularity."
+        }
+      ]
+    },
+    {
+      "id": "S5",
+      "repository": "NousVolition/My-Sources-Project-ALL",
+      "path": "reports/quantum-water-pilot/diagnostics/initial-vibrations/gfn1-H2O-start0-step0.0025/stdout.txt",
+      "commit": "3301eb4ef9493aa62afd21616729811ab16d48a9",
+      "url": "https://github.com/NousVolition/My-Sources-Project-ALL/blob/3301eb4ef9493aa62afd21616729811ab16d48a9/reports/quantum-water-pilot/diagnostics/initial-vibrations/gfn1-H2O-start0-step0.0025/stdout.txt",
+      "sampled": true,
+      "excerpts": [
+        {
+          "startLine": 146,
+          "text": "          :  Hamiltonian                  GFN1-xTB          :"
+        },
+        {
+          "startLine": 586,
+          "text": "          | TOTAL ENERGY               -5.768774918844 Eh   |\n          | TOTAL ENTHALPY             -5.744713645127 Eh   |\n          | TOTAL FREE ENERGY          -5.766112306113 Eh   |\n          | GRADIENT NORM               0.000096198431 Eh/α |\n          | HOMO-LUMO GAP               9.347991761703 eV   |"
+        },
+        {
+          "startLine": 614,
+          "text": "normal termination of xtb"
+        }
+      ]
+    },
+    {
+      "id": "S6",
+      "repository": "NousVolition/My-Sources-Project-ALL",
+      "path": "reports/quantum-water-pilot/diagnostics/initial-vibrations/gfn2-H2O-start0-step0.00125/stdout.txt",
+      "commit": "3301eb4ef9493aa62afd21616729811ab16d48a9",
+      "url": "https://github.com/NousVolition/My-Sources-Project-ALL/blob/3301eb4ef9493aa62afd21616729811ab16d48a9/reports/quantum-water-pilot/diagnostics/initial-vibrations/gfn2-H2O-start0-step0.00125/stdout.txt",
+      "sampled": true,
+      "excerpts": [
+        {
+          "startLine": 147,
+          "text": "          :  Hamiltonian                  GFN2-xTB          :"
+        },
+        {
+          "startLine": 620,
+          "text": "          | TOTAL ENERGY               -5.070544446870 Eh   |\n          | TOTAL ENTHALPY             -5.046638379493 Eh   |\n          | TOTAL FREE ENERGY          -5.068037516535 Eh   |\n          | GRADIENT NORM               0.000018469927 Eh/α |\n          | HOMO-LUMO GAP              14.390527159788 eV   |"
+        },
+        {
+          "startLine": 648,
+          "text": "normal termination of xtb"
+        }
+      ]
+    }
+  ],
+  "examples": [
+    {
+      "case": "same-study",
+      "expectedAccept": false,
+      "connection": {
+        "title": "Preserving hidden phase information by changing representation",
+        "kind": "interpretive",
+        "relationship": "S1 says direct phase subtraction loses state information and motivates the p,z transform; S2 says restart must reconstruct unwrapped phases and preserve z because rounded output phases lose precision. Both passages use a changed representation to keep information that a rounded phase readout would erase.",
+        "limit": "One is a fix for a failed numerical implementation, the other a restart/data convention; they share the precision issue, not the same equations or model.",
+        "evidence": {
+          "S1": "S1P1",
+          "S2": "S2P1",
+          "S3": null,
+          "S4": null,
+          "S5": null,
+          "S6": null
+        },
+        "words": [
+          {
+            "term": "unwrapped state",
+            "kind": "candidate",
+            "fit": "Captures the idea of keeping phase information explicit instead of collapsing it into rounded output values."
+          },
+          {
+            "term": "phase-separating transform",
+            "kind": "candidate",
+            "fit": "Names the change of variables as a way to keep the difference visible; it leaves out the storage/restart context."
+          },
+          {
+            "term": "lossless restart state",
+            "kind": "candidate",
+            "fit": "Emphasizes that the representation is chosen to preserve information when resuming; it leaves out the numerical-failure motivation in S1."
+          }
+        ]
+      }
+    },
+    {
+      "case": "same-study-control",
+      "expectedAccept": true,
+      "connection": {
+        "title": "Preserving phase information within one Josephson pilot",
+        "kind": "interpretive",
+        "relationship": "The audit and restart instructions describe the same Josephson sweep pilot. The audit explains why direct phase subtraction loses a very small separation; the accepted representation stores the mean phase p and log-separation z. The restart instructions preserve that same z instead of reconstructing it from rounded output phases.",
+        "limit": "This is a connection between implementation repair and restart practice within one study, not independent evidence from different physical models. The accepted equations are a coordinate transform of the original conditional model; no new physical memory term is added. Preserving z addresses this precision problem without promising an entirely error-free or lossless computation.",
+        "evidence": {
+          "S1": "S1P1",
+          "S2": "S2P2",
+          "S3": null,
+          "S4": null,
+          "S5": null,
+          "S6": null
+        },
+        "words": [
+          {
+            "term": "phase-state preservation",
+            "kind": "candidate",
+            "fit": "Names the shared aim of the implementation and restart convention, without promising zero numerical error."
+          },
+          {
+            "term": "mean/log-separation coordinates",
+            "kind": "candidate",
+            "fit": "Names the actual representation, keeping mean phase and small separation distinct."
+          },
+          {
+            "term": "precision-aware restart",
+            "kind": "candidate",
+            "fit": "Names the need to retain z when resuming; it is not a guarantee of a lossless computation."
+          }
+        ]
+      }
+    },
+    {
+      "case": "construction-boundary",
+      "expectedAccept": false,
+      "connection": {
+        "title": "Boundary preparation versus residual boundary mismatch",
+        "kind": "interpretive",
+        "relationship": "The hug-boundary note uses a closed pose to prepare a smooth ring so velocity vanishes near cube faces and opposite faces match, while the smooth-field note later says the same kind of smooth field still shows a small periodic face mismatch on a finite box and may need explicit periodization.",
+        "limit": "Both concern boundaries, but one is a construction step for the initial field and the other is a remaining discrete artifact; they are not the same level of claim.",
+        "evidence": {
+          "S1": null,
+          "S2": null,
+          "S3": "S3P1",
+          "S4": "S4P1",
+          "S5": null,
+          "S6": null
+        },
+        "words": [
+          {
+            "term": "boundary preparation",
+            "kind": "candidate",
+            "fit": "Names the constructive step in the hug note without implying the boundary issue is fully resolved."
+          },
+          {
+            "term": "face mismatch",
+            "kind": "candidate",
+            "fit": "Keeps the residual finite-box discrepancy visible in the smooth-field note."
+          },
+          {
+            "term": "periodize",
+            "kind": "candidate",
+            "fit": "Points to the proposed way of making the boundary treatment explicit."
+          }
+        ]
+      }
+    },
+    {
+      "case": "construction-boundary-control",
+      "expectedAccept": true,
+      "connection": {
+        "title": "Boundary preparation separates two initial-field constructions",
+        "kind": "interpretive",
+        "relationship": "The smooth-field note reports a nonzero periodic-face mismatch for its unwindowed field in a finite box. The hug-boundary note describes a different, gated construction: a smooth spatial weight is applied to the stream function, and the resulting initial field vanishes near every face. It reports boundary mismatch 0.053709416 before the hug and 0 after. This is a useful connection between a boundary problem and an explicitly described construction that removes that seam.",
+        "limit": "The old mismatch must not be transferred to the gated initial field. The zero seam concerns that constructed initial field and its periodic extension; it does not by itself establish convergence or stability of the later numerical evolution. Document order alone establishes no chronology.",
+        "evidence": {
+          "S1": null,
+          "S2": null,
+          "S3": "S3P9",
+          "S4": "S4P3",
+          "S5": null,
+          "S6": null
+        },
+        "words": [
+          {
+            "term": "boundary preparation",
+            "kind": "candidate",
+            "fit": "Preserves the hug image while naming its precise job: preparing the initial field's boundary."
+          },
+          {
+            "term": "smooth spatial gate",
+            "kind": "candidate",
+            "fit": "Names the weight applied to the stream function; simply masking velocity would generally change divergence."
+          },
+          {
+            "term": "construction-specific limitation",
+            "kind": "candidate",
+            "fit": "Keeps a limitation attached to the particular field and boundary treatment where it was observed."
+          }
+        ]
+      }
+    },
+    {
+      "case": "incompatible-energy",
+      "expectedAccept": false,
+      "connection": {
+        "title": "Same endpoint, different step-size trace",
+        "kind": "observed",
+        "relationship": "Across the water-pilot runs, both files end with a converged optimization and \"normal termination of xtb,\" while the final energy is nearly the same and the step-specific diagnostics differ.",
+        "limit": "This shows a shared endpoint and comparable convergence, not identical trajectories or error behavior.",
+        "evidence": {
+          "S1": null,
+          "S2": null,
+          "S3": null,
+          "S4": null,
+          "S5": "S5P1",
+          "S6": "S6P1"
+        },
+        "words": [
+          {
+            "term": "converged endpoint",
+            "kind": "candidate",
+            "fit": "Centers the shared finish while leaving the path details in the background."
+          },
+          {
+            "term": "step-size-sensitive trace",
+            "kind": "candidate",
+            "fit": "Keeps the numerical path in view and makes clear that the differences sit in the diagnostics, not the ending alone."
+          },
+          {
+            "term": "same endpoint, different path",
+            "kind": "coined",
+            "fit": "A compact label for the shared termination with varying intermediate behavior; it leaves out the chemistry-specific details."
+          }
+        ]
+      }
+    },
+    {
+      "case": "termination-control",
+      "expectedAccept": true,
+      "connection": {
+        "title": "Same termination status, different computational models",
+        "kind": "observed",
+        "relationship": "Both diagnostic logs report normal termination of xtb. They use different Hamiltonians, GFN1-xTB and GFN2-xTB, and different displacement steps. Their reported total energies are -5.768774918844 Eh and -5.070544446870 Eh, respectively. The supported commonality is the termination message, not a shared numerical energy endpoint.",
+        "limit": "These two logs do not isolate a step-size effect: the electronic model also changes. Absolute energies from different Hamiltonians cannot be treated as a shared endpoint or their difference attributed to the displacement step alone. Normal termination does not by itself validate physical accuracy, vibration results, or convergence across models. These are diagnostic runs, not a replacement for the final study.",
+        "evidence": {
+          "S1": null,
+          "S2": null,
+          "S3": null,
+          "S4": null,
+          "S5": "S5P3",
+          "S6": "S6P3"
+        },
+        "words": [
+          {
+            "term": "normal termination",
+            "kind": "candidate",
+            "fit": "Names exactly what both logs report; it does not mean the physical claims have been validated."
+          },
+          {
+            "term": "model-dependent energy",
+            "kind": "candidate",
+            "fit": "Keeps each reported energy attached to its own Hamiltonian."
+          },
+          {
+            "term": "confounded comparison",
+            "kind": "candidate",
+            "fit": "Names why changing both model and displacement step prevents attributing the difference to step size alone."
+          }
+        ]
+      }
+    }
+  ]
+}

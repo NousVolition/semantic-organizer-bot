@@ -1,0 +1,718 @@
+{
+  "description": "Pinned public passages; four historical mistakes and corrected controls, plus assertion-scope and mathematical-composition probes. Expected decisions and field targets stay out of model requests.",
+  "sources": [
+    {
+      "id": "S7",
+      "repository": "NousVolition/My-Sources-Project-ALL",
+      "path": "math/imports/hug-ns/mirror-calibration/README.md",
+      "commit": "3301eb4ef9493aa62afd21616729811ab16d48a9",
+      "url": "https://github.com/NousVolition/My-Sources-Project-ALL/blob/3301eb4ef9493aa62afd21616729811ab16d48a9/math/imports/hug-ns/mirror-calibration/README.md",
+      "sampled": true,
+      "excerpts": [
+        {
+          "startLine": 9,
+          "text": "| Check | Measured difference |\n| --- | --- |\n| Reflected full velocity fields | At most 7.14e-15 relative error |\n| Zero-bias mirror mismatch E | At most 6.90e-15 |\n| Base versus half timestep | At most 0.000172% for signed amplitude and E curves |\n| 33³ versus 49³ | At most 0.7791% for those curves |\n\nThe two-grid comparison measures agreement of these observables; it does not establish full-field convergence or a convergence order.\n"
+        }
+      ]
+    },
+    {
+      "id": "S8",
+      "repository": "NousVolition/Nous-Volition",
+      "path": "studies/fluid-organization/extensions/stress-history/README.md",
+      "commit": "795931d13d0eac3b861270476b037b2d96754126",
+      "url": "https://github.com/NousVolition/Nous-Volition/blob/795931d13d0eac3b861270476b037b2d96754126/studies/fluid-organization/extensions/stress-history/README.md",
+      "sampled": true,
+      "excerpts": [
+        {
+          "startLine": 63,
+          "text": "| active | 0.25 | 0.202449 | 0.135607 | +33.02% | [+16.56%, +47.35%] |\n| active | 0.75 | 0.159322 | 0.101842 | +36.08% | [+11.80%, +51.57%] |"
+        },
+        {
+          "startLine": 38,
+          "text": "These screens and matched finer-grid reruns support the declared finite calculation; four refinement seeds do not prove ensemble-wide continuum convergence. The cutoff criterion is a screening convention, not a guarantee."
+        },
+        {
+          "startLine": 40,
+          "text": "smooth: mean history-minus-present RMSE on the four refinement fields is -0.003627 at baseline settings, -0.003627 at half step and -0.003631 on the finer grid. The largest paired grid change in that contrast is 1.4904e-05; it is below the magnitude of the full test-sample mean contrast. The mean contrast sign does not change in this four-field subset. active: mean history-minus-present RMSE on the four refinement fields is -0.021279 at baseline settings, -0.021279 at half step and -0.021287 on the finer grid. The largest paired grid change in that contrast is 0.000501603; it is below the magnitude of the full test-sample mean contrast. The mean contrast sign does not change in this four-field subset. These checks are dependent numerical comparisons, not additional independent test fields. They do not quantify continuum uncertainty across the entire ensemble."
+        }
+      ]
+    },
+    {
+      "id": "S9",
+      "repository": "NousVolition/My-Sources-Project-ALL",
+      "path": "math/imports/hug-ns/mirror-fluid/README.md",
+      "commit": "3301eb4ef9493aa62afd21616729811ab16d48a9",
+      "url": "https://github.com/NousVolition/My-Sources-Project-ALL/blob/3301eb4ef9493aa62afd21616729811ab16d48a9/math/imports/hug-ns/mirror-fluid/README.md",
+      "sampled": true,
+      "excerpts": [
+        {
+          "startLine": 54,
+          "text": "New calculations go into `rerun/`. The saved `results/` and supplied `references/` remain available for comparison."
+        },
+        {
+          "startLine": 41,
+          "text": "## Reproduction and the time-window correction\n\nThe first correction script stopped at 0.12, while its reference JSON came from 0.16. Both windows were run. The latest uploaded script uses 0.16 and matches the tested executable code; the only difference from the local diagnostic copy is its module description. [Version check](version-2-check.json). The 0.12 result is retained under an explicit filename.\n\nReference comparisons pass with absolute tolerance 1e-12 plus relative tolerance 1e-10. The largest absolute difference among current reference values is 1.32e-13. These are reproducibility checks at the supplied grid; they do not establish grid convergence."
+        }
+      ]
+    },
+    {
+      "id": "S10",
+      "repository": "NousVolition/Nous-Volition",
+      "path": "DATA-RELEASES.md",
+      "commit": "795931d13d0eac3b861270476b037b2d96754126",
+      "url": "https://github.com/NousVolition/Nous-Volition/blob/795931d13d0eac3b861270476b037b2d96754126/DATA-RELEASES.md",
+      "sampled": true,
+      "excerpts": [
+        {
+          "startLine": 22,
+          "text": "This downloads and checks every numerical archive, restores the exact original paths, then verifies every restored file. It does not rerun simulations or overwrite files with different contents. Matching existing files are preserved. Restored paths are ignored by Git so the large files are not accidentally recommitted."
+        },
+        {
+          "startLine": 28,
+          "text": "The release includes **every one of the 531 original files** from commit [`bfa175101743`](https://github.com/NousVolition/Nous-Volition/tree/bfa17510174326b0f9afc99d697ea5f3a94d0f61): numerical ZIPs plus `reports-and-source.zip`. That source/report archive preserves all original reports, figures, scripts, checksums and historical records exactly as they were.\n\nDownload `restore_numerical_data.py` and `catalog.json` from the release into one folder, then run:\n\n```text\npython restore_numerical_data.py --catalog catalog.json --full-snapshot --destination restored-original\n```\n\nUse a **new empty destination**. This recreates the original complete publication, including original local report links, without mixing later edited documentation into its historical checksum set. For offline use, download all ZIPs too and add `--assets-dir .`. Manual extraction of all ZIPs into one common folder also restores the original layout; the helper additionally verifies all hashes."
+        },
+        {
+          "startLine": 48,
+          "text": "- Original result bytes and historical publication receipts are preserved in the numerical release and the complete original-history backup linked below. Where a current download link changed inside a checked package, its current delivery manifest was updated; the original manifest remains in `reports-and-source.zip`.\n- The subsequent [verified history cleanup](HISTORY-CLEANUP.md) also removes archived numerical paths from normal clone history. Original commits and every historical result remain recoverable from the complete Git backup on the release.\n- The archive is a dated snapshot. Later studies and completions require their own verified additions and are not implied by this release."
+        }
+      ]
+    },
+    {
+      "id": "S11",
+      "repository": "NousVolition/My-Sources-Project-ALL",
+      "path": "reports/clay-cell-stress/solver-versions/README.md",
+      "commit": "3301eb4ef9493aa62afd21616729811ab16d48a9",
+      "url": "https://github.com/NousVolition/My-Sources-Project-ALL/blob/3301eb4ef9493aa62afd21616729811ab16d48a9/reports/clay-cell-stress/solver-versions/README.md",
+      "sampled": true,
+      "excerpts": [
+        {
+          "startLine": 17,
+          "text": "During the storage change, three unfinished calculations were interrupted:\namplitude32-one, long-s1-two and steady-mesh72. Their partial in-memory states\nwere not saved and are not numerical results or counted runs. Those requested\nconfigurations are rerun to completion with the sparse version. All completed\ndense recordings and their hashes remain intact. No result is claimed for the\ninterrupted calculations."
+        }
+      ]
+    },
+    {
+      "id": "S12",
+      "repository": "NousVolition/My-Sources-Project-ALL",
+      "path": "reports/clay-contact-stress/obstacle-only/README.md",
+      "commit": "3301eb4ef9493aa62afd21616729811ab16d48a9",
+      "url": "https://github.com/NousVolition/My-Sources-Project-ALL/blob/3301eb4ef9493aa62afd21616729811ab16d48a9/reports/clay-contact-stress/obstacle-only/README.md",
+      "sampled": true,
+      "excerpts": [
+        {
+          "startLine": 9,
+          "text": "The main stage was stopped when these crossings were discovered. Its remaining planned cases have no completed result; they must not be counted as successes or numerical failures. The frozen plans remain in `data/protocol.json` and `data/sensitivity-protocol.json`. Individual `.json` files record actually completed cases; matching `.npz` files contain full states."
+        },
+        {
+          "startLine": 17,
+          "text": "It is expected to return a failing status and list 11 configurations. The old report builder requires passing geometry, so no successful report was generated for this stage. `MODEL-NOTES.md` retains working notes and the originally planned workflow; its uncompleted placeholders are not completed results.\n\n`data/initial-attempts` retains two recording-time roundoff stops and two completed early trials. `data/low-barrier-attempts` retains eight completed weaker-barrier trials, including an energy-budget miss. The independent DOP853 recordings here were completed, but the queued matching fine-step tests had not finished when the stage was stopped, so no completed independent-comparison result is claimed for them."
+        }
+      ]
+    },
+    {
+      "id": "S13",
+      "repository": "NousVolition/My-Sources-Project-ALL",
+      "path": "reports/files/Math-review.md",
+      "commit": "3301eb4ef9493aa62afd21616729811ab16d48a9",
+      "url": "https://github.com/NousVolition/My-Sources-Project-ALL/blob/3301eb4ef9493aa62afd21616729811ab16d48a9/reports/files/Math-review.md",
+      "sampled": true,
+      "excerpts": [
+        {
+          "startLine": 5,
+          "text": "A smooth ring-centered replacement is \\(\\phi=\\exp(-(r^2-r_0^2)^2/\\alpha^4-z^2/\\alpha^2)\\), because it depends on \\(r^2=x^2+y^2\\)."
+        },
+        {
+          "startLine": 1,
+          "text": "# Math review: Navier-Stokes working framework\n\nThe framework is a research draft. The following steps need correction or proof before its singularity conclusion can be supported.\n\n1. **Initial data at the axis.** With \\(r=\\sqrt{x^2+y^2}\\), the factor \\(\\exp(-((r-r_0)^2+z^2)/\\alpha^2)\\) is not differentiable at \\(r=0\\) when \\(r_0>0\\). The claim that the displayed fields are smooth Schwartz data is therefore unsupported. A smooth ring-centered replacement is \\(\\phi=\\exp(-(r^2-r_0^2)^2/\\alpha^4-z^2/\\alpha^2)\\), because it depends on \\(r^2=x^2+y^2\\). Full velocity formulas are in the companion `Nous-Volition` repository's `STREAM_FUNCTION_CORRECTION.md` in this prepared pair.\n2. **Forcing and the Clay formulation.** Clay's Statement C allows a prescribed smooth force \\(f(x,t)\\). The draft's force depends on the evolving scalar \\(S\\), so the coupled model is a different system unless a reduction to the prescribed-force formulation is proved. Also, smooth \\(S\\) does not in general make \\(|\\nabla S|\\) smooth at zeros of \\(\\nabla S\\); a tanh switch outside that norm does not fix the cusp."
+        },
+        {
+          "startLine": 13,
+          "text": "\nReuse the corrected initial field and its existing proof. The new stokes_stream folder records the grid comparisons. Choose the boundary treatment and model to study, then resolve spatial and temporal accuracy. Consolidate the existing Copilot work before adding another field or box script.\n"
+        }
+      ]
+    },
+    {
+      "id": "S14",
+      "repository": "NousVolition/My-Sources-Project-ALL",
+      "path": "reports/files/Stream-function-correction.md",
+      "commit": "3301eb4ef9493aa62afd21616729811ab16d48a9",
+      "url": "https://github.com/NousVolition/My-Sources-Project-ALL/blob/3301eb4ef9493aa62afd21616729811ab16d48a9/reports/files/Stream-function-correction.md",
+      "sampled": true,
+      "excerpts": [
+        {
+          "startLine": 21,
+          "text": "Define the envelope, stream function, and swirl:\n\n$$\n\\phi=\\exp\\left[-\\frac{(r^2-R^2)^2}{a^4}-\\frac{z^2}{b^2}\\right],\n\\qquad \\psi=A r^2z\\phi,\\qquad u_\\theta=B r\\phi.\n$$"
+        },
+        {
+          "startLine": 36,
+          "text": "\n$$\nH=1-\\frac{2z^2}{b^2},\\qquad C=2-\\frac{4q(q-R^2)}{a^4}.\n$$\n\nThen\n\n$$\n\\boxed{\\mathbf u_0=\n\\bigl(-A xH-B y,\\;-A yH+B x,\\;A zC\\bigr)\\phi.}\n$$\n\nThere is no division by $r$. On the axis,\n\n$$\n\\mathbf u_0(0,0,z)=\n\\left(0,0,2Az\\,e^{-R^4/a^4-z^2/b^2}\\right).\n$$\n\nThe previous correction is recovered with $a=b=\\alpha$ and $A=B=1$.\n\n## 2. Why it is smooth and incompressible\n\nEvery component is a polynomial in $x,y,z$ times the exponential of a polynomial. Hence the field is real analytic, including at $x=y=0$.\n\nFor decay, the inequality"
+        },
+        {
+          "startLine": 133,
+          "text": "## 4. The axis correction changes the shape too\n\nThe old envelope uses $(r-R)^2$, with $r=\\sqrt{x^2+y^2}$. Along $y=0$, that becomes $(|x|-R)^2$. For $R>0$ its left and right derivatives at the axis disagree.\n\nThis also affects the original velocity. At fixed $z$, its axial component has the expansion\n\n$$\nu_{z,\\mathrm{old}}(x,0,z)=\nAz\\phi_{\\mathrm{old}}(0,z)\n\\left[2+\\frac{6R}{\\alpha^2}|x|+O(x^2)\\right].\n$$\n\nIt has a cusp when $AzR\\ne0$. The corrected field uses a polynomial in $r^2$.\n\n![Comparison of the original radial Gaussian and corrected smooth ring envelope](smooth-initial-profile.png)\n\nThe new radial width near $r=R>0$ is approximately $a^2/(2R)$, in the convention $\\exp[-((r-R)/w)^2]$. Equal scale values therefore do not give equal widths. To match the old width $\\alpha$ to quadratic order at the ring, choose $a=\\sqrt{2R\\alpha}$ and $b=\\alpha$. This matches local curvature at the peak, not the whole original shape."
+        }
+      ]
+    },
+    {
+      "id": "S15",
+      "repository": "NousVolition/My-Sources-Project-ALL",
+      "path": "math/notes/smooth-initial-field.md",
+      "commit": "3301eb4ef9493aa62afd21616729811ab16d48a9",
+      "url": "https://github.com/NousVolition/My-Sources-Project-ALL/blob/3301eb4ef9493aa62afd21616729811ab16d48a9/math/notes/smooth-initial-field.md",
+      "sampled": true,
+      "excerpts": [
+        {
+          "startLine": 151,
+          "text": "## 5. What has been checked\n\nSeven code tests cover axis values, stream-function differentiation, numerical Cartesian divergence, rotational symmetry, energy scaling, the zero field, and invalid geometric parameters. They pass using the Python standard library.\n\nDirect numerical integration of the squared Cartesian velocity agrees with the exact energy formula to relative error below $1.3\\times10^{-14}$ in four parameter choices, including zero ring radius and unequal widths. The calculation used a 180-point Gauss-Legendre rule in both radius and height, on a large truncated domain.\n\nThese calculations check the implementation. The analytic identities above establish smoothness, incompressibility, decay, and finite energy for the full parameter family.\n\nIf a scalar initial field is needed, $S_0=S_*\\phi$ is also Schwartz. Smoothness of a force containing $|\\nabla S|$ at critical points remains a separate issue. The editable note now examines a discrete projection and short box experiments. Forcing, boundary treatment and convergence remain separate questions.\n\nFor the precise initial-data and forcing requirements in the standard Navier-Stokes problem, see [Fefferman's official Clay Mathematics Institute problem description](https://www.claymath.org/library/monographs/MPPc.pdf).\n\n## 6. Discrete follow-up\n\nThe existing LaTeX note includes the compatible centered Poisson stencil, the missing-spacing and oscillation defects in the submitted iteration, and measurements from length-6 and length-18 boxes. For the original bump, the length-6 raw divergence maxima are 0.46351, 0.91375, and 1.71323 at 8, 16, and 32 points. The finer-grid maxima lie on the periodic boundary. The corrected projection reduces measured divergence to floating-point roundoff, without proving that the boundary model or evolution is accurate. The smooth comparison starts both branches from the same projected field."
+        }
+      ]
+    },
+    {
+      "id": "S16",
+      "repository": "NousVolition/My-Sources-Project-ALL",
+      "path": "math/notes/smooth-initial-field.tex",
+      "commit": "3301eb4ef9493aa62afd21616729811ab16d48a9",
+      "url": "https://github.com/NousVolition/My-Sources-Project-ALL/blob/3301eb4ef9493aa62afd21616729811ab16d48a9/math/notes/smooth-initial-field.tex",
+      "sampled": true,
+      "excerpts": [
+        {
+          "startLine": 22,
+          "text": "This note completes the initial-data construction: the field below is smooth\nthrough the symmetry axis, divergence-free on all of $\\R^3$, and rapidly\ndecreasing. Its kinetic energy has an exact formula. These statements concern\nthe starting field. The discrete experiments below do not establish a theorem\nabout time evolution or singularity."
+        },
+        {
+          "startLine": 448,
+          "text": "A second comparison uses the smooth field with\n$R=1.5$, $a=\\sqrt3$, $b=1$, $A=B=1$, matching the original local ring width.\nIt projects the sampled start once, then copies that same start to both\nbranches. At $L=6$, $N=32$, this initial correction has relative grid\n$L^2$ size $0.009636$. At time $0.08$, the divergence maxima are\n$1.05212$ without projection and $1.33\\times10^{-15}$ with projection.\nThe maximum gradient norms are $4.05142$ and $4.08213$ respectively.\nProjection enforces the chosen discrete divergence; it need not lower the\nmaximum gradient.\n\nHalving the time step to $0.01$ and taking eight steps to the same time\ngives $1.03447$ and $1.33\\times10^{-15}$ for the two divergence maxima.\nThe projected maximum gradient changes from $4.08213$ to $4.07891$,\nand its discrete energy from $38.80037$ to $38.77337$.\nThis is one time-resolution check, not a convergence or stability proof.\n\nEven the smooth field has a small nonzero periodic face mismatch on $L=6$.\nThe next spatial-accuracy experiment should make the boundary treatment\nexplicit (for example, periodize the rapidly decreasing field), then refine\nspace and time with that choice fixed. A finite grid and four time steps\ncannot establish continuum regularity or singularity."
+        }
+      ]
+    }
+  ],
+  "examples": [
+    {
+      "case": "misplaced-convergence-citation",
+      "expectedAccept": false,
+      "expectedNotPass": [
+        "citation_support"
+      ],
+      "connection": {
+        "title": "Observable-level check is narrower than convergence",
+        "kind": "interpretive",
+        "relationship": "Both passages treat a comparison of selected observables as useful but limited: it can show close agreement on the measured quantities without establishing full-field convergence or a convergence order.",
+        "limit": "The files compare different observables and different controls, so the shared point is methodological rather than a claim about the same field quantity.",
+        "words": [
+          {
+            "term": "observable-level check",
+            "kind": "candidate",
+            "fit": "Names a check on measured quantities without implying whole-field convergence."
+          },
+          {
+            "term": "convergence screen",
+            "kind": "candidate",
+            "fit": "Emphasizes a filter or test for convergence, but leaves out the specific observables."
+          },
+          {
+            "term": "windowed comparison",
+            "kind": "candidate",
+            "fit": "Captures the bounded comparison window, but not the stronger warning about convergence."
+          }
+        ],
+        "evidence": {
+          "S7": "S7P1",
+          "S8": "S8P1"
+        }
+      }
+    },
+    {
+      "case": "convergence-citation-control",
+      "expectedAccept": true,
+      "connection": {
+        "title": "Observable agreement and finite refinement checks",
+        "kind": "interpretive",
+        "relationship": "The mirror calibration compares selected observables across two grids. The history study checks numerical refinement on four fields. Both limit what those finite comparisons establish about continuum convergence.",
+        "limit": "The studies measure different quantities and use different comparison sets. This is a methodological connection, not a common convergence rate, full-field error bound or shared physical result.",
+        "words": [
+          {
+            "term": "observable-level check",
+            "kind": "candidate",
+            "fit": "Fits the mirror calibration’s comparison of selected measurements; it does not imply full-field convergence."
+          },
+          {
+            "term": "refinement check",
+            "kind": "candidate",
+            "fit": "Names the history study’s finer-grid comparisons on four fields without extending their result to the whole ensemble."
+          },
+          {
+            "term": "finite-calculation support",
+            "kind": "candidate",
+            "fit": "Names the limited support those numerical checks provide; it is not a convergence theorem."
+          }
+        ],
+        "evidence": {
+          "S7": "S7P1",
+          "S8": "S8P2"
+        }
+      }
+    },
+    {
+      "case": "shared-rerun-overclaim",
+      "expectedAccept": false,
+      "expectedNotPass": [
+        "relationship"
+      ],
+      "connection": {
+        "title": "Working copy vs preserved snapshot",
+        "kind": "interpretive",
+        "relationship": "S9 and S10 both keep a live rerun space separate from preserved references: S9 sends new calculations into `rerun/` while retaining saved results and references for comparison, and S10 restores exact original paths from release archives without rerunning simulations or overwriting files.",
+        "limit": "The connection is about workflow and archival language, not the same storage system or the same kind of data.",
+        "words": [
+          {
+            "term": "working copy",
+            "kind": "candidate",
+            "fit": "Captures the active rerun area in S9; it leaves out the preserved-reference emphasis of S10."
+          },
+          {
+            "term": "reference archive",
+            "kind": "candidate",
+            "fit": "Captures the kept comparison material in both passages; it leaves out the active rerun step."
+          },
+          {
+            "term": "preserved snapshot",
+            "kind": "candidate",
+            "fit": "Captures the frozen original paths and release state in S10; it leaves out ongoing recomputation."
+          }
+        ],
+        "evidence": {
+          "S9": "S9P1",
+          "S10": "S10P1"
+        }
+      }
+    },
+    {
+      "case": "archive-workflow-control",
+      "expectedAccept": true,
+      "connection": {
+        "title": "Working copy and preserved snapshot",
+        "kind": "interpretive",
+        "relationship": "The mirror-fluid workflow separates new calculations from saved results and references. The release workflow restores archived files without rerunning simulations. Both keep reference material available, through different workflows.",
+        "limit": "Only the mirror-fluid passage describes an active rerun directory. The release guide describes restoration of a dated snapshot, not new calculations.",
+        "words": [
+          {
+            "term": "working copy",
+            "kind": "candidate",
+            "fit": "Fits the active rerun area in the mirror-fluid workflow; it does not describe archive restoration as a rerun."
+          },
+          {
+            "term": "reference archive",
+            "kind": "candidate",
+            "fit": "Names preserved comparison material without implying ongoing recomputation."
+          },
+          {
+            "term": "preserved snapshot",
+            "kind": "candidate",
+            "fit": "Fits the release’s dated original files; later results are not implied by that snapshot."
+          }
+        ],
+        "evidence": {
+          "S9": "S9P1",
+          "S10": "S10P1"
+        }
+      }
+    },
+    {
+      "case": "unsaved-state-preservation",
+      "expectedAccept": false,
+      "expectedNotPass": [
+        "relationship",
+        "word_2"
+      ],
+      "connection": {
+        "title": "Unfinished work is not a result",
+        "kind": "observed",
+        "relationship": "Both files mark interrupted or stopped computations as non-results and preserve them separately from completed records. One says partial in-memory states were not saved and are not numerical results; the other says remaining planned cases have no completed result and uncompleted placeholders are not completed results.",
+        "limit": "The shared concern is result status, not algorithmic identity. One file is about solver-version storage, the other about a stopped audit stage.",
+        "words": [
+          {
+            "term": "non-result",
+            "kind": "candidate",
+            "fit": "Directly captures the status of the interrupted or uncompleted runs; it leaves out whether the work was archived or discarded."
+          },
+          {
+            "term": "frozen attempt",
+            "kind": "candidate",
+            "fit": "Highlights that the attempt is preserved but not counted as finished; it leaves out the broader versioning context."
+          },
+          {
+            "term": "unfinished state",
+            "kind": "candidate",
+            "fit": "Keeps the emphasis on partial computation and avoids implying a failure verdict."
+          }
+        ],
+        "evidence": {
+          "S11": "S11P1",
+          "S12": "S12P1"
+        }
+      }
+    },
+    {
+      "case": "unsaved-state-control",
+      "expectedAccept": true,
+      "connection": {
+        "title": "Unfinished calculations and retained plans",
+        "kind": "interpretive",
+        "relationship": "Both reports exclude unfinished calculations from completed numerical results. One explicitly says partial in-memory states were not saved. The other retains frozen plans and records of cases that actually completed.",
+        "limit": "A preserved plan or note about an attempt is not a saved computational state. The two reports concern different solver stages and do not supply results for their unfinished cases.",
+        "words": [
+          {
+            "term": "non-result",
+            "kind": "candidate",
+            "fit": "Names the status of unfinished cases without counting them as numerical successes or failures."
+          },
+          {
+            "term": "unfinished calculation",
+            "kind": "candidate",
+            "fit": "Describes work that did not reach a completed result; it makes no claim that partial states were saved."
+          },
+          {
+            "term": "frozen plan",
+            "kind": "candidate",
+            "fit": "Applies to the retained protocol plans in the obstacle-only stage, not to the unsaved solver states."
+          }
+        ],
+        "evidence": {
+          "S11": "S11P1",
+          "S12": "S12P1"
+        }
+      }
+    },
+    {
+      "case": "invented-chronology",
+      "expectedAccept": false,
+      "expectedNotPass": [
+        "relationship"
+      ],
+      "connection": {
+        "title": "Ring-centered fix after the smoothness warning",
+        "kind": "interpretive",
+        "relationship": "The math review flags a non-smooth ring-centered initial field and asks for a replacement; the later construction answers that request with a polynomial-in-`r^2` envelope and an axis-safe velocity field.",
+        "limit": "This is a wording and structural match, not proof that the later file was written as a direct response to the review; it only shows that the proposed replacement takes the form the review says is needed.",
+        "words": [
+          {
+            "term": "ring-centered replacement",
+            "kind": "candidate",
+            "fit": "Keeps the review's geometric target and the sense of substitution, but leaves out the technical reason for the substitution."
+          },
+          {
+            "term": "axis-smooth ring envelope",
+            "kind": "candidate",
+            "fit": "Highlights the repaired smoothness through the axis; it does not name the underlying stream-function construction."
+          },
+          {
+            "term": "polynomial in r²",
+            "kind": "candidate",
+            "fit": "Names the mathematical repair directly, but omits the ring-centered motivation and the physical setup."
+          }
+        ],
+        "evidence": {
+          "S13": "S13P1",
+          "S14": "S14P1"
+        }
+      }
+    },
+    {
+      "case": "structural-ring-control",
+      "expectedAccept": true,
+      "connection": {
+        "title": "Smooth ring construction matches the review’s proposed form",
+        "kind": "observed",
+        "relationship": "The review identifies an axis-smoothness problem and proposes a smooth ring-centered replacement. The correction uses the same type of envelope: an exponential whose exponent is polynomial in r², together with an axis-safe Cartesian velocity formula.",
+        "limit": "The review points to a companion correction, which supports a content link. These passages do not establish when this particular file was written or that it was a direct response. Smooth initial data do not establish the accuracy of later evolution.",
+        "words": [
+          {
+            "term": "smooth ring envelope",
+            "kind": "candidate",
+            "fit": "Names the ring-shaped, axis-smooth exponential envelope."
+          },
+          {
+            "term": "polynomial exponent",
+            "kind": "candidate",
+            "fit": "Locates the polynomial dependence in the exponent; the full exponential envelope is not a polynomial."
+          },
+          {
+            "term": "axis-safe formula",
+            "kind": "candidate",
+            "fit": "Names the Cartesian velocity expression that avoids division by r at the axis."
+          }
+        ],
+        "evidence": {
+          "S13": "S13P1",
+          "S14": "S14P1"
+        }
+      }
+    },
+    {
+      "case": "proof-explicitly-withheld",
+      "expectedAccept": true,
+      "expectedStances": {
+        "word_3": [
+          "withheld",
+          "contrast"
+        ]
+      },
+      "connection": {
+        "title": "Validation stops before a theorem",
+        "kind": "interpretive",
+        "relationship": "Both passages separate local checks from stronger claims: the smooth-field note says implementation checks validate the field and energy formula, while the refinement note says finite grids and a few time steps cannot establish continuum regularity or singularity.",
+        "limit": "The two files do not make the same claim about the underlying model; one documents exact identities for the starting field, the other limits what the discrete run can prove.",
+        "words": [
+          {
+            "term": "verification",
+            "kind": "candidate",
+            "fit": "Keeps the scope at a check or confirmation step without implying a theorem."
+          },
+          {
+            "term": "validation",
+            "kind": "candidate",
+            "fit": "Broadens the claim a little; it fits the implementation language but can sound stronger than the discrete evidence alone."
+          },
+          {
+            "term": "proof",
+            "kind": "candidate",
+            "fit": "Names the stronger status both notes explicitly withhold for the time-evolution claim."
+          }
+        ],
+        "evidence": {
+          "S15": "S15P2",
+          "S16": "S16P1"
+        }
+      }
+    },
+    {
+      "case": "proof-affirmed-with-disclaimer",
+      "expectedAccept": false,
+      "expectedNotPass": [
+        "relationship"
+      ],
+      "connection": {
+        "title": "Validation stops before a theorem",
+        "kind": "interpretive",
+        "relationship": "Both notes prove that the later time evolution remains smooth and cannot form a singularity.",
+        "limit": "The two files do not make the same claim about the underlying model; one documents exact identities for the starting field, the other limits what the discrete run can prove.",
+        "words": [
+          {
+            "term": "verification",
+            "kind": "candidate",
+            "fit": "Keeps the scope at a check or confirmation step without implying a theorem."
+          },
+          {
+            "term": "validation",
+            "kind": "candidate",
+            "fit": "Broadens the claim a little; it fits the implementation language but can sound stronger than the discrete evidence alone."
+          },
+          {
+            "term": "proof",
+            "kind": "candidate",
+            "fit": "Names the stronger status both notes explicitly withhold for the time-evolution claim."
+          }
+        ],
+        "evidence": {
+          "S15": "S15P2",
+          "S16": "S16P1"
+        }
+      }
+    },
+    {
+      "case": "scoped-initial-data-proof",
+      "expectedAccept": true,
+      "connection": {
+        "title": "Initial-data identities and a withheld evolution theorem",
+        "kind": "interpretive",
+        "relationship": "The analytic identities establish smoothness, incompressibility, decay and finite energy of the initial field. The finite evolution checks do not establish a theorem about later regularity or singularity.",
+        "limit": "The two files do not make the same claim about the underlying model; one documents exact identities for the starting field, the other limits what the discrete run can prove.",
+        "words": [
+          {
+            "term": "initial-data proof",
+            "kind": "candidate",
+            "fit": "Refers to the analytic identities for the starting field, not a proof of later evolution."
+          },
+          {
+            "term": "implementation check",
+            "kind": "candidate",
+            "fit": "Refers to numerical checks of the implementation and energy formula."
+          },
+          {
+            "term": "unproved evolution claim",
+            "kind": "candidate",
+            "fit": "Keeps the withheld time-evolution theorem separate from the established initial-field properties."
+          }
+        ],
+        "evidence": {
+          "S15": "S15P2",
+          "S16": "S16P1"
+        }
+      }
+    },
+    {
+      "case": "not-disproven-is-not-proved",
+      "expectedAccept": false,
+      "expectedNotPass": [
+        "relationship"
+      ],
+      "connection": {
+        "title": "Validation stops before a theorem",
+        "kind": "interpretive",
+        "relationship": "A time-evolution singularity has not been disproven by these checks, so these notes establish that a singularity occurs.",
+        "limit": "The two files do not make the same claim about the underlying model; one documents exact identities for the starting field, the other limits what the discrete run can prove.",
+        "words": [
+          {
+            "term": "verification",
+            "kind": "candidate",
+            "fit": "Keeps the scope at a check or confirmation step without implying a theorem."
+          },
+          {
+            "term": "validation",
+            "kind": "candidate",
+            "fit": "Broadens the claim a little; it fits the implementation language but can sound stronger than the discrete evidence alone."
+          },
+          {
+            "term": "proof",
+            "kind": "candidate",
+            "fit": "Names the stronger status both notes explicitly withhold for the time-evolution claim."
+          }
+        ],
+        "evidence": {
+          "S15": "S15P2",
+          "S16": "S16P1"
+        }
+      }
+    },
+    {
+      "case": "not-only-is-affirmative",
+      "expectedAccept": false,
+      "expectedNotPass": [
+        "relationship"
+      ],
+      "connection": {
+        "title": "Validation stops before a theorem",
+        "kind": "interpretive",
+        "relationship": "The finite checks not only prove continuum regularity but also establish a singularity theorem.",
+        "limit": "The two files do not make the same claim about the underlying model; one documents exact identities for the starting field, the other limits what the discrete run can prove.",
+        "words": [
+          {
+            "term": "verification",
+            "kind": "candidate",
+            "fit": "Keeps the scope at a check or confirmation step without implying a theorem."
+          },
+          {
+            "term": "validation",
+            "kind": "candidate",
+            "fit": "Broadens the claim a little; it fits the implementation language but can sound stronger than the discrete evidence alone."
+          },
+          {
+            "term": "proof",
+            "kind": "candidate",
+            "fit": "Names the stronger status both notes explicitly withhold for the time-evolution claim."
+          }
+        ],
+        "evidence": {
+          "S15": "S15P2",
+          "S16": "S16P1"
+        }
+      }
+    },
+    {
+      "case": "conditional-proof-requirement",
+      "expectedAccept": true,
+      "connection": {
+        "title": "Validation stops before a theorem",
+        "kind": "interpretive",
+        "relationship": "A claim of a theorem about time evolution would require evidence beyond the finite checks described here. The sources separately establish properties of the initial field and withhold the stronger evolution conclusion.",
+        "limit": "The two files do not make the same claim about the underlying model; one documents exact identities for the starting field, the other limits what the discrete run can prove.",
+        "words": [
+          {
+            "term": "verification",
+            "kind": "candidate",
+            "fit": "Keeps the scope at a check or confirmation step without implying a theorem."
+          },
+          {
+            "term": "validation",
+            "kind": "candidate",
+            "fit": "Broadens the claim a little; it fits the implementation language but can sound stronger than the discrete evidence alone."
+          },
+          {
+            "term": "proof",
+            "kind": "candidate",
+            "fit": "Names the stronger status both notes explicitly withhold for the time-evolution claim."
+          }
+        ],
+        "evidence": {
+          "S15": "S15P2",
+          "S16": "S16P1"
+        }
+      }
+    },
+    {
+      "case": "polynomial-envelope-confusion",
+      "expectedAccept": false,
+      "expectedNotPass": [
+        "relationship"
+      ],
+      "connection": {
+        "title": "Smooth ring construction matches the review’s proposed form",
+        "kind": "observed",
+        "relationship": "Both documents use a polynomial ring envelope, so the envelope itself is polynomial in r².",
+        "limit": "The review points to a companion correction, which supports a content link. These passages do not establish when this particular file was written or that it was a direct response. Smooth initial data do not establish the accuracy of later evolution.",
+        "words": [
+          {
+            "term": "smooth ring envelope",
+            "kind": "candidate",
+            "fit": "Names the ring-shaped, axis-smooth exponential envelope."
+          },
+          {
+            "term": "polynomial exponent",
+            "kind": "candidate",
+            "fit": "Locates the polynomial dependence in the exponent; the full exponential envelope is not a polynomial."
+          },
+          {
+            "term": "axis-safe formula",
+            "kind": "candidate",
+            "fit": "Names the Cartesian velocity expression that avoids division by r at the axis."
+          }
+        ],
+        "evidence": {
+          "S13": "S13P1",
+          "S14": "S14P1"
+        }
+      }
+    },
+    {
+      "case": "exponential-composition-control",
+      "expectedAccept": true,
+      "connection": {
+        "title": "Smooth ring construction matches the review’s proposed form",
+        "kind": "observed",
+        "relationship": "Both documents describe a smooth ring envelope of the form exp(P(r²)), with z and parameters fixed when considering the polynomial dependence on r². The exponential envelope itself is not a polynomial.",
+        "limit": "The review points to a companion correction, which supports a content link. These passages do not establish when this particular file was written or that it was a direct response. Smooth initial data do not establish the accuracy of later evolution.",
+        "words": [
+          {
+            "term": "smooth ring envelope",
+            "kind": "candidate",
+            "fit": "Names the ring-shaped, axis-smooth exponential envelope."
+          },
+          {
+            "term": "polynomial exponent",
+            "kind": "candidate",
+            "fit": "Locates the polynomial dependence in the exponent; the full exponential envelope is not a polynomial."
+          },
+          {
+            "term": "axis-safe formula",
+            "kind": "candidate",
+            "fit": "Names the Cartesian velocity expression that avoids division by r at the axis."
+          }
+        ],
+        "evidence": {
+          "S13": "S13P1",
+          "S14": "S14P1"
+        }
+      }
+    }
+  ]
+}

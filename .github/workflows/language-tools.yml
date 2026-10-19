@@ -1,0 +1,74 @@
+name: Requested language tools
+
+on:
+  issues:
+    types: [opened]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: language-tool-${{ github.event.issue.number }}
+  cancel-in-progress: false
+
+jobs:
+  check:
+    if: >-
+      github.repository == 'NousVolition/semantic-organizer-bot' &&
+      github.event.issue.user.login == 'NousVolition' &&
+      github.event.sender.login == 'NousVolition' &&
+      contains(fromJSON('["[Check ontology]", "[Diagram word roles]"]'), github.event.issue.title)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Validate request
+        id: request
+        run: python3 tools/check.py prepare
+      - uses: ./.github/actions/setup-language-tool
+        with:
+          tool: ${{ steps.request.outputs.tool }}
+      - name: Run real tool
+        run: python tools/check.py run
+        env:
+          MPLBACKEND: Agg
+          TOKENIZERS_PARALLELISM: 'false'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: language-tool-result
+          path: tool-output/
+          if-no-files-found: warn
+          retention-days: 7
+  report:
+    needs: check
+    if: always() && needs.check.result != 'skipped'
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    permissions:
+      actions: read
+      issues: write
+    steps:
+      - uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          name: language-tool-result
+          path: result
+      - name: Post tool result
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('node:fs');
+            const run = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+            const path = 'result/report.md';
+            const body = fs.existsSync(path)
+              ? fs.readFileSync(path, 'utf8').slice(0, 55000)
+              : '<!-- seo-language-tool-result -->\n**The tool check did not complete.** Installation or execution failed before a report was available. No formal result is claimed.';
+            const full = `${body}\n\n[Tool run and downloadable results](${run}) · Artifacts expire after 7 days.`;
+            const comments = await github.paginate(github.rest.issues.listComments, {...context.repo, issue_number: context.issue.number});
+            const previous = comments.find(c => c.user.login === 'github-actions[bot]' && c.body.startsWith('<!-- seo-language-tool-result -->'));
+            if (previous) await github.rest.issues.updateComment({...context.repo, comment_id: previous.id, body: full});
+            else await github.rest.issues.createComment({...context.repo, issue_number: context.issue.number, body: full});
+
