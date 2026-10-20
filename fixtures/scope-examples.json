@@ -292,8 +292,8 @@
       "connection": {
         "title": "Working copy and preserved snapshot",
         "kind": "interpretive",
-        "relationship": "The mirror-fluid workflow separates new calculations from saved results and references. The release workflow restores archived files without rerunning simulations. Both keep reference material available, through different workflows.",
-        "limit": "Only the mirror-fluid passage describes an active rerun directory. The release guide describes restoration of a dated snapshot, not new calculations.",
+        "relationship": "The mirror-fluid workflow reserves `rerun/` for new calculations while keeping saved results and references available. The release workflow restores original archive paths without rerunning simulations. They describe different ways of keeping existing material available.",
+        "limit": "Only the mirror-fluid passage describes an active rerun directory. The release guide restores and verifies files without rerunning simulations.",
         "words": [
           {
             "term": "working copy",
@@ -301,14 +301,14 @@
             "fit": "Fits the active rerun area in the mirror-fluid workflow; it does not describe archive restoration as a rerun."
           },
           {
-            "term": "reference archive",
+            "term": "restored archive",
             "kind": "candidate",
-            "fit": "Names preserved comparison material without implying ongoing recomputation."
+            "fit": "Names restored existing files without implying ongoing recomputation."
           },
           {
-            "term": "preserved snapshot",
+            "term": "restored paths",
             "kind": "candidate",
-            "fit": "Fits the release’s dated original files; later results are not implied by that snapshot."
+            "fit": "Names the restored original locations without describing them as a rerun area."
           }
         ],
         "evidence": {
@@ -359,7 +359,7 @@
         "title": "Unfinished calculations and retained plans",
         "kind": "interpretive",
         "relationship": "Both reports exclude unfinished calculations from completed numerical results. One explicitly says partial in-memory states were not saved. The other retains frozen plans and records of cases that actually completed.",
-        "limit": "A preserved plan or note about an attempt is not a saved computational state. The two reports concern different solver stages and do not supply results for their unfinished cases.",
+        "limit": "A preserved plan or note about an attempt is not a saved computational state. Neither report supplies a completed numerical result for its unfinished cases.",
         "words": [
           {
             "term": "non-result",
@@ -423,13 +423,13 @@
       "connection": {
         "title": "Smooth ring construction matches the review’s proposed form",
         "kind": "observed",
-        "relationship": "The review identifies an axis-smoothness problem and proposes a smooth ring-centered replacement. The correction uses the same type of envelope: an exponential whose exponent is polynomial in r², together with an axis-safe Cartesian velocity formula.",
-        "limit": "The review points to a companion correction, which supports a content link. These passages do not establish when this particular file was written or that it was a direct response. Smooth initial data do not establish the accuracy of later evolution.",
+        "relationship": "The review specifies an exponential envelope whose exponent is polynomial in r² and points to its companion correction. That correction gives a Cartesian velocity formula using the same envelope, with no division by r.",
+        "limit": "The companion-file pointer supports a content link. It does not establish when the correction was written or that it directly responded to the review.",
         "words": [
           {
-            "term": "smooth ring envelope",
+            "term": "ring envelope",
             "kind": "candidate",
-            "fit": "Names the ring-shaped, axis-smooth exponential envelope."
+            "fit": "Names the exponential ring-centered envelope shared by the proposed and corrected forms."
           },
           {
             "term": "polynomial exponent",
@@ -443,8 +443,8 @@
           }
         ],
         "evidence": {
-          "S13": "S13P1",
-          "S14": "S14P1"
+          "S13": "S13P3",
+          "S14": "S14P2"
         }
       }
     },
@@ -460,8 +460,8 @@
       "connection": {
         "title": "Validation stops before a theorem",
         "kind": "interpretive",
-        "relationship": "Both passages separate local checks from stronger claims: the smooth-field note says implementation checks validate the field and energy formula, while the refinement note says finite grids and a few time steps cannot establish continuum regularity or singularity.",
-        "limit": "The two files do not make the same claim about the underlying model; one documents exact identities for the starting field, the other limits what the discrete run can prove.",
+        "relationship": "Both notes keep two scopes apart: analytic identities establish stated properties of the starting field, while finite or discrete checks do not establish a theorem about later evolution or singularity.",
+        "limit": "This is a distinction in the scope of proof within a shared model. An initial-field result does not settle later evolution.",
         "words": [
           {
             "term": "verification",
@@ -495,7 +495,7 @@
         "title": "Validation stops before a theorem",
         "kind": "interpretive",
         "relationship": "Both notes prove that the later time evolution remains smooth and cannot form a singularity.",
-        "limit": "The two files do not make the same claim about the underlying model; one documents exact identities for the starting field, the other limits what the discrete run can prove.",
+        "limit": "This is a distinction in the scope of proof within a shared model. An initial-field result does not settle later evolution.",
         "words": [
           {
             "term": "verification",
@@ -624,8 +624,8 @@
       "connection": {
         "title": "Validation stops before a theorem",
         "kind": "interpretive",
-        "relationship": "A claim of a theorem about time evolution would require evidence beyond the finite checks described here. The sources separately establish properties of the initial field and withhold the stronger evolution conclusion.",
-        "limit": "The two files do not make the same claim about the underlying model; one documents exact identities for the starting field, the other limits what the discrete run can prove.",
+        "relationship": "A claim of a theorem about time evolution would require evidence beyond the finite checks described here. The notes establish stated initial-field properties while withholding the stronger evolution conclusion.",
+        "limit": "This is a distinction in the scope of proof within a shared model. An initial-field result does not settle later evolution.",
         "words": [
           {
             "term": "verification",
@@ -689,13 +689,13 @@
       "connection": {
         "title": "Smooth ring construction matches the review’s proposed form",
         "kind": "observed",
-        "relationship": "Both documents describe a smooth ring envelope of the form exp(P(r²)), with z and parameters fixed when considering the polynomial dependence on r². The exponential envelope itself is not a polynomial.",
-        "limit": "The review points to a companion correction, which supports a content link. These passages do not establish when this particular file was written or that it was a direct response. Smooth initial data do not establish the accuracy of later evolution.",
+        "relationship": "The review specifies an exponential envelope whose exponent is polynomial in r² and points to its companion correction. That correction gives a Cartesian velocity formula using the same envelope, with no division by r. The envelope itself is not a polynomial.",
+        "limit": "The companion-file pointer supports a content link. It does not establish when the correction was written or that it directly responded to the review.",
         "words": [
           {
-            "term": "smooth ring envelope",
+            "term": "ring envelope",
             "kind": "candidate",
-            "fit": "Names the ring-shaped, axis-smooth exponential envelope."
+            "fit": "Names the exponential ring-centered envelope shared by the proposed and corrected forms."
           },
           {
             "term": "polynomial exponent",
@@ -709,8 +709,8 @@
           }
         ],
         "evidence": {
-          "S13": "S13P1",
-          "S14": "S14P1"
+          "S13": "S13P3",
+          "S14": "S14P2"
         }
       }
     }
