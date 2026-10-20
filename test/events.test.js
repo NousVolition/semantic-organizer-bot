@@ -13,6 +13,7 @@ const originalKey = process.env.OPENAI_API_KEY;
 const originalModel = process.env.OPENAI_MODEL;
 const originalPushReviews = process.env.ENABLE_PUSH_REVIEWS;
 const originalTextReviews = process.env.ENABLE_TEXT_REVIEWS;
+const originalDriftScan = process.env.ENABLE_DRIFT_SCAN;
 beforeEach(async () => {
   unmatched = [];
   nock.emitter.on("no match", recordUnmatched);
@@ -20,6 +21,7 @@ beforeEach(async () => {
   process.env.OPENAI_API_KEY = "test-key";
   delete process.env.OPENAI_MODEL;
   delete process.env.ENABLE_PUSH_REVIEWS;
+  delete process.env.ENABLE_DRIFT_SCAN;
   process.env.ENABLE_TEXT_REVIEWS = "true";
   probot = new Probot({ githubToken: "test-token", logLevel: "fatal" });
   await probot.load(app);
@@ -37,6 +39,8 @@ afterEach(() => {
   else process.env.ENABLE_PUSH_REVIEWS = originalPushReviews;
   if (originalTextReviews === undefined) delete process.env.ENABLE_TEXT_REVIEWS;
   else process.env.ENABLE_TEXT_REVIEWS = originalTextReviews;
+  if (originalDriftScan === undefined) delete process.env.ENABLE_DRIFT_SCAN;
+  else process.env.ENABLE_DRIFT_SCAN = originalDriftScan;
   assert.deepEqual(pending, []);
   assert.deepEqual(unmatched, []);
 });

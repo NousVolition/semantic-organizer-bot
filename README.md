@@ -99,6 +99,27 @@ sampling; a batch is not an exhaustive reading of the account. Batch membership
 can change when source commits change. It does not search PDFs, images, issues,
 or every line of long documents.
 
+### Optional local Drift Scan
+
+Set `ENABLE_DRIFT_SCAN=true` to add a local, opt-in shortlist to ordinary
+`[Discover language]` and numbered batch runs. It loads
+[`onnx-community/all-MiniLM-L6-v2-ONNX`](https://huggingface.co/onnx-community/all-MiniLM-L6-v2-ONNX)
+through Transformers.js, embeds the already collected citable passages in the
+service process, and proposes a small set of cross-file pairs with middling
+semantic similarity. It skips same-file pairs, exact repeated quotations, and
+near-duplicate matches. The first enabled run in a fresh service instance may
+download the public model and take longer.
+
+Drift Scan is a routing aid, not a finding. It supplies only existing passage
+IDs and rounded scores to the existing discovery prompt; it does not add source
+text, create a report section, or call a Hugging Face inference API with source
+passages. The normal exact-quotation checks, two-distinct-file rule, and
+independent comparison review still decide what can be published. A score is not
+evidence, a confidence value, or a demonstrated shared mechanism. Previews,
+example checks, and report reviews never load the model. If the optional model
+cannot load or run, discovery continues without a shortlist and logs only a
+small diagnostic.
+
 Only the configured owner's new issues in the reporting repository can trigger
 discovery. One job runs per service instance. The webhook records a status
 comment and returns before the scan finishes. A completed or recorded job is not
@@ -207,6 +228,8 @@ before deploying. Keep API keys in Render, never in the skill file.
    - `APP_ID` = the numeric App ID from your GitHub App settings (not the Client ID)
    - `PRIVATE_KEY` = the full private key text from your GitHub App
    - `WEBHOOK_SECRET` = the secret you set when creating the GitHub App
+   - Optional, non-secret: `ENABLE_DRIFT_SCAN` = `true` to enable the local
+     cross-file shortlist for normal discovery runs
 6. After it deploys, open `https://YOUR-SERVICE.onrender.com/healthz`. It should return `{"status":"ok"}`. This confirms that the app loaded and has its required settings; it does not test the credentials against GitHub or OpenAI.
 7. Set the GitHub App's **Webhook URL** to `https://YOUR-SERVICE.onrender.com/api/github/webhooks`. The `/api/github/webhooks` path is required.
 8. Install the GitHub App on the repositories you want it to review. In the app settings, open **Advanced → Recent Deliveries**, send or redeliver a `ping`, and verify a successful response.

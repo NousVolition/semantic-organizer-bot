@@ -11,6 +11,7 @@ const OpenAI = require("openai");
 const { readFileSync } = require("node:fs");
 const { join } = require("node:path");
 const { createDiscoveryHandler } = require("./discovery");
+const { createDriftScanner } = require("./drift-scan");
 const { skillsForMode } = require("./language-skills");
 const discoveryConfig = require("./discovery-config.json");
 
@@ -30,7 +31,10 @@ module.exports = (app, { getRouter } = {}) => {
   const languageSkills = readFileSync(join(__dirname, "language-skills.md"), "utf8");
   const reviewSkills = skillsForMode(languageSkills, "review");
   const discoverySkills = skillsForMode(languageSkills, "discovery");
-  const discovery = createDiscoveryHandler({ config: discoveryConfig, openai, model: discoveryModel, skills: discoverySkills, log: app.log });
+  // This is deliberately opt-in: it downloads a public local model only when a
+  // real discovery run needs a shortlist, never for previews or text reviews.
+  const driftScanner = process.env.ENABLE_DRIFT_SCAN === "true" ? createDriftScanner({ log: app.log }) : null;
+  const discovery = createDiscoveryHandler({ config: discoveryConfig, openai, model: discoveryModel, skills: discoverySkills, log: app.log, driftScanner });
   app.on("issues.opened", discovery.handle);
 
   function logOpenAIError(message, error) {
