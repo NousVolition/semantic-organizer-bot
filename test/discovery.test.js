@@ -279,6 +279,37 @@ test("redelivered issues with a saved bot job are not run twice", async () => {
   assert.equal(state.posted.length, 1);
 });
 
+test("redelivery after an interrupted run does not start a second job on the same issue", async () => {
+  const api = github();
+  const state = jobContext(api);
+  const handler = createDiscoveryHandler({ config, log });
+  await handler.handle(state.context);
+  await handler.waitForIdle();
+  assert.equal(state.posted.length, 1);
+  // A restart can interrupt a job after the status comment is reserved but before the
+  // result is published, leaving only the reserved marker comment on the issue.
+  api.paginate = async () => [{ user: { type: "Bot" }, body: state.posted[0] }];
+  await handler.handle(state.context);
+  await handler.waitForIdle();
+  assert.equal(state.posted.length, 1);
+  assert.equal(state.updated.length, 1);
+});
+
+test("an unrelated bot comment quoting the marker does not suppress discovery", async () => {
+  const api = github();
+  const state = jobContext(api);
+  const handler = createDiscoveryHandler({ config, log });
+  await handler.handle(state.context);
+  await handler.waitForIdle();
+  assert.equal(state.posted.length, 1);
+  const marker = state.posted[0].split("\n")[0];
+  api.paginate = async () => [{ user: { type: "Bot" }, body: `Earlier status ${marker} is quoted here for context.` }];
+  await handler.handle(state.context);
+  await handler.waitForIdle();
+  assert.equal(state.posted.length, 2);
+  assert.equal(state.updated.length, 2);
+});
+
 test("the discovery slot is reserved before asynchronous setup finishes", async () => {
   const first = jobContext(github());
   const second = jobContext(github());
