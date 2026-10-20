@@ -200,6 +200,55 @@ test('comparison model override stays separate from the discovery model', () => 
   }
 });
 
+test('reproducing the retained expected decisions validates all 22 cases in independent calls', async () => {
+  const suites = [fixtures, require('../fixtures/scope-examples.json')];
+  const all = suites.flatMap(s => s.examples);
+  assert.equal(all.length, 22);
+  assert.equal(all.filter(e => e.expectedAccept).length, 11);
+  const requests = [];
+  const client = { chat: { completions: { create: async request => {
+    requests.push(request);
+    const { candidates, passages } = JSON.parse(request.messages[1].content);
+    // Expected answers and targeted failure fields are never sent to the model.
+    assert.ok(!request.messages[0].content.includes('expectedAccept'));
+    assert.ok(!request.messages[1].content.includes('expectedAccept'));
+    assert.ok(!request.messages[1].content.includes('expectedNotPass'));
+    assert.ok(!request.messages[1].content.includes('expectedStances'));
+    // Each comparison is reviewed on its own with only its own context.
+    assert.equal(candidates.length, 1);
+    assert.deepEqual(Object.keys(request.response_format.json_schema.schema.properties), ['C1']);
+    const example = all[requests.length - 1];
+    assert.equal(candidates[0].fields.title, example.connection.title);
+    assert.ok(passages.every(p => example.connection.evidence[p.source]));
+    assert.ok(passages.length > Object.values(example.connection.evidence).filter(Boolean).length);
+    assert.equal(request.model, 'gpt-5.4');
+    const fields = Object.fromEntries(Object.keys(candidates[0].fields).map(key => [key, {
+      stance: example.expectedStances?.[key]?.[0] || 'asserted',
+      proposition: 'The complete field preserves the stated scope.', status: 'pass', reason: 'Mock supported field.' }]));
+    const verdict = { fields,
+      checks: Object.fromEntries(CHECKS.map(key => [key, 'pass'])), reason: 'Mock supported comparison.',
+      passages: Object.values(example.connection.evidence).filter(Boolean) };
+    for (const key of (example.expectedNotPass || [])) {
+      if (key in verdict.checks) verdict.checks[key] = 'fail';
+      else verdict.fields[key] = { ...verdict.fields[key], status: 'fail', reason: 'Mock unsupported clause.' };
+    }
+    if (!example.expectedAccept && !(example.expectedNotPass || []).length) verdict.checks.claim_scope = 'fail';
+    return response({ C1: verdict });
+  } } } };
+  const report = await checkComparisonExamples(client, 'gpt-5.4-mini');
+  assert.equal(requests.length, 22);
+  assert.match(report, /22 of 22 expected decisions matched/);
+  assert.match(report, /Comparison checker: gpt-5\.4\./);
+  assert.match(report, /22 independent bounded calls/);
+  assert.ok(!report.includes('**FAIL**'));
+  for (const example of all) assert.ok(report.includes(example.case));
+  const record = JSON.parse(Buffer.from(report.match(/comparison-example-data:([A-Za-z0-9+/=]+)/)[1], 'base64'));
+  assert.equal(record.version, 2); assert.equal(record.model, 'gpt-5.4');
+  assert.equal(record.total, 22); assert.equal(record.passed, 22);
+  assert.deepEqual(record.results.map(r => r.case), all.map(e => e.case));
+  assert.ok(record.results.every(r => r.matched && r.actualAccept === r.expectedAccept));
+});
+
 test("example-check command obeys owner/repository authorization and avoids repository collection", async () => {
   let calls = 0; const posted = [], updated = [];
   const octokit = { paginate: async () => [], issues: { listComments() {},
