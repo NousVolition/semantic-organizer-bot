@@ -54,6 +54,11 @@ test('scope examples contain valid evidence and both positive and negative contr
   assert.deepEqual(scope.examples.find(e => e.case === 'unsaved-state-preservation').expectedNotPass, ['relationship','word_2']);
   assert.equal(scope.examples.find(e => e.case === 'proof-explicitly-withheld').expectedAccept, true);
   assert.equal(scope.examples.find(e => e.case === 'not-only-is-affirmative').expectedAccept, false);
+  const proof = scope.examples.find(e => e.case === 'proof-explicitly-withheld').connection;
+  assert.match(proof.relationship, /Both notes keep two scopes apart/);
+  assert.doesNotMatch(proof.limit, /different claims about the underlying model/);
+  const ring = scope.examples.find(e => e.case === 'structural-ring-control').connection;
+  assert.deepEqual(ring.evidence, { S13: 'S13P3', S14: 'S14P2' });
 });
 
 test("each comparison dimension independently blocks publication; uncertainty never becomes acceptance", () => {
@@ -105,6 +110,8 @@ test("regression cases retain real values, version context, and valid same-study
   review.C3.checks.configuration = "fail";
   review.C5.checks.quantities = "fail";
   assert.deepEqual(evaluateAudit(connections, review, catalog).map(d => d.accepted), fixtures.examples.map(x => x.expectedAccept));
+  const termination = fixtures.examples.find(e => e.case === 'termination-control').connection;
+  assert.doesNotMatch(`${termination.relationship}\n${termination.limit}\n${termination.words.map(w => w.fit).join('\n')}`, /step-size|displacement step/i);
 });
 
 test("review sees adjacent context, not expected answers, and logs only counts/categories", async () => {

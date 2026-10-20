@@ -227,7 +227,7 @@
         "evidence": {
           "S1": null,
           "S2": null,
-          "S3": "S3P9",
+          "S3": "S3P8",
           "S4": "S4P3",
           "S5": null,
           "S6": null
@@ -292,8 +292,8 @@
       "connection": {
         "title": "Same termination status, different computational models",
         "kind": "observed",
-        "relationship": "Both diagnostic logs report normal termination of xtb. They use different Hamiltonians, GFN1-xTB and GFN2-xTB, and different displacement steps. Their reported total energies are -5.768774918844 Eh and -5.070544446870 Eh, respectively. The supported commonality is the termination message, not a shared numerical energy endpoint.",
-        "limit": "These two logs do not isolate a step-size effect: the electronic model also changes. Absolute energies from different Hamiltonians cannot be treated as a shared endpoint or their difference attributed to the displacement step alone. Normal termination does not by itself validate physical accuracy, vibration results, or convergence across models. These are diagnostic runs, not a replacement for the final study.",
+        "relationship": "Both diagnostic logs report normal termination of xtb. They use different Hamiltonians, GFN1-xTB and GFN2-xTB, and report total energies of -5.768774918844 Eh and -5.070544446870 Eh, respectively. The supported commonality is the termination message, not a shared numerical energy endpoint.",
+        "limit": "Absolute energies from different Hamiltonians cannot be treated as a shared endpoint. Normal termination does not by itself validate physical accuracy, vibration results, or convergence across models.",
         "evidence": {
           "S1": null,
           "S2": null,
@@ -314,9 +314,9 @@
             "fit": "Keeps each reported energy attached to its own Hamiltonian."
           },
           {
-            "term": "confounded comparison",
+            "term": "model-limited comparison",
             "kind": "candidate",
-            "fit": "Names why changing both model and displacement step prevents attributing the difference to step size alone."
+            "fit": "Names why the differing Hamiltonians prevent the absolute energies from serving as one shared endpoint."
           }
         ]
       }
