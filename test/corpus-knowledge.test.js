@@ -21,7 +21,7 @@ test('the same local definitions reach both generation modes and the independent
     calls++;
     assert.equal(req.messages[0].content.split(CORPUS_GUIDANCE).length, 2);
     assert.doesNotMatch(JSON.stringify(req.messages), /expectedAccept|expectedNotPass|expectedStances/);
-    assert.match(req.messages[0].content, /withholding a proof is not asserting that proof/);
+    assert.match(req.messages[0].content, /withholding a claim of proof is not asserting that proof/);
     return { choices: [{ finish_reason:'stop', message:{ content:'{}' } }] };
   } } } };
   const result = await auditConnections(client, 'mock-model', [fixtures.examples[0].connection], catalog);
@@ -86,6 +86,8 @@ test('corpus evaluation has matched controls, valid evidence, and no answer leak
     const {candidates}=JSON.parse(req.messages[1].content);
     assert.equal(candidates.length,1);
     const e=fixtures.examples[calls++];
+    assert.equal(candidates[0].fields.relationship,e.connection.relationship);
+    assert.equal(candidates[0].fields.word_1,`${e.connection.words[0].term}: ${e.connection.words[0].fit}`);
     const fields=Object.fromEntries(Object.keys(candidates[0].fields).map(key=>[key,{
       stance:e.expectedStances?.[key]?.[0]||'asserted', proposition:candidates[0].fields[key],
       status:e.expectedNotPass?.includes(key)?'fail':'pass',reason:'Mock verdict for pipeline validation.'
@@ -98,6 +100,24 @@ test('corpus evaluation has matched controls, valid evidence, and no answer leak
   assert.match(report,/12 of 12 expected decisions matched/);
   assert.match(report,/Synthetic examples/);
   assert.doesNotMatch(report,/## Pinned sources/);
+});
+
+test('corpus controls preserve the owner phrase and distinguish an unclaimed proof from a concealed one', () => {
+  const examples=Object.fromEntries(fixtures.examples.map(e=>[e.case,e]));
+  const language=examples['socio-didact-bounded'];
+  assert.equal(language.connection.words[0].term,'preserves Sens while adjusting Sin');
+  assert.equal(language.expectedAccept,true);
+  const scaling=examples['alignment-stability-bounded'];
+  assert.equal(scaling.connection.words[0].term,'product preserved under reciprocal scaling');
+  const proof=examples['withheld-proof-bounded'];
+  assert.equal(proof.connection.words[0].term,'evolution not proved here');
+  assert.equal(proof.expectedAccept,true);
+  assert.deepEqual(proof.expectedStances.word_1,['withheld','contrast']);
+  assert.doesNotMatch(JSON.stringify([scaling.connection,proof.connection]),/bounded invariant|local mathematical result|withheld evolution proof/);
+  const concealment=examples['withheld-proof-overclaim'];
+  assert.match(concealment.connection.words[0].fit,/proof of global smoothness exists but is being concealed/);
+  assert.equal(concealment.expectedAccept,false);
+  assert.ok(concealment.expectedNotPass.includes('word_1'));
 });
 
 test('corpus command is owner-only and does not collect the public repositories', async () => {
