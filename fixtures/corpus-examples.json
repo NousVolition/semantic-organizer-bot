@@ -1,0 +1,433 @@
+{
+  "description": "Synthetic evaluation passages derived from owner-approved corpus definitions. These are controls, not newly discovered research findings or pinned quotations. Expected verdicts are evaluation-only and excluded from model requests.",
+  "sources": [
+    {
+      "id": "S101",
+      "repository": "NousVolition/semantic-organizer-bot",
+      "path": "fixtures/corpus-examples.json",
+      "url": "https://github.com/NousVolition/semantic-organizer-bot/blob/main/fixtures/corpus-examples.json",
+      "sampled": false,
+      "excerpts": [
+        {
+          "startLine": 1,
+          "text": "The sharp response is max(q,0). It is zero for q<=0 and proportional to the excess for q>0."
+        }
+      ]
+    },
+    {
+      "id": "S102",
+      "repository": "NousVolition/semantic-organizer-bot",
+      "path": "fixtures/corpus-examples.json",
+      "url": "https://github.com/NousVolition/semantic-organizer-bot/blob/main/fixtures/corpus-examples.json",
+      "sampled": false,
+      "excerpts": [
+        {
+          "startLine": 1,
+          "text": "The other response is q*(1+tanh(q/epsilon))/2, epsilon>0. It has an explicitly intended negative tail for q<0."
+        }
+      ]
+    },
+    {
+      "id": "S103",
+      "repository": "NousVolition/semantic-organizer-bot",
+      "path": "fixtures/corpus-examples.json",
+      "url": "https://github.com/NousVolition/semantic-organizer-bot/blob/main/fixtures/corpus-examples.json",
+      "sampled": false,
+      "excerpts": [
+        {
+          "startLine": 1,
+          "text": "For v in R^n, the gradient norm |v| is not differentiable at v=0."
+        }
+      ]
+    },
+    {
+      "id": "S104",
+      "repository": "NousVolition/semantic-organizer-bot",
+      "path": "fixtures/corpus-examples.json",
+      "url": "https://github.com/NousVolition/semantic-organizer-bot/blob/main/fixtures/corpus-examples.json",
+      "sampled": false,
+      "excerpts": [
+        {
+          "startLine": 1,
+          "text": "We apply a smooth scalar tanh switch to a signed excess involving |v|; no cancellation or gradient regularization is supplied."
+        }
+      ]
+    },
+    {
+      "id": "S105",
+      "repository": "NousVolition/semantic-organizer-bot",
+      "path": "fixtures/corpus-examples.json",
+      "url": "https://github.com/NousVolition/semantic-organizer-bot/blob/main/fixtures/corpus-examples.json",
+      "sampled": false,
+      "excerpts": [
+        {
+          "startLine": 1,
+          "text": "Four node positions have Y coordinates (3,3,3,3), so the reference residual at this state is zero. No evolution rule is specified."
+        }
+      ]
+    },
+    {
+      "id": "S106",
+      "repository": "NousVolition/semantic-organizer-bot",
+      "path": "fixtures/corpus-examples.json",
+      "url": "https://github.com/NousVolition/semantic-organizer-bot/blob/main/fixtures/corpus-examples.json",
+      "sampled": false,
+      "excerpts": [
+        {
+          "startLine": 1,
+          "text": "Reciprocal scaling by lambda and 1/lambda, lambda>0, preserves the scalar product SR. No time-evolution law is specified."
+        }
+      ]
+    },
+    {
+      "id": "S107",
+      "repository": "NousVolition/semantic-organizer-bot",
+      "path": "fixtures/corpus-examples.json",
+      "url": "https://github.com/NousVolition/semantic-organizer-bot/blob/main/fixtures/corpus-examples.json",
+      "sampled": false,
+      "excerpts": [
+        {
+          "startLine": 1,
+          "text": "Let the permitted region be [-1,1] and the available actions be A={0}. Its boundary is {-1,1}."
+        }
+      ]
+    },
+    {
+      "id": "S108",
+      "repository": "NousVolition/semantic-organizer-bot",
+      "path": "fixtures/corpus-examples.json",
+      "url": "https://github.com/NousVolition/semantic-organizer-bot/blob/main/fixtures/corpus-examples.json",
+      "sampled": false,
+      "excerpts": [
+        {
+          "startLine": 1,
+          "text": "A boundary-margin model measures unsigned distance to that boundary; an outside action at 2 has distance 1."
+        }
+      ]
+    },
+    {
+      "id": "S109",
+      "repository": "NousVolition/semantic-organizer-bot",
+      "path": "fixtures/corpus-examples.json",
+      "url": "https://github.com/NousVolition/semantic-organizer-bot/blob/main/fixtures/corpus-examples.json",
+      "sampled": false,
+      "excerpts": [
+        {
+          "startLine": 1,
+          "text": "Socio-Didact is a coined situational observation and learning mode. It need not be dominant, strategic, or unusually intelligent."
+        }
+      ]
+    },
+    {
+      "id": "S110",
+      "repository": "NousVolition/semantic-organizer-bot",
+      "path": "fixtures/corpus-examples.json",
+      "url": "https://github.com/NousVolition/semantic-organizer-bot/blob/main/fixtures/corpus-examples.json",
+      "sampled": false,
+      "excerpts": [
+        {
+          "startLine": 1,
+          "text": "Sens means personal intent; Sin means socially constrained or encoded expression in this corpus. The writer preserves Sens while adjusting Sin."
+        }
+      ]
+    },
+    {
+      "id": "S111",
+      "repository": "NousVolition/semantic-organizer-bot",
+      "path": "fixtures/corpus-examples.json",
+      "url": "https://github.com/NousVolition/semantic-organizer-bot/blob/main/fixtures/corpus-examples.json",
+      "sampled": false,
+      "excerpts": [
+        {
+          "startLine": 1,
+          "text": "The optional response a(q)=0 for q<=0 and q*exp[-(epsilon/q)^2] for q>0, epsilon>0, is C-infinity in q. Global PDE regularity is not proved here."
+        }
+      ]
+    },
+    {
+      "id": "S112",
+      "repository": "NousVolition/semantic-organizer-bot",
+      "path": "fixtures/corpus-examples.json",
+      "url": "https://github.com/NousVolition/semantic-organizer-bot/blob/main/fixtures/corpus-examples.json",
+      "sampled": false,
+      "excerpts": [
+        {
+          "startLine": 1,
+          "text": "A separate initial-field identity establishes divergence freedom at initialization. It does not establish the subsequent evolution theorem."
+        }
+      ]
+    }
+  ],
+  "examples": [
+    {
+      "case": "tanh-threshold-overclaim",
+      "expectedAccept": false,
+      "connection": {
+        "title": "Tanh threshold",
+        "kind": "interpretive",
+        "relationship": "Both laws are exactly inactive below threshold and nonnegative everywhere.",
+        "limit": "This comparison concerns only the two supplied statements.",
+        "evidence": {
+          "S101": "S101P1",
+          "S102": "S102P1"
+        },
+        "words": [
+          {
+            "term": "exact-off equivalence",
+            "fit": "Both laws are exactly inactive below threshold and nonnegative everywhere."
+          }
+        ]
+      },
+      "expectedNotPass": [
+        "relationship",
+        "word_1"
+      ]
+    },
+    {
+      "case": "tanh-threshold-bounded",
+      "expectedAccept": true,
+      "connection": {
+        "title": "Tanh threshold",
+        "kind": "interpretive",
+        "relationship": "Both use the threshold excess, but only the sharp law is exactly off below threshold. The signed tanh tail is intentional in the second model.",
+        "limit": "This comparison concerns only the two supplied statements.",
+        "evidence": {
+          "S101": "S101P1",
+          "S102": "S102P1"
+        },
+        "words": [
+          {
+            "term": "different threshold responses",
+            "fit": "Both use the threshold excess, but only the sharp law is exactly off below threshold. The signed tanh tail is intentional in the second model."
+          }
+        ]
+      }
+    },
+    {
+      "case": "smooth-composition-overclaim",
+      "expectedAccept": false,
+      "connection": {
+        "title": "Smooth composition",
+        "kind": "interpretive",
+        "relationship": "The outer tanh proves this composition is smooth everywhere, including v=0.",
+        "limit": "This comparison concerns only the two supplied statements.",
+        "evidence": {
+          "S103": "S103P1",
+          "S104": "S104P1"
+        },
+        "words": [
+          {
+            "term": "automatic smoothness",
+            "fit": "The outer tanh proves this composition is smooth everywhere, including v=0."
+          }
+        ]
+      },
+      "expectedNotPass": [
+        "relationship",
+        "word_1"
+      ]
+    },
+    {
+      "case": "smooth-composition-bounded",
+      "expectedAccept": true,
+      "connection": {
+        "title": "Smooth composition",
+        "kind": "interpretive",
+        "relationship": "A smooth outer switch does not automatically resolve the zero-gradient norm issue; the composition needs checking.",
+        "limit": "This comparison concerns only the two supplied statements.",
+        "evidence": {
+          "S103": "S103P1",
+          "S104": "S104P1"
+        },
+        "words": [
+          {
+            "term": "composition check",
+            "fit": "A smooth outer switch does not automatically resolve the zero-gradient norm issue; the composition needs checking."
+          }
+        ]
+      }
+    },
+    {
+      "case": "alignment-stability-overclaim",
+      "expectedAccept": false,
+      "connection": {
+        "title": "Alignment stability",
+        "kind": "interpretive",
+        "relationship": "Both mathematical equalities prove dynamically stable equilibria.",
+        "limit": "This comparison concerns only the two supplied statements.",
+        "evidence": {
+          "S105": "S105P1",
+          "S106": "S106P1"
+        },
+        "words": [
+          {
+            "term": "stable equilibrium",
+            "fit": "Both mathematical equalities prove dynamically stable equilibria."
+          }
+        ]
+      },
+      "expectedNotPass": [
+        "relationship",
+        "word_1"
+      ]
+    },
+    {
+      "case": "alignment-stability-bounded",
+      "expectedAccept": true,
+      "connection": {
+        "title": "Alignment stability",
+        "kind": "interpretive",
+        "relationship": "The first supplies coordinate alignment and the second a transformation invariant. Neither supplied statement establishes stability over time.",
+        "limit": "This comparison concerns only the two supplied statements.",
+        "evidence": {
+          "S105": "S105P1",
+          "S106": "S106P1"
+        },
+        "words": [
+          {
+            "term": "bounded invariant",
+            "fit": "The first supplies coordinate alignment and the second a transformation invariant. Neither supplied statement establishes stability over time."
+          }
+        ]
+      }
+    },
+    {
+      "case": "boundary-feasibility-overclaim",
+      "expectedAccept": false,
+      "connection": {
+        "title": "Boundary feasibility",
+        "kind": "interpretive",
+        "relationship": "No available boundary point means no passage, and an outside action must have a negative unsigned distance.",
+        "limit": "This comparison concerns only the two supplied statements.",
+        "evidence": {
+          "S107": "S107P1",
+          "S108": "S108P1"
+        },
+        "words": [
+          {
+            "term": "negative unsigned distance",
+            "fit": "No available boundary point means no passage, and an outside action must have a negative unsigned distance."
+          }
+        ]
+      },
+      "expectedNotPass": [
+        "relationship",
+        "word_1"
+      ]
+    },
+    {
+      "case": "boundary-feasibility-bounded",
+      "expectedAccept": true,
+      "connection": {
+        "title": "Boundary feasibility",
+        "kind": "interpretive",
+        "relationship": "An action can be permitted without lying on the boundary, and unsigned distance alone does not identify which side it is on.",
+        "limit": "This comparison concerns only the two supplied statements.",
+        "evidence": {
+          "S107": "S107P1",
+          "S108": "S108P1"
+        },
+        "words": [
+          {
+            "term": "side-aware margin",
+            "fit": "An action can be permitted without lying on the boundary, and unsigned distance alone does not identify which side it is on."
+          }
+        ]
+      }
+    },
+    {
+      "case": "socio-didact-overclaim",
+      "expectedAccept": false,
+      "connection": {
+        "title": "Socio didact",
+        "kind": "interpretive",
+        "relationship": "The Socio-Didact is a superior cognitive type who manipulates social groups to overcome moral sin.",
+        "limit": "This comparison concerns only the two supplied statements.",
+        "evidence": {
+          "S109": "S109P1",
+          "S110": "S110P1"
+        },
+        "words": [
+          {
+            "term": "cognitive superiority",
+            "fit": "The Socio-Didact is a superior cognitive type who manipulates social groups to overcome moral sin."
+          }
+        ]
+      },
+      "expectedNotPass": [
+        "relationship",
+        "word_1"
+      ]
+    },
+    {
+      "case": "socio-didact-bounded",
+      "expectedAccept": true,
+      "connection": {
+        "title": "Socio didact",
+        "kind": "interpretive",
+        "relationship": "The observer can learn local cues and adjust expression while preserving intent. The coined vocabulary makes that distinction visible.",
+        "limit": "This comparison concerns only the two supplied statements.",
+        "evidence": {
+          "S109": "S109P1",
+          "S110": "S110P1"
+        },
+        "words": [
+          {
+            "term": "meaning-preserving adaptation",
+            "fit": "The observer can learn local cues and adjust expression while preserving intent. The coined vocabulary makes that distinction visible."
+          }
+        ]
+      }
+    },
+    {
+      "case": "withheld-proof-overclaim",
+      "expectedAccept": false,
+      "connection": {
+        "title": "Withheld proof",
+        "kind": "interpretive",
+        "relationship": "Both withhold some detail but nevertheless establish global smoothness of the evolution.",
+        "limit": "This comparison concerns only the two supplied statements.",
+        "evidence": {
+          "S111": "S111P1",
+          "S112": "S112P1"
+        },
+        "words": [
+          {
+            "term": "global proof",
+            "fit": "Both withhold some detail but nevertheless establish global smoothness of the evolution."
+          }
+        ]
+      },
+      "expectedNotPass": [
+        "relationship",
+        "word_1"
+      ]
+    },
+    {
+      "case": "withheld-proof-bounded",
+      "expectedAccept": true,
+      "connection": {
+        "title": "Withheld proof",
+        "kind": "interpretive",
+        "relationship": "Both statements preserve a local mathematical result while explicitly withholding proof of the stronger time-evolution claim.",
+        "limit": "This comparison concerns only the two supplied statements.",
+        "evidence": {
+          "S111": "S111P1",
+          "S112": "S112P1"
+        },
+        "words": [
+          {
+            "term": "withheld evolution proof",
+            "fit": "Both statements preserve a local mathematical result while explicitly withholding proof of the stronger time-evolution claim."
+          }
+        ]
+      },
+      "expectedStances": {
+        "word_1": [
+          "withheld",
+          "contrast"
+        ]
+      }
+    }
+  ]
+}

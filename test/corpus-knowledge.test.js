@@ -1,0 +1,118 @@
+const { test } = require('node:test');
+const assert = require('node:assert/strict');
+const { readFileSync } = require('node:fs');
+const { join } = require('node:path');
+const { CORPUS_GUIDANCE } = require('../corpus-knowledge');
+const { skillsForMode } = require('../language-skills');
+const { auditConnections, CHECKS } = require('../comparison-audit');
+const { citationPassages, checkComparisonExamples, createDiscoveryHandler } = require('../discovery');
+const fixtures = require('../fixtures/corpus-examples.json');
+const catalog = citationPassages(fixtures.sources);
+
+test('the same local definitions reach both generation modes and the independent audit', async () => {
+  const rules = readFileSync(join(__dirname, '../language-skills.md'), 'utf8');
+  for (const mode of ['review','discovery']) {
+    const prompt = skillsForMode(rules, mode);
+    assert.equal(prompt.split(CORPUS_GUIDANCE).length, 2);
+    assert.match(prompt, /do not impose them on unrelated writing/);
+  }
+  let calls = 0;
+  const client = { chat: { completions: { create: async req => {
+    calls++;
+    assert.equal(req.messages[0].content.split(CORPUS_GUIDANCE).length, 2);
+    assert.doesNotMatch(JSON.stringify(req.messages), /expectedAccept|expectedNotPass|expectedStances/);
+    assert.match(req.messages[0].content, /withholding a proof is not asserting that proof/);
+    return { choices: [{ finish_reason:'stop', message:{ content:'{}' } }] };
+  } } } };
+  const result = await auditConnections(client, 'mock-model', [fixtures.examples[0].connection], catalog);
+  assert.equal(calls, 1);
+  assert.equal(result[0].accepted, false);
+});
+
+test('numerical counterexamples distinguish threshold semantics and composition regularity', () => {
+  const eps = 2;
+  const tail = q => q * (1 + Math.tanh(q/eps)) / 2;
+  assert.ok(Math.abs(tail(-eps)/eps + .11920292202211755) < 1e-14);
+  assert.ok(tail(-eps) < 0);
+  assert.equal(Math.max(-eps,0),0);
+  assert.equal(Math.max(0,0),0);
+  // Difference quotients expose a corner in this actual composition (not all compositions).
+  const f = v => tail(Math.abs(v) - eps);
+  const h=1e-5, right=(f(h)-f(0))/h, left=(f(-h)-f(0))/(-h);
+  assert.ok(Math.abs(right-left) > .1);
+  const delta=.3, gamma=2;
+  const norm = v => Math.sqrt(v*v+delta*delta)-delta;
+  const onset = Math.sqrt(gamma*gamma+2*delta*gamma);
+  assert.ok(Math.abs(norm(onset)-gamma)<1e-12);
+  assert.equal(norm(0),0);
+  assert.ok(norm(gamma)<gamma); // A changed measure shifts the original-magnitude threshold.
+  const calibrated = v => Math.sqrt(v*v+delta*delta)-Math.sqrt(gamma*gamma+delta*delta);
+  assert.equal(calibrated(gamma),0);
+  assert.ok(calibrated(gamma/2)<0);
+  assert.ok(calibrated(gamma*2)>0);
+  // These finite checks illustrate the guidance; they are not a proof of C-infinity.
+  const exact = q => q <= 0 ? 0 : q*Math.exp(-((eps/q)**2));
+  for (const q of [-2,-.1,0]) assert.equal(exact(q),0);
+  assert.ok(exact(2)>0);
+});
+
+test('counterexamples keep feasibility, dissipation and static invariance in scope', () => {
+  const actions=[0], boundary=[-1,1];
+  assert.ok(actions.some(x => x>=-1 && x<=1));
+  assert.ok(!actions.some(x => boundary.includes(x)));
+  assert.equal(Math.min(...boundary.map(x=>Math.abs(2-x))),1);
+  const pairs=[[1,1],[1,0],[0,1],[0,0]];
+  assert.deepEqual(pairs.map(([a,b])=>a===b),[true,false,false,true]);
+  const severity=[.8,1.4,1.3].map(x=>5*x), thresholds=[8.5,5.5,6];
+  assert.deepEqual(severity,[4,7,6.5]);
+  assert.deepEqual(severity.map((x,i)=>x>=thresholds[i]),[false,true,true]);
+  const s=3,r=5,lambda=2;
+  assert.equal((lambda*s)*(r/lambda),s*r);
+  // Zero coordinate residual at t=0 is compatible with x'=x-3 and growing perturbations.
+  assert.equal(3-3,0);
+  assert.ok(.01*Math.exp(1)>.01);
+  // Fixed negative force adds energy to a negative velocity: u dot f > 0.
+  assert.ok((-1)*(-1)>0);
+});
+
+test('corpus evaluation has matched controls, valid evidence, and no answer leakage', async () => {
+  assert.equal(fixtures.examples.length,12);
+  assert.equal(fixtures.examples.filter(x=>x.expectedAccept).length,6);
+  for(const e of fixtures.examples) for(const [source,id] of Object.entries(e.connection.evidence))
+    assert.ok(catalog.some(p=>p.id===id && p.source.id===source));
+  let calls=0;
+  const client={chat:{completions:{create:async req=>{
+    assert.doesNotMatch(JSON.stringify(req.messages),/expectedAccept|expectedNotPass|expectedStances/);
+    const {candidates}=JSON.parse(req.messages[1].content);
+    assert.equal(candidates.length,1);
+    const e=fixtures.examples[calls++];
+    const fields=Object.fromEntries(Object.keys(candidates[0].fields).map(key=>[key,{
+      stance:e.expectedStances?.[key]?.[0]||'asserted', proposition:candidates[0].fields[key],
+      status:e.expectedNotPass?.includes(key)?'fail':'pass',reason:'Mock verdict for pipeline validation.'
+    }]));
+    const verdict={fields,checks:Object.fromEntries(CHECKS.map(x=>[x,'pass'])),reason:'Mock evaluation.',passages:Object.values(e.connection.evidence)};
+    return {choices:[{finish_reason:'stop',message:{content:JSON.stringify({C1:verdict})}}]};
+  }}}};
+  const report=await checkComparisonExamples(client,'mock-model',undefined,true);
+  assert.equal(calls,12);
+  assert.match(report,/12 of 12 expected decisions matched/);
+  assert.match(report,/Synthetic examples/);
+  assert.doesNotMatch(report,/## Pinned sources/);
+});
+
+test('corpus command is owner-only and does not collect the public repositories', async () => {
+  const posted=[],updated=[];
+  const octokit={paginate:async()=>[],issues:{listComments(){},createComment:async x=>{posted.push(x.body);return {data:{id:1}};},updateComment:async x=>updated.push(x.body)}};
+  const config={owner:'example',controlRepository:'bot',repositories:['public'],filesPerBatch:2,charactersPerFile:600,maximumFileBytes:10000};
+  let calls=0;
+  const openai={chat:{completions:{create:async()=>{calls++;return {choices:[{finish_reason:'stop',message:{content:'{}'}}]};}}}};
+  const h=createDiscoveryHandler({config,openai,model:'mock-model',log:{error(){}}});
+  const context={octokit,issue:()=>({owner:'example',repo:'bot',issue_number:1}),payload:{sender:{login:'stranger',type:'User'},repository:{owner:{login:'example'},name:'bot'},issue:{number:1,title:'[Discover language] check corpus examples',user:{type:'User'}}}};
+  await h.handle(context);assert.equal(posted.length,0);
+  context.payload.sender.login='example';context.payload.repository.name='wrong';
+  await h.handle(context);assert.equal(posted.length,0);
+  context.payload.repository.name='bot';
+  await h.handle(context);await h.waitForIdle();
+  assert.equal(calls,12);assert.equal(updated.length,1);
+  assert.match(updated[0],/synthetic corpus examples/);
+});

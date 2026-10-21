@@ -1,3 +1,4 @@
+const { CORPUS_GUIDANCE } = require("./corpus-knowledge");
 const headings = { review: "Direct text reviews", discovery: "Discovery reports" };
 
 function skillsForMode(markdown, mode) {
@@ -12,7 +13,7 @@ function skillsForMode(markdown, mode) {
   );
   if (found.length !== 2 || new Set(found).size !== 2)
     throw new Error("Language skills must define both response formats exactly once");
-  return selected;
+  return `${selected}\n\n${CORPUS_GUIDANCE}`;
 }
 
 module.exports = { skillsForMode };
