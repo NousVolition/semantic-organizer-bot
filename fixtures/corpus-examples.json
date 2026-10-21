@@ -150,10 +150,19 @@
       "path": "fixtures/corpus-examples.json",
       "url": "https://github.com/NousVolition/semantic-organizer-bot/blob/main/fixtures/corpus-examples.json",
       "sampled": false,
+      "provenance": "Synthetic summary of the checked derivation at https://github.com/NousVolition/My-Sources-Project-ALL/blob/2d99c8c4fe36f4ca1e8b25339ab0358211bffbd3/math/notes/smooth-initial-field.tex; not a verbatim source quotation.",
       "excerpts": [
         {
           "startLine": 1,
-          "text": "A separate initial-field identity establishes divergence freedom at initialization. It does not establish the subsequent evolution theorem."
+          "text": "The stated Cartesian initial field is proved smooth, divergence-free throughout R^3, rapidly decreasing, and finite-energy for R>=0, a,b>0 and finite real A,B. The derivation follows. Global smooth evolution is not proved here; no singularity theorem is asserted. This initial-data construction does not establish periodic-box compatibility or a theorem for modified forcing."
+        },
+        {
+          "startLine": 2,
+          "text": "Here q=x^2+y^2 is squared radial position. Define phi=exp[-(q-R^2)^2/a^4-z^2/b^2], H=1-2*z^2/b^2, C=2-4*q*(q-R^2)/a^4, and u0=(-A*x*H-B*y,-A*y*H+B*x,A*z*C)*phi. The Cartesian formula has no division by the radial coordinate."
+        },
+        {
+          "startLine": 3,
+          "text": "Differentiating gives partial_x(u0_x)+partial_y(u0_y)=-A*H*C*phi and partial_z(u0_z)=+A*H*C*phi: the sum is exactly zero, including on the axis. Components and derivatives are polynomials times phi. The bound (q-R^2)^2>=q^2/2-R^4 gives rapid decay, proving the field is Schwartz with finite energy. Finite implementation tests support the code; the analytic derivation establishes these initial-field properties."
         }
       ]
     }
@@ -409,7 +418,7 @@
       "connection": {
         "title": "Withheld proof",
         "kind": "interpretive",
-        "relationship": "One passage describes smoothness of the response function; the other reports an initial-field identity. Both explicitly refrain from claiming a proof of the stronger time-evolution result.",
+        "relationship": "One passage establishes smoothness of a scalar response function; the other supplies a derivation of smoothness, divergence freedom and rapid decay for its Cartesian initial field. Both explicitly refrain from claiming a proof of global smooth evolution.",
         "limit": "This comparison concerns only the two supplied statements.",
         "evidence": {
           "S111": "S111P1",
@@ -418,12 +427,69 @@
         "words": [
           {
             "term": "evolution not proved here",
-            "fit": "A claim of proof of the subsequent evolution is withheld in both passages. This does not imply that a proof exists and is being concealed, or that the evolution claim is false."
+            "fit": "A claim of proof of global smooth evolution is withheld in both passages. This does not imply that a proof exists and is being concealed, that the evolution claim is false, or that their established response-function and initial-field properties are unproved."
           }
         ]
       },
       "expectedStances": {
         "word_1": [
+          "withheld",
+          "contrast"
+        ]
+      }
+    },
+    {
+      "case": "initial-proof-denial-overclaim",
+      "expectedAccept": false,
+      "connection": {
+        "title": "Initial results and evolution scope",
+        "kind": "interpretive",
+        "relationship": "Because neither passage proves global smooth evolution, neither establishes its stated smoothness property, and the initial field's divergence freedom is only an unchecked numerical observation.",
+        "limit": "This comparison concerns only the two supplied statements and their stated constructions.",
+        "evidence": {
+          "S111": "S111P1",
+          "S112": "S112P1"
+        },
+        "words": [
+          {
+            "term": "unproved initial-field incompressibility",
+            "fit": "Withholding a global-evolution claim makes the supplied initial-field divergence cancellation unproved."
+          }
+        ]
+      },
+      "expectedNotPass": [
+        "relationship",
+        "word_1"
+      ]
+    },
+    {
+      "case": "initial-proof-kept",
+      "expectedAccept": true,
+      "connection": {
+        "title": "Initial results and evolution scope",
+        "kind": "interpretive",
+        "relationship": "The response-law smoothness and Cartesian initial-field derivation establish different properties. Neither passage claims to prove global smooth evolution; this does not retract their narrower results.",
+        "limit": "The initial-field result applies to the stated parameters and Cartesian formula on R^3. It gives no evolution theorem for changed forcing and does not make raw samples periodic. Changing the force alone does not retract the identity for the unchanged initial field.",
+        "evidence": {
+          "S111": "S111P1",
+          "S112": "S112P1"
+        },
+        "words": [
+          {
+            "term": "proved initial-field incompressibility",
+            "fit": "For the supplied Cartesian field, the horizontal and vertical derivatives cancel exactly everywhere on R^3, including the axis."
+          },
+          {
+            "term": "global evolution not proved here",
+            "fit": "Both passages withhold the stronger claim of proof of global smooth evolution. This does not deny the proved initial-field properties or assert that a global proof is concealed."
+          }
+        ]
+      },
+      "expectedStances": {
+        "word_1": [
+          "asserted"
+        ],
+        "word_2": [
           "withheld",
           "contrast"
         ]
