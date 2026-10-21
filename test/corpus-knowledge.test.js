@@ -46,6 +46,10 @@ test('numerical counterexamples distinguish threshold semantics and composition 
   assert.ok(Math.abs(norm(onset)-gamma)<1e-12);
   assert.equal(norm(0),0);
   assert.ok(norm(gamma)<gamma); // A changed measure shifts the original-magnitude threshold.
+  const calibrated = v => Math.sqrt(v*v+delta*delta)-Math.sqrt(gamma*gamma+delta*delta);
+  assert.equal(calibrated(gamma),0);
+  assert.ok(calibrated(gamma/2)<0);
+  assert.ok(calibrated(gamma*2)>0);
   // These finite checks illustrate the guidance; they are not a proof of C-infinity.
   const exact = q => q <= 0 ? 0 : q*Math.exp(-((eps/q)**2));
   for (const q of [-2,-.1,0]) assert.equal(exact(q),0);
