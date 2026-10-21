@@ -267,6 +267,24 @@ Subscribe to: `push`, `pull_request`, `issues`
 
 ## Local development and tests
 
+### Corpus definitions
+
+Edit `corpus-definitions.md` to maintain the owner's local terms and mathematical
+distinctions. Both generation modes and the independent publication reviewer load
+the same file at startup. A deployment loads changes. Keep definitions scoped to
+their source/version; unfamiliar language is not itself an error. These rules
+are prompt guidance, not model training or a formal verification tool.
+
+The offline tests check prompt delivery and explicit mathematical counterexamples.
+They do not measure live model accuracy. `fixtures/corpus-examples.json` contains
+paired evaluation cases, separate from the guidance; expected verdicts must never
+be sent to the model. No source document is uploaded by these tests.
+
+The owner can request `[Discover language] check corpus examples` in the control
+repository for the separate 12-case live model evaluation. This uses the configured
+comparison model and API usage; it does not run on startup or on ordinary tests.
+The existing `check examples` command retains its original 22-case scope.
+
 Use Node.js 24. Run `npm ci`, copy `.env.example` to `.env`, and fill in the
 settings. `npm start` validates the settings and starts the bot. `npm run dev`
 uses Probot's interactive local setup instead.

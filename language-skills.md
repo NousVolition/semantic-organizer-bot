@@ -258,7 +258,7 @@ Comparison lessons from source review:
 
 ### Owner's glossary
 
-No custom terms yet. Add entries in this form (replace the bracketed text):
+The owner's combined-corpus definitions are maintained in [corpus-definitions.md](corpus-definitions.md). The application loads that file into both direct review and discovery, and separately into the comparison reviewer. It defines Sens, Sin, Socio-Didact, boundary margin, membership cues, and situational orientations, with math and logic distinctions that preserve their scope. These are local meanings, not universal definitions. Add further entries here in this form:
 
 ```text
 Term: [your term]
@@ -270,7 +270,7 @@ Term: [your term]
 
 ### Owner's examples and preferences
 
-No custom examples yet. Add examples in this form (replace the bracketed text):
+The shared corpus file includes examples preserving unconventional language and explicitly withheld proof claims. Add further examples here in this form:
 
 ```text
 Original: [a phrase you used]
