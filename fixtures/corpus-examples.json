@@ -285,8 +285,8 @@
         },
         "words": [
           {
-            "term": "bounded invariant",
-            "fit": "The first supplies coordinate alignment and the second a transformation invariant. Neither supplied statement establishes stability over time."
+            "term": "product preserved under reciprocal scaling",
+            "fit": "The second passage establishes that reciprocal scaling preserves SR. The first establishes coordinate alignment only. Neither statement establishes stability or boundedness of a subsequent time evolution."
           }
         ]
       }
@@ -373,8 +373,8 @@
         },
         "words": [
           {
-            "term": "meaning-preserving adaptation",
-            "fit": "The observer can learn local cues and adjust expression while preserving intent. The coined vocabulary makes that distinction visible."
+            "term": "preserves Sens while adjusting Sin",
+            "fit": "In this corpus, the observer can retain personal intent (Sens) while adapting socially constrained or encoded expression (Sin). Keep this coined wording: it distinguishes intent from expression without assigning superiority, manipulation, or moral wrongdoing."
           }
         ]
       }
@@ -393,8 +393,8 @@
         },
         "words": [
           {
-            "term": "global proof",
-            "fit": "Both withhold some detail but nevertheless establish global smoothness of the evolution."
+            "term": "concealed evolution proof",
+            "fit": "Both passages indicate that a proof of global smoothness exists but is being concealed."
           }
         ]
       },
@@ -409,7 +409,7 @@
       "connection": {
         "title": "Withheld proof",
         "kind": "interpretive",
-        "relationship": "Both statements preserve a local mathematical result while explicitly withholding proof of the stronger time-evolution claim.",
+        "relationship": "One passage describes smoothness of the response function; the other reports an initial-field identity. Both explicitly refrain from claiming a proof of the stronger time-evolution result.",
         "limit": "This comparison concerns only the two supplied statements.",
         "evidence": {
           "S111": "S111P1",
@@ -417,8 +417,8 @@
         },
         "words": [
           {
-            "term": "withheld evolution proof",
-            "fit": "Both statements preserve a local mathematical result while explicitly withholding proof of the stronger time-evolution claim."
+            "term": "evolution not proved here",
+            "fit": "A claim of proof of the subsequent evolution is withheld in both passages. This does not imply that a proof exists and is being concealed, or that the evolution claim is false."
           }
         ]
       },
