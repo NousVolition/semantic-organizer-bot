@@ -32,6 +32,29 @@ Preserve unusual words, imagery, productive ambiguity, and supported semantic fo
 
 If the intended threshold remains |grad S| = Gamma with Gamma >= 0, an alternative calibrated excess is q_delta_star = sqrt(|grad S|^2 + delta^2) - sqrt(Gamma^2 + delta^2), delta > 0. Its sign matches |grad S| - Gamma, so combining it with a_epsilon retains that cutoff while giving a smooth exact-off constitutive response. The response above threshold still changes; do not call the new law identical to the original tanh or sharp law.
 
+## Checked initial-field proof and its scope
+
+The checked construction is [A smooth initial velocity field with swirl](https://github.com/NousVolition/My-Sources-Project-ALL/blob/2d99c8c4fe36f4ca1e8b25339ab0358211bffbd3/math/notes/smooth-initial-field.tex), especially its field definition and smoothness, decay, and incompressibility proof. This pinned version supplies a derivation, not just a reported identity. Attach the result to this formula, parameter family, and whole-space domain. Recheck an altered field or gate before transferring the initial-field result. Changed forcing or boundary treatment needs separate evolution or compatibility analysis; it does not by itself retract the identity for an unchanged initial field. The link records provenance; ordinary model requests do not fetch it or execute a proof checker.
+
+Here q = x^2 + y^2 is squared radial position, not the threshold excess called q elsewhere. For R >= 0, a,b > 0 and finite real A,B, define
+
+```text
+phi = exp[-(q - R^2)^2/a^4 - z^2/b^2]
+H = 1 - 2*z^2/b^2
+C = 2 - 4*q*(q - R^2)/a^4
+u0 = (-A*x*H - B*y, -A*y*H + B*x, A*z*C) * phi
+```
+
+The Cartesian derivatives give partial_x(u0_x) + partial_y(u0_y) = -A*H*C*phi and partial_z(u0_z) = +A*H*C*phi. The swirl terms cancel, so div(u0) = 0 exactly, including on the axis. There is no division by the radial coordinate. Every component and derivative is a polynomial times phi; the estimate (q - R^2)^2 >= q^2/2 - R^4 gives rapid decay. Thus this initial field is smooth (indeed real analytic), divergence-free, and Schwartz on all of R^3, with finite kinetic energy and finite L2 norms of every spatial derivative. These are established initial-field properties within the stated assumptions, not merely numerical observations or conjectures. The reproduced implementation tests and energy quadrature support the implementation; finite checks alone are not the analytic proof.
+
+Keep three scopes separate:
+
+- **Proved at initialization:** the properties above hold throughout space for u0. All of space is not all of time. Do not downgrade the initial-field proof because a stronger evolution claim is withheld.
+- **Later evolution under a separate theorem:** for the standard unforced incompressible Navier-Stokes problem on R^3 with positive viscosity, these smooth rapidly decreasing divergence-free data fall within standard local-existence theory, giving smooth evolution for some positive time. This uses that theorem and its hypotheses, not the divergence identity alone; it supplies no numerical lifespan here. See [Fefferman's problem description](https://www.claymath.org/library/monographs/MPPc.pdf). Do not transfer this conclusion silently to a modified forcing or coupled model.
+- **Not established by this construction:** smooth evolution for all time, eventual singularity, dynamic stability, numerical convergence, and compatibility of raw samples with a periodic box. These need separate evidence. Withholding a claim of proof about global evolution neither denies the proved initial-field properties nor asserts a concealed proof or a disproof of global evolution. A numerical projection's small discrete divergence is a different result from continuum regularity.
+
+When reading a new passage, identify the actual formula, assumptions, and object of each claim. The checked construction is not a whitelist for any statement containing "initial field" or "proof". Retain attribution when a different identity is merely reported, and inspect any changed construction rather than borrowing this result.
+
 ## Short examples of the intended reading
 
 ### A claim of proof can be withheld without a proof being concealed
@@ -41,6 +64,8 @@ Read the object and scope of the sentence. “Evolution is not proved here” wi
 - Keep: “The Y residual vanishes; stability over time is not established.” Repair: “The Y residual vanishes, proving closed-loop stability.”
 - Keep: “The tanh model intentionally permits a signed response below threshold.” Repair: “Tanh makes this force exactly zero below threshold.”
 - Keep: “The smooth exact-off law has a flat join; global regularity is not proved here.” The response-function property is asserted; a claim of proof of evolution is withheld. Do not infer a concealed proof or a disproof.
+- Keep: “The stated Cartesian field is proved smooth and divergence-free on R^3; global smooth evolution is not proved here.” The initial-field clause is asserted and supported; the evolution clause withholds a stronger claim. Repair: “Because global evolution is not proved here, the initial-field result is only an unchecked numerical observation.”
+- Keep: “A separate local-existence theorem applies under the standard unforced whole-space Navier-Stokes assumptions.” Repair: “The initial-field identity proves smooth evolution for all time under any force or boundary treatment.”
 - Keep: “The Socio-Didact preserves Sens while adjusting Sin.” Read the coined terms locally, without inferring cognitive rank or manipulation, and preserve the author's exact phrase when it fits the passage.
 
 Mathematical background: NIST DLMF, hyperbolic functions (https://dlmf.nist.gov/4.28 and https://dlmf.nist.gov/4.34); mathlib's smooth transition construction (https://leanprover-community.github.io/mathlib4_docs/Mathlib/Analysis/SpecialFunctions/SmoothTransition.html). These references concern scalar functions, not a proof about this corpus's PDE model. Ordinary model requests cannot browse or independently verify them.

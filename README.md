@@ -281,9 +281,15 @@ paired evaluation cases, separate from the guidance; expected verdicts must neve
 be sent to the model. No source document is uploaded by these tests.
 
 The owner can request `[Discover language] check corpus examples` in the control
-repository for the separate 12-case live model evaluation. This uses the configured
+repository for the separate 14-case live model evaluation. This uses the configured
 comparison model and API usage; it does not run on startup or on ordinary tests.
 The existing `check examples` command retains its original 22-case scope.
+
+The corpus suite includes the checked initial-field derivation and paired cases
+that distinguish its proved properties from a withheld global-evolution claim.
+It includes a negative control for downgrading the initial-field proof merely
+because that stronger claim is withheld. The source/version and assumptions are recorded in the shared
+definitions; these remain fallible model guidance, not a formal proof checker.
 
 Use Node.js 24. Run `npm ci`, copy `.env.example` to `.env`, and fill in the
 settings. `npm start` validates the settings and starts the bot. `npm run dev`

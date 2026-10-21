@@ -15,6 +15,9 @@ test('the same local definitions reach both generation modes and the independent
     const prompt = skillsForMode(rules, mode);
     assert.equal(prompt.split(CORPUS_GUIDANCE).length, 2);
     assert.match(prompt, /do not impose them on unrelated writing/);
+    assert.match(prompt, /partial_x\(u0_x\) \+ partial_y\(u0_y\) = -A\*H\*C\*phi/);
+    assert.match(prompt, /Do not downgrade the initial-field proof/);
+    assert.match(prompt, /standard local-existence theory/);
   }
   let calls = 0;
   const client = { chat: { completions: { create: async req => {
@@ -22,6 +25,7 @@ test('the same local definitions reach both generation modes and the independent
     assert.equal(req.messages[0].content.split(CORPUS_GUIDANCE).length, 2);
     assert.doesNotMatch(JSON.stringify(req.messages), /expectedAccept|expectedNotPass|expectedStances/);
     assert.match(req.messages[0].content, /withholding a claim of proof is not asserting that proof/);
+    assert.match(req.messages[0].content, /Checked initial-field proof and its scope/);
     return { choices: [{ finish_reason:'stop', message:{ content:'{}' } }] };
   } } } };
   const result = await auditConnections(client, 'mock-model', [fixtures.examples[0].connection], catalog);
@@ -76,18 +80,24 @@ test('counterexamples keep feasibility, dissipation and static invariance in sco
 });
 
 test('corpus evaluation has matched controls, valid evidence, and no answer leakage', async () => {
-  assert.equal(fixtures.examples.length,12);
-  assert.equal(fixtures.examples.filter(x=>x.expectedAccept).length,6);
+  assert.equal(fixtures.examples.length,14);
+  assert.equal(fixtures.examples.filter(x=>x.expectedAccept).length,7);
   for(const e of fixtures.examples) for(const [source,id] of Object.entries(e.connection.evidence))
     assert.ok(catalog.some(p=>p.id===id && p.source.id===source));
   let calls=0;
   const client={chat:{completions:{create:async req=>{
     assert.doesNotMatch(JSON.stringify(req.messages),/expectedAccept|expectedNotPass|expectedStances/);
-    const {candidates}=JSON.parse(req.messages[1].content);
+    const {candidates,passages}=JSON.parse(req.messages[1].content);
     assert.equal(candidates.length,1);
     const e=fixtures.examples[calls++];
     assert.equal(candidates[0].fields.relationship,e.connection.relationship);
-    assert.equal(candidates[0].fields.word_1,`${e.connection.words[0].term}: ${e.connection.words[0].fit}`);
+    for (const [i,word] of e.connection.words.entries())
+      assert.equal(candidates[0].fields[`word_${i+1}`],`${word.term}: ${word.fit}`);
+    if (e.connection.evidence.S112) {
+      assert.deepEqual(passages.filter(p=>p.source==='S112').map(p=>p.text),
+        catalog.filter(p=>p.source.id==='S112').map(p=>p.quote));
+      assert.ok(passages.some(p=>p.source==='S112' && p.text.includes('partial_z(u0_z)=+A*H*C*phi')));
+    }
     const fields=Object.fromEntries(Object.keys(candidates[0].fields).map(key=>[key,{
       stance:e.expectedStances?.[key]?.[0]||'asserted', proposition:candidates[0].fields[key],
       status:e.expectedNotPass?.includes(key)?'fail':'pass',reason:'Mock verdict for pipeline validation.'
@@ -96,8 +106,8 @@ test('corpus evaluation has matched controls, valid evidence, and no answer leak
     return {choices:[{finish_reason:'stop',message:{content:JSON.stringify({C1:verdict})}}]};
   }}}};
   const report=await checkComparisonExamples(client,'mock-model',undefined,true);
-  assert.equal(calls,12);
-  assert.match(report,/12 of 12 expected decisions matched/);
+  assert.equal(calls,14);
+  assert.match(report,/14 of 14 expected decisions matched/);
   assert.match(report,/Synthetic examples/);
   assert.doesNotMatch(report,/## Pinned sources/);
 });
@@ -120,6 +130,40 @@ test('corpus controls preserve the owner phrase and distinguish an unclaimed pro
   assert.ok(concealment.expectedNotPass.includes('word_1'));
 });
 
+test('the corpus evaluation requires both the asserted initial proof and the withheld evolution stance', async () => {
+  const positive=fixtures.examples.find(e=>e.case==='initial-proof-kept');
+  const negative=fixtures.examples.find(e=>e.case==='initial-proof-denial-overclaim');
+  assert.equal(positive.expectedAccept,true);
+  assert.deepEqual(positive.expectedStances.word_1,['asserted']);
+  assert.deepEqual(positive.expectedStances.word_2,['withheld','contrast']);
+  assert.equal(negative.expectedAccept,false);
+  assert.deepEqual(negative.expectedNotPass,['relationship','word_1']);
+  assert.match(fixtures.sources.find(s=>s.id==='S112').provenance,
+    /blob\/2d99c8c4fe36f4ca1e8b25339ab0358211bffbd3\/math\/notes\/smooth-initial-field\.tex/);
+
+  // A keep verdict alone is insufficient if either substantive claim is misread.
+  // These supplied verdicts exercise evaluation plumbing, not live model accuracy.
+  for (const [wrongField,wrongStance] of [['word_1','withheld'],['word_2','asserted']]) {
+    let calls=0;
+    const client={chat:{completions:{create:async req=>{
+      assert.doesNotMatch(JSON.stringify(req.messages),/expectedAccept|expectedNotPass|expectedStances/);
+      const {candidates}=JSON.parse(req.messages[1].content);
+      const e=fixtures.examples[calls++];
+      const fields=Object.fromEntries(Object.keys(candidates[0].fields).map(key=>[key,{
+        stance:e===positive && key===wrongField ? wrongStance : e.expectedStances?.[key]?.[0]||'asserted',
+        proposition:candidates[0].fields[key], status:e.expectedNotPass?.includes(key)?'fail':'pass',
+        reason:'Supplied verdict for stance-gating validation.'
+      }]));
+      const verdict={fields,checks:Object.fromEntries(CHECKS.map(x=>[x,'pass'])),reason:'Mock evaluation.',passages:Object.values(e.connection.evidence)};
+      return {choices:[{finish_reason:'stop',message:{content:JSON.stringify({C1:verdict})}}]};
+    }}}};
+    const report=await checkComparisonExamples(client,'mock-model',undefined,true);
+    assert.equal(calls,14);
+    assert.match(report,/13 of 14 expected decisions matched/);
+    assert.match(report,/initial-proof-kept:[\s\S]*?Expected: keep\. Actual: keep\. \*\*FAIL\*\*/);
+  }
+});
+
 test('corpus command is owner-only and does not collect the public repositories', async () => {
   const posted=[],updated=[];
   const octokit={paginate:async()=>[],issues:{listComments(){},createComment:async x=>{posted.push(x.body);return {data:{id:1}};},updateComment:async x=>updated.push(x.body)}};
@@ -133,6 +177,6 @@ test('corpus command is owner-only and does not collect the public repositories'
   await h.handle(context);assert.equal(posted.length,0);
   context.payload.repository.name='bot';
   await h.handle(context);await h.waitForIdle();
-  assert.equal(calls,12);assert.equal(updated.length,1);
+  assert.equal(calls,14);assert.equal(updated.length,1);
   assert.match(updated[0],/synthetic corpus examples/);
 });
