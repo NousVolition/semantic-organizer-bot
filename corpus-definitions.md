@@ -2,6 +2,32 @@
 
 These are local definitions authorized by the owner for the combined corpus. Apply them when the source uses this framework; do not impose them on unrelated writing or silently override an explicit definition in another version. Identify a version conflict and retain both scopes. These notes guide generation and the independent comparison review. They do not certify a source's mathematics or run a solver.
 
+## Checked vocabulary counts and their scope
+
+This is a source-specific reference, not a fixed count for future inputs. The 21 October 2026 audit used the 31-page UEA accepted manuscript of *Playing with the News on Reddit: The Politics Game on r/The_Donald* by Topinka, Osborne-Carey and Finlayson: https://ueaeprints.uea.ac.uk/id/eprint/94862/1/Playing_the_News_on_Reddit_MS_Revision.pdf . The audited PDF has SHA-256 `27cef9a1d427263fbc2c6e9f93fe59224fcf0ee37824450d1002fb70f52f4f1d`. Identify a different version explicitly and use its supplied evidence rather than replacing it with these totals.
+
+**46 is the broader vocabulary count; “Left” itself appears 21 times within that total.** The count is of occurrences, not 46 distinct words, people, ideological equivalents or hostile judgments. “Left” is matched case-insensitively as a whole word, including possessive and lowercase political uses; leftist and lefty belong to separate groups.
+
+| Declared vocabulary group | Abstract/main text | Bibliography | Total |
+| --- | ---: | ---: | ---: |
+| Left / The Left | 21 | 0 | 21 |
+| Leftist / Leftism | 2 | 0 | 2 |
+| Lefty | 1 | 0 | 1 |
+| Liberal / Liberalism, including liberals | 9 | 0 | 9 |
+| Progressive, including progressives | 3 | 0 | 3 |
+| Feminist / Feminism, including feminists | 3 | 1 | 4 |
+| SJW / Social justice warrior(s) | 1 | 3 | 4 |
+| Antifa | 2 | 0 | 2 |
+| Broader vocabulary total | 42 | 4 | 46 |
+
+Use the declared listed forms, normalize PDF line breaks and hyphen/space variants, and exclude anti-liberal, anti-feminist and neoliberalism from the Liberal/Feminist groups. Democracy is not Democrat. Group labels do not assert that their referents are interchangeable. The 21 occurrences of “Left” are already included in 46: adding them again to obtain 67 double-counts a subset.
+
+The 4 bibliography occurrences comprise 3 article-title occurrences and 1 journal-name occurrence: *Feminist Media Studies*, p28. Phelan's 2019 article title is on p29. Of the 42 body occurrences, 3 occur in 2 participant comments; the other 39 are in researcher prose, including 2 reporting Zhang's study. Researcher prose may report somebody else's view; neither its location nor a lexical count establishes endorsement. Independent human agreement on interpretive coding is not established by the recount.
+
+The separate selected-term audit contains **90 occurrences across 23 term groups: 70 body and 20 reference-title occurrences**. It is a different vocabulary selection; do not add 90 and 46 as disjoint sets without checking overlap. These numbers are not counts of distinct hostile judgments and alone establish neither bias nor justification.
+
+When reading or reviewing any count claim, retain `(value, counting unit, forms/group membership, source/version, text coverage, matching/overlap rules)` together. The number alone is not evidence of the other fields. Check titles, relationships, limitations and suggested words for scope transfers. Withhold a precise count when the supplied excerpt or aggregate does not establish it. Read negation and attribution in context: “46 is not the count of Left” denies the incorrect count; it does not assert it. A clearly bounded “Left vocabulary” heading or “lexical constellation” metaphor need not be normalized.
+
 ## Preserve the language and its meaning
 
 - **Sens**: personal intent or intended meaning in this corpus.

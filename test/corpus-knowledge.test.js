@@ -105,7 +105,7 @@ test('corpus evaluation has matched controls, valid evidence, and no answer leak
     const verdict={fields,checks:Object.fromEntries(CHECKS.map(x=>[x,'pass'])),reason:'Mock evaluation.',passages:Object.values(e.connection.evidence)};
     return {choices:[{finish_reason:'stop',message:{content:JSON.stringify({C1:verdict})}}]};
   }}}};
-  const report=await checkComparisonExamples(client,'mock-model',undefined,true);
+  const report=await checkComparisonExamples(client,'mock-model',undefined,'corpus');
   assert.equal(calls,14);
   assert.match(report,/14 of 14 expected decisions matched/);
   assert.match(report,/Synthetic examples/);
@@ -157,7 +157,7 @@ test('the corpus evaluation requires both the asserted initial proof and the wit
       const verdict={fields,checks:Object.fromEntries(CHECKS.map(x=>[x,'pass'])),reason:'Mock evaluation.',passages:Object.values(e.connection.evidence)};
       return {choices:[{finish_reason:'stop',message:{content:JSON.stringify({C1:verdict})}}]};
     }}}};
-    const report=await checkComparisonExamples(client,'mock-model',undefined,true);
+    const report=await checkComparisonExamples(client,'mock-model',undefined,'corpus');
     assert.equal(calls,14);
     assert.match(report,/13 of 14 expected decisions matched/);
     assert.match(report,/initial-proof-kept:[\s\S]*?Expected: keep\. Actual: keep\. \*\*FAIL\*\*/);
