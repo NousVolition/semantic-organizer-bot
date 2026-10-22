@@ -49,9 +49,13 @@ The review first records a proposition and assertion stance (asserted, withheld,
 conditional, attributed, contrast or mixed) for each field. It then gives a separate verdict and reason for the title,
 relationship, limitation and every suggested term with its explanation. A true
 relationship cannot override a failed or missing field-level check.
-Selected-citation support is checked separately from broader context. An accurate
-claim with a misplaced supporting quote is withheld for citation repair. Each
-review's citation schema is restricted to that candidate's source files.
+Selected-citation support is checked separately from broader context. A selected
+result statement and its supplied adjacent derivation may jointly support details
+of the same construction; the reviewer records the supporting passage IDs. An
+unrelated selected quote still requires citation repair. Short topic headings are
+read in the context of the complete connection, while explicit unsupported
+assertions still block publication. Each review's citation schema is restricted
+to that candidate's source files.
 The rules distinguish retained plans from unsaved states, archive restoration
 from reruns, structural agreement from chronology, and a polynomial exponent
 from an exponential envelope. A word such as “proof” used as the stronger status

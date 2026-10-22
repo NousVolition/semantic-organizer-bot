@@ -44,6 +44,67 @@ test('each candidate schema excludes citations from other candidates', () => {
   assert.ok(schema.properties.C5.properties.passages.items.enum.includes('S5P1'));
 });
 
+test('a result anchor can use adjacent proof passages without borrowing another source', async () => {
+  const corpus = require('../fixtures/corpus-examples.json');
+  const context = citationPassages(corpus.sources);
+  const candidate = corpus.examples.find(e => e.case === 'initial-proof-kept').connection;
+  assert.equal(candidate.evidence.S112, 'S112P1');
+  const original = JSON.stringify(candidate);
+  const proofIds = ['S111P1', 'S112P1', 'S112P2', 'S112P3'];
+  const client = { chat: { completions: { create: async request => {
+    const { candidates, passages } = JSON.parse(request.messages[1].content);
+    assert.deepEqual(candidates[0].fields, reviewFields(candidate));
+    assert.equal(passages.find(p => p.id === 'S112P1').selected, true);
+    assert.equal(passages.find(p => p.id === 'S112P3').selected, false);
+    assert.match(passages.find(p => p.id === 'S112P3').text, /partial_z\(u0_z\)=\+A\*H\*C\*phi/);
+    assert.ok(passages.every(p => candidate.evidence[p.source]));
+    const allowed = request.response_format.json_schema.schema.properties.C1.properties.passages.items.enum;
+    assert.ok(proofIds.every(id => allowed.includes(id)));
+    assert.ok(!allowed.includes('S102P1'));
+    const review = verdicts([candidate]);
+    review.C1.passages = proofIds;
+    return response(review);
+  } } } };
+  const [decision] = await auditConnections(client, 'mock-model', [candidate], context);
+  assert.equal(decision.accepted, true);
+  assert.deepEqual(decision.supportingPassages, proofIds);
+  assert.equal(JSON.stringify(candidate), original);
+
+  const borrowed = verdicts([candidate]);
+  borrowed.C1.passages = [...proofIds, 'S102P1'];
+  const [invalid] = evaluateAudit([candidate], borrowed, context);
+  assert.equal(invalid.accepted, false);
+  assert.deepEqual(invalid.supportingPassages, []);
+});
+
+test('contextual headings do not bypass field failures or rewrite the supplied controls', async () => {
+  const corpus = require('../fixtures/corpus-examples.json');
+  const context = citationPassages(corpus.sources);
+  const examples = ['withheld-proof-bounded', 'withheld-proof-overclaim'].map(name => corpus.examples.find(e => e.case === name));
+  let calls = 0;
+  const client = { chat: { completions: { create: async request => {
+    const example = examples[calls++];
+    const { candidates } = JSON.parse(request.messages[1].content);
+    assert.equal(candidates[0].fields.title, 'Withheld proof');
+    assert.deepEqual(candidates[0].fields, reviewFields(example.connection));
+    assert.doesNotMatch(JSON.stringify(request.messages), /expectedAccept|expectedNotPass|expectedStances/);
+    assert.match(request.messages[0].content, /First read all supplied fields together/);
+    assert.match(request.messages[0].content, /does not excuse that unsupported assertion/);
+    // Supplied judgments exercise transport/gating, not model comprehension.
+    const review = verdicts([example.connection]);
+    review.C1.fields.title.stance = 'withheld';
+    if (example.case === 'withheld-proof-overclaim') {
+      review.C1.fields.word_1.status = 'fail';
+      review.C1.fields.word_1.reason = 'The explicit concealed-proof assertion lacks support.';
+    }
+    return response(review);
+  } } } };
+  const decisions = await auditConnections(client, 'mock-model', examples.map(e => e.connection), context);
+  assert.equal(calls, 2);
+  assert.deepEqual(decisions.map(d => d.accepted), [true, false]);
+  assert.ok(decisions[1].failed.includes('word_1'));
+});
+
 test('scope examples contain valid evidence and both positive and negative controls', () => {
   const scope = require('../fixtures/scope-examples.json');
   const passages = citationPassages(scope.sources);

@@ -303,6 +303,7 @@ async function checkComparisonExamples(openai, model, log, corpusOnly = false) {
   if (!corpusOnly) for (const source of fixtures.sources) output.push(`- [${safeText(source.path, 250)}](${source.url})`);
   const record = { version: 2, model: comparisonModel(model), passed, total: decisions.length, results: decisions.map((d, i) => ({ case: fixtures.examples[i].case,
     expectedAccept: fixtures.examples[i].expectedAccept, actualAccept: d.accepted, matched: matches[i], failed: d.failed,
+    supportingPassages: d.supportingPassages,
     fields: Object.fromEntries(Object.entries(d.fields).map(([key, field]) => [key, { status: field.status, stance: field.stance }])) })) };
   output.push(`\n<!-- comparison-example-data:${Buffer.from(JSON.stringify(record)).toString("base64")} -->`);
   const body = output.join("\n");
