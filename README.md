@@ -21,6 +21,11 @@ The owner opens an issue in this bot repository with one of these exact titles:
   claims, negation traps and polynomial/exponential scope. Expected answers and
   targeted failure fields are not sent to the model. The report checks decisions,
   specific mistake locations and assertion stance. Only the owner can run it.
+- `[Discover language] check count examples` — evaluate 12 separate count-scope
+  controls, including vocabulary totals versus exact-word counts, overlapping
+  subsets, source coverage, attribution, changed versions and missing evidence.
+  This owner-only command uses the configured comparison model and API usage.
+  It does not scan repositories or change the existing 14- and 22-case suites.
 - `[Discover language] review report 45` — apply the current evidence review to
   an existing completed bot report in issue #45. It rechecks the published claims
   and each term/fit using the exact public source commits originally cited, with
@@ -288,6 +293,16 @@ The owner can request `[Discover language] check corpus examples` in the control
 repository for the separate 14-case live model evaluation. This uses the configured
 comparison model and API usage; it does not run on startup or on ordinary tests.
 The existing `check examples` command retains its original 22-case scope.
+
+The separate `check count examples` command uses `fixtures/count-examples.json`.
+Its 12 controlled cases include the checked 46 broader vocabulary occurrences
+versus 21 occurrences of “Left,” plus contrasting invented versions and incomplete
+inputs. The cases are paraphrases and synthetic probes, not manuscript quotations.
+Generation and review receive the counting rules and source-specific ledger in
+`corpus-definitions.md`; a different source/version must use its own evidence.
+Offline tests validate delivery, arithmetic, command routing and fail-closed
+publication gates using supplied verdicts. They do not establish live model
+comprehension or guarantee future counts.
 
 The corpus suite includes the checked initial-field derivation and paired cases
 that distinguish its proved properties from a withheld global-evolution claim.

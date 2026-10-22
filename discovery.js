@@ -274,8 +274,12 @@ async function generateDiscovery(openai, model, skills, collected, log, driftPai
     audit: { checked: decisions.length, withheld: decisions.filter(d => !d.accepted).length } }, collected, log);
 }
 
-async function checkComparisonExamples(openai, model, log, corpusOnly = false) {
+async function checkComparisonExamples(openai, model, log, suite = "comparison") {
+  if (!["comparison", "corpus", "counts"].includes(suite)) throw new Error("Unknown comparison example suite");
+  const corpusOnly = suite === "corpus";
+  const countOnly = suite === "counts";
   const suites = corpusOnly ? [require("./fixtures/corpus-examples.json")]
+    : countOnly ? [require("./fixtures/count-examples.json")]
     : [require("./fixtures/comparison-examples.json"), require("./fixtures/scope-examples.json")];
   const fixtures = { sources: suites.flatMap(s => s.sources), examples: suites.flatMap(s => s.examples) };
   const catalog = citationPassages(fixtures.sources);
@@ -292,15 +296,15 @@ async function checkComparisonExamples(openai, model, log, corpusOnly = false) {
   const passed = matches.filter(Boolean).length;
   const output = ["# Comparison regression check", `${passed} of ${fixtures.examples.length} expected decisions matched.`,
     `Comparison checker: ${safeText(comparisonModel(model), 100)}.`,
-    `This on-demand check uses ${corpusOnly ? "synthetic corpus examples and corrected controls" : "pinned public excerpts, historical mistakes, corrected controls and assertion-scope probes"} in ${fixtures.examples.length} independent bounded calls. Expected answers and field targets are kept out of model requests. A match requires the expected decision and any targeted failure or assertion stance. It tests the publication review, not a fresh search or a formal proof.`];
+    `This on-demand check uses ${corpusOnly ? "synthetic corpus examples and corrected controls" : countOnly ? "synthetic count-scope examples and corrected controls" : "pinned public excerpts, historical mistakes, corrected controls and assertion-scope probes"} in ${fixtures.examples.length} independent bounded calls. Expected answers and field targets are kept out of model requests. A match requires the expected decision and any targeted failure or assertion stance. It tests the publication review, not a fresh search or a formal proof.`];
   for (const [i, d] of decisions.entries()) {
     const example = fixtures.examples[i];
     output.push(`\n## ${safeText(example.case, 120)}: ${safeText(example.connection.title, 120)}\nExpected: ${example.expectedAccept ? "keep" : "withhold"}. Actual: ${d.accepted ? "keep" : "withhold"}. **${matches[i] ? "PASS" : "FAIL"}**\n\n${safeText(d.reason, 700)}`);
     if (example.expectedNotPass?.length) output.push(`Targeted checks: ${safeText(example.expectedNotPass.join(", "))}. Flagged: ${safeText(d.failed.join(", ") || "none")}.`);
     if (example.expectedStances) for (const key of Object.keys(example.expectedStances)) output.push(`Assertion stance for ${safeText(key)}: ${safeText(d.fields[key]?.stance || "missing")}.`);
   }
-  output.push(corpusOnly ? "\n## Evaluation source\nSynthetic examples maintained in fixtures/corpus-examples.json; these are not quotations from the research repositories." : "\n## Pinned sources");
-  if (!corpusOnly) for (const source of fixtures.sources) output.push(`- [${safeText(source.path, 250)}](${source.url})`);
+  output.push(corpusOnly || countOnly ? `\n## Evaluation source\nSynthetic examples maintained in fixtures/${countOnly ? "count" : "corpus"}-examples.json; these are not quotations from the research repositories.` : "\n## Pinned sources");
+  if (!corpusOnly && !countOnly) for (const source of fixtures.sources) output.push(`- [${safeText(source.path, 250)}](${source.url})`);
   const record = { version: 2, model: comparisonModel(model), passed, total: decisions.length, results: decisions.map((d, i) => ({ case: fixtures.examples[i].case,
     expectedAccept: fixtures.examples[i].expectedAccept, actualAccept: d.accepted, matched: matches[i], failed: d.failed,
     supportingPassages: d.supportingPassages,
@@ -317,7 +321,7 @@ function createDiscoveryHandler({ octokitForContext, config, openai, model, skil
   const running = new Set();
   async function handle(context) {
     const { issue, repository, sender } = context.payload;
-    const match = /^\[discover language\](?:\s+(preview|check (?:corpus )?examples|batch\s+(\d+)|review report\s+(\d+)))?\s*$/i.exec(issue?.title || "");
+    const match = /^\[discover language\](?:\s+(preview|check (?:(?:corpus|count) )?examples|batch\s+(\d+)|review report\s+(\d+)))?\s*$/i.exec(issue?.title || "");
     if (!match || issue?.user?.type === "Bot" || sender?.type === "Bot"
       || sender?.login?.toLowerCase() !== config.owner.toLowerCase()
       || repository?.owner?.login?.toLowerCase() !== config.owner.toLowerCase()
@@ -340,7 +344,7 @@ function createDiscoveryHandler({ octokitForContext, config, openai, model, skil
       // restart interrupted the job before publishing, a redelivery must not start a second
       // run that would look like a fresh job once the unfinished comment is updated by hand.
       if (comments.some(item => item.user?.type === "Bot" && item.body?.startsWith(marker))) { running.delete(key); return; }
-      const status = /^check (?:corpus )?examples$/i.test(match[1] || "")
+      const status = /^check (?:(?:corpus|count) )?examples$/i.test(match[1] || "")
         ? "Checking the selected comparison examples and valid controls. The result will show expected and actual decisions."
         : match[3] ? "Reviewing the existing findings against their pinned source passages. The result will show which comparisons and word suggestions pass the new checks."
         : "Reading the configured public source repositories. This is a bounded source batch; a coverage report will show what was read.";
@@ -350,8 +354,10 @@ function createDiscoveryHandler({ octokitForContext, config, openai, model, skil
     const job = (async () => {
       let body;
       try {
-        if (/^check (?:corpus )?examples$/i.test(match[1] || "")) {
-          body = await checkComparisonExamples(openai, model, log, match[1].toLowerCase() === "check corpus examples");
+        if (/^check (?:(?:corpus|count) )?examples$/i.test(match[1] || "")) {
+          const suite = match[1].toLowerCase() === "check corpus examples" ? "corpus"
+            : match[1].toLowerCase() === "check count examples" ? "counts" : "comparison";
+          body = await checkComparisonExamples(openai, model, log, suite);
         } else if (match[3]) {
           const { reviewPublishedReport } = require("./report-review");
           body = await reviewPublishedReport({ octokit, config, reportIssue: Number(match[3]), openai, model, log,

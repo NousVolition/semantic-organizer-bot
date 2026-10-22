@@ -1,0 +1,364 @@
+{
+  "description": "Controlled count-scope evaluation: paraphrases of a verified public-manuscript audit plus explicitly synthetic different-version/incomplete-input controls. These are not manuscript quotations. Expected answers and field targets are evaluation-only and excluded from model requests.",
+  "audit": {
+    "groups": [
+      [
+        "Left / The Left",
+        21,
+        0
+      ],
+      [
+        "Leftist / Leftism",
+        2,
+        0
+      ],
+      [
+        "Lefty",
+        1,
+        0
+      ],
+      [
+        "Liberal / Liberalism",
+        9,
+        0
+      ],
+      [
+        "Progressive",
+        3,
+        0
+      ],
+      [
+        "Feminist / Feminism",
+        3,
+        1
+      ],
+      [
+        "SJW / Social justice warrior(s)",
+        1,
+        3
+      ],
+      [
+        "Antifa",
+        2,
+        0
+      ]
+    ]
+  },
+  "sources": [
+    {
+      "id": "S201",
+      "repository": "NousVolition/semantic-organizer-bot",
+      "path": "fixtures/count-examples.json",
+      "url": "https://github.com/NousVolition/semantic-organizer-bot/blob/main/fixtures/count-examples.json",
+      "sampled": false,
+      "excerpts": [
+        {
+          "startLine": 1,
+          "text": "Controlled paraphrase of the 21 October 2026 audit of the 31-page UEA accepted manuscript: the broader vocabulary total is 46 occurrences, including 21 case-insensitive whole-word occurrences of Left (including possessive and lowercase political uses). Body=42; bibliography=4. The disjoint listed-form groups have (body,bibliography) counts: Left / The Left=(21,0); Leftist / Leftism=(2,0); Lefty=(1,0); Liberal / Liberalism=(9,0); Progressive=(3,0); Feminist / Feminism=(3,1); SJW / Social justice warrior(s)=(1,3); Antifa=(2,0). The 21 are included in 46, not additional. Exclude anti-liberal, anti-feminist and neoliberalism from Liberal/Feminist groups. These are lexical occurrences, not actor counts."
+        }
+      ]
+    },
+    {
+      "id": "S202",
+      "repository": "NousVolition/semantic-organizer-bot",
+      "path": "fixtures/count-examples.json",
+      "url": "https://github.com/NousVolition/semantic-organizer-bot/blob/main/fixtures/count-examples.json",
+      "sampled": false,
+      "excerpts": [
+        {
+          "startLine": 1,
+          "text": "Controlled audit-method note for the same manuscript: 4 bibliography occurrences = 3 in article titles + 1 in the journal name Feminist Media Studies (p28); Phelan 2019's article title is on p29. The 42 body occurrences include 3 in 2 participant comments and 39 in researcher prose, including 2 reporting Zhang. Researchers can report someone else's viewpoint without endorsing it. Separate selected-term audit: 90 occurrences in 23 groups = 70 body + 20 reference titles. These selections are not established as disjoint. Counts alone establish neither bias nor justification, endorsement nor distinct hostile judgments."
+        }
+      ]
+    },
+    {
+      "id": "S203",
+      "repository": "NousVolition/semantic-organizer-bot",
+      "path": "fixtures/count-examples.json",
+      "url": "https://github.com/NousVolition/semantic-organizer-bot/blob/main/fixtures/count-examples.json",
+      "sampled": false,
+      "excerpts": [
+        {
+          "startLine": 1,
+          "text": "Synthetic different document/version B, not the UEA manuscript: a complete declared whole-word, case-insensitive audit finds 16 occurrences in its broader vocabulary, including 4 of Left; 13 body + 3 bibliography. Leftist and lefty are separate from Left. This document's speaker/endorsement coding is not supplied."
+        }
+      ]
+    },
+    {
+      "id": "S204",
+      "repository": "NousVolition/semantic-organizer-bot",
+      "path": "fixtures/count-examples.json",
+      "url": "https://github.com/NousVolition/semantic-organizer-bot/blob/main/fixtures/count-examples.json",
+      "sampled": false,
+      "excerpts": [
+        {
+          "startLine": 1,
+          "text": "Synthetic incomplete document/version C, not the UEA manuscript: a summary reports 46 broader vocabulary occurrences. The member breakdown, body/bibliography split, matching rules and full text are absent. Its count of the exact word Left is unknown."
+        }
+      ]
+    }
+  ],
+  "examples": [
+    {
+      "case": "count-word-overclaim",
+      "expectedAccept": false,
+      "connection": {
+        "title": "The word Left appears 46 times",
+        "kind": "interpretive",
+        "relationship": "The manuscript contains 46 occurrences of the exact word Left.",
+        "limit": "These are lexical occurrences in the specified version, not a count of actors or an independent finding of bias.",
+        "evidence": {
+          "S201": "S201P1",
+          "S202": "S202P1"
+        },
+        "words": [
+          {
+            "term": "46 Left mentions",
+            "fit": "Left itself occurs 46 times."
+          }
+        ]
+      },
+      "expectedNotPass": [
+        "title",
+        "relationship",
+        "word_1"
+      ]
+    },
+    {
+      "case": "count-scopes-kept",
+      "expectedAccept": true,
+      "connection": {
+        "title": "Left vocabulary",
+        "kind": "interpretive",
+        "relationship": "The broader vocabulary has 46 occurrences, including 21 of Left itself; the audit method keeps word count and group count separate.",
+        "limit": "These are lexical occurrences in the specified version, not a count of actors or an independent finding of bias.",
+        "evidence": {
+          "S201": "S201P1",
+          "S202": "S202P1"
+        },
+        "words": [
+          {
+            "term": "word within a vocabulary",
+            "fit": "The 21 occurrences of Left are a subset of the broader 46."
+          }
+        ]
+      }
+    },
+    {
+      "case": "count-subset-added",
+      "expectedAccept": false,
+      "connection": {
+        "title": "Adding the member",
+        "kind": "interpretive",
+        "relationship": "The 46 broader occurrences and 21 occurrences of Left make 67 distinct occurrences in this vocabulary.",
+        "limit": "These are lexical occurrences in the specified version, not a count of actors or an independent finding of bias.",
+        "evidence": {
+          "S201": "S201P1",
+          "S202": "S202P1"
+        },
+        "words": [
+          {
+            "term": "combined total of 67",
+            "fit": "Adding Left to the broader group yields 67 distinct occurrences."
+          }
+        ]
+      },
+      "expectedNotPass": [
+        "relationship",
+        "word_1"
+      ]
+    },
+    {
+      "case": "count-denial-kept",
+      "expectedAccept": true,
+      "connection": {
+        "title": "46 is not the count of Left",
+        "kind": "interpretive",
+        "relationship": "There are 46 broader vocabulary occurrences, not 46 occurrences of the word Left; that word occurs 21 times within the total.",
+        "limit": "These are lexical occurrences in the specified version, not a count of actors or an independent finding of bias.",
+        "evidence": {
+          "S201": "S201P1",
+          "S202": "S202P1"
+        },
+        "words": [
+          {
+            "term": "included, not added",
+            "fit": "The 21 are already part of 46, so this is not a total of 67."
+          }
+        ]
+      }
+    },
+    {
+      "case": "count-coverage-overclaim",
+      "expectedAccept": false,
+      "connection": {
+        "title": "Body and references",
+        "kind": "interpretive",
+        "relationship": "The broader vocabulary appears 46 times in the body and four more times in article titles.",
+        "limit": "These are lexical occurrences in the specified version, not a count of actors or an independent finding of bias.",
+        "evidence": {
+          "S201": "S201P1",
+          "S202": "S202P1"
+        },
+        "words": [
+          {
+            "term": "all four are article-title mentions",
+            "fit": "Each bibliography occurrence belongs to an article title."
+          }
+        ]
+      },
+      "expectedNotPass": [
+        "relationship",
+        "word_1"
+      ]
+    },
+    {
+      "case": "count-provenance-kept",
+      "expectedAccept": true,
+      "connection": {
+        "title": "Body and bibliography",
+        "kind": "interpretive",
+        "relationship": "The total 46 separates into 42 body and 4 bibliography occurrences; the latter are 3 article-title occurrences and 1 journal-name occurrence.",
+        "limit": "These are lexical occurrences in the specified version, not a count of actors or an independent finding of bias.",
+        "evidence": {
+          "S201": "S201P1",
+          "S202": "S202P1"
+        },
+        "words": [
+          {
+            "term": "journal-name occurrence",
+            "fit": "Feminist Media Studies contributes the journal-name occurrence on p28; Phelan's article title is on p29."
+          }
+        ]
+      }
+    },
+    {
+      "case": "count-bias-overclaim",
+      "expectedAccept": false,
+      "connection": {
+        "title": "Frequency proves bias",
+        "kind": "interpretive",
+        "relationship": "The 90 selected-term occurrences and 46 broader vocabulary occurrences establish 136 distinct hostile judgments by the researchers and prove their bias.",
+        "limit": "These are lexical occurrences in the specified version, not a count of actors or an independent finding of bias.",
+        "evidence": {
+          "S201": "S201P1",
+          "S202": "S202P1"
+        },
+        "words": [
+          {
+            "term": "endorsement count",
+            "fit": "Every recorded occurrence endorses the view expressed, including quotations and bibliography."
+          }
+        ]
+      },
+      "expectedNotPass": [
+        "relationship",
+        "word_1"
+      ]
+    },
+    {
+      "case": "count-metaphor-kept",
+      "expectedAccept": true,
+      "connection": {
+        "title": "Lexical constellation",
+        "kind": "interpretive",
+        "relationship": "The broader group is a lexical constellation of 46 occurrences with different referents, including 21 of Left; the body/bibliography split is 42/4.",
+        "limit": "These are lexical occurrences in the specified version, not a count of actors or an independent finding of bias.",
+        "evidence": {
+          "S201": "S201P1",
+          "S202": "S202P1"
+        },
+        "words": [
+          {
+            "term": "lexical constellation",
+            "fit": "An optional image for the declared vocabulary grouping, not an assertion that its terms are synonymous or that reporting a view endorses it."
+          }
+        ]
+      }
+    },
+    {
+      "case": "count-new-version-overclaim",
+      "expectedAccept": false,
+      "connection": {
+        "title": "A different source",
+        "kind": "interpretive",
+        "relationship": "Document B has 16 broader occurrences but the shared reference requires its exact Left count to be 21.",
+        "limit": "These are lexical occurrences in the specified version, not a count of actors or an independent finding of bias.",
+        "evidence": {
+          "S203": "S203P1"
+        },
+        "words": [
+          {
+            "term": "carry the count forward",
+            "fit": "The old UEA count overrides the supplied count of 4 in this different document."
+          }
+        ]
+      },
+      "expectedNotPass": [
+        "relationship",
+        "word_1"
+      ]
+    },
+    {
+      "case": "count-new-version-kept",
+      "expectedAccept": true,
+      "connection": {
+        "title": "Version-specific counts",
+        "kind": "interpretive",
+        "relationship": "The supplied audit of document B records 16 broader occurrences including 4 of Left, with 13 in the body and 3 in the bibliography.",
+        "limit": "These are lexical occurrences in the specified version, not a count of actors or an independent finding of bias.",
+        "evidence": {
+          "S203": "S203P1"
+        },
+        "words": [
+          {
+            "term": "count with its version",
+            "fit": "These figures belong to B; the UEA manuscript's 46 and 21 do not replace them."
+          }
+        ]
+      }
+    },
+    {
+      "case": "count-missing-member-overclaim",
+      "expectedAccept": false,
+      "connection": {
+        "title": "Unknown breakdown",
+        "kind": "interpretive",
+        "relationship": "Document C reports a broader total of 46, so Left itself must appear 21 times.",
+        "limit": "This is a reported aggregate; the full source text is unavailable.",
+        "evidence": {
+          "S204": "S204P1"
+        },
+        "words": [
+          {
+            "term": "inferred exact count",
+            "fit": "The member count is exactly 21 even without its breakdown or source text."
+          }
+        ]
+      },
+      "expectedNotPass": [
+        "relationship",
+        "word_1"
+      ]
+    },
+    {
+      "case": "count-missing-member-kept",
+      "expectedAccept": true,
+      "connection": {
+        "title": "Member count not established",
+        "kind": "interpretive",
+        "relationship": "Document C reports 46 broader occurrences; its exact Left count is not established by the supplied summary.",
+        "limit": "The aggregate is reported, not independently recounted here. Its coverage and matching rules are missing.",
+        "evidence": {
+          "S204": "S204P1"
+        },
+        "words": [
+          {
+            "term": "withheld member count",
+            "fit": "No precise member count is asserted without the missing breakdown or text."
+          }
+        ]
+      }
+    }
+  ]
+}

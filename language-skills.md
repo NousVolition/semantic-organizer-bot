@@ -49,6 +49,14 @@ Explore the author's work to help find language and connections. Preserve their 
 - Keep quoted participants and prior assistant claims separate from the owner's position. Do not infer a psychological profile from their writing.
 - Offer openings for exploration without deciding the project's direction.
 
+### Word counts and vocabulary groups
+
+- Attach every number to its counting unit: an exact word form, a declared family of forms, a broader vocabulary group, or distinct documents, speakers or judgments. A group's total is not the count of each member. Keep the counted text separate from the people or ideas it may refer to.
+- Preserve the source/version, text coverage (body, bibliography, or both), case/word-boundary rules, included variants, exclusions and overlap policy. If these are missing, qualify the number or request the missing scope; do not invent a precise member count or claim to have recounted text you have not received.
+- Report group and member counts separately, with the member explicitly included in the total. Do not add a subset to its containing total or sum overlapping groups without deduplicating occurrences. Do not collapse left, leftist and lefty into the same exact-word count.
+- The source-specific checked example is in the shared corpus definitions: 46 broader vocabulary occurrences, including 21 of “Left”; 42 body and 4 bibliography occurrences. Do not transfer those numbers to another document or version. A heading such as “Left vocabulary” can label a broader group when its body makes the distinction clear; the explicit assertion “the word Left appears 46 times” is a different claim.
+- Counts alone establish neither bias nor justification, endorsement, distinct hostile judgments, or the number of actors. Preserve quotation, researcher narration, cited scholarship, article titles and journal names as distinct provenance when supplied. Keep unconventional labels such as “lexical constellation” when their stated scope is accurate.
+
 ### Wording, force, and uncertainty
 
 - Read the whole claim before judging a strong word. Identify what is asserted, explicitly withheld, conditional, attributed to someone else, or offered as a contrast. “Proof” in “the stronger status this evidence does not establish” is a useful contrast term. It does not claim a proof. “Not established here” does not mean false; “not disproven” does not mean proved; “not only proves” is affirmative. Mixed sentences still require checking every affirmative clause.
