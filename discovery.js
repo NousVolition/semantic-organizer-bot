@@ -185,6 +185,7 @@ function safeText(text, maximum = 1500) {
 }
 
 function coverage(collected) {
+  if (collected.mode === "pinned") return ["## Sources and coverage", "All text from the selected immutable public files was supplied. These files were explicitly selected for this run; no account-wide coverage is claimed.", ...collected.sources.map(s => `- [${safeText(s.repository + "/" + s.path, 300)}](${s.url}) — full text at commit ${s.commit}`)].join("\n");
   if (collected.mode === 'complete') {
     const e = collected.excluded;
     const lines = ['## Sources and coverage', `Complete-text batch ${collected.batch} of ${collected.totalBatches}: ${collected.selectedWindows} overlapping sections from ${collected.sources.length} files. The pinned index contains ${collected.totalWindows} sections across ${collected.readableFiles} readable, distinct text files.`,
@@ -211,7 +212,7 @@ function renderDiscovery(result, collected, log) {
   let accepted = 0;
   let omitted = 0;
   const rejected = [];
-  for (const item of (Array.isArray(result.connections) ? result.connections : []).slice(0, 5)) {
+  for (const item of (Array.isArray(result.connections) ? result.connections : []).slice(0, 6)) {
     const references = Array.isArray(item.evidence) ? item.evidence
       : item.evidence && typeof item.evidence === "object" ? Object.entries(item.evidence)
         .filter(([, passage]) => passage !== null).map(([source, passage]) => ({ source, passage })) : [];
@@ -262,7 +263,7 @@ function discoverySchema(catalog) {
   }) } });
 }
 
-async function generateDiscovery(openai, model, skills, collected, log, driftPairs = []) {
+async function generateDiscovery(openai, model, skills, collected, log, driftPairs = [], options = {}) {
   skills = `${skills || ''}\n\n${CONFIDENCE_RULES}`;
   const catalog = citationPassages(collected.sources);
   if (new Set(catalog.filter(item => item.quote.length >= 15).map(item => item.source.id)).size < 2) return renderDiscovery({ connections: [] }, collected);
@@ -291,9 +292,52 @@ async function generateDiscovery(openai, model, skills, collected, log, driftPai
     throw Object.assign(new Error("Invalid discovery draft"), { code: "invalid_discovery" });
   if (draft.connections.some(c => c.confidence !== undefined && !validConfidence(c.confidence)))
     throw Object.assign(new Error('Invalid confidence assessment'), { code: 'invalid_discovery' });
-  const decisions = await auditConnections(openai, model, draft.connections, catalog, log);
-  return renderDiscovery({ connections: draft.connections.filter((_, i) => decisions[i].accepted),
-    audit: { checked: decisions.length, withheld: decisions.filter(d => !d.accepted).length } }, collected, log);
+  return publishDiscoveryDraft(openai, model, draft.connections, collected, log,
+    { ...options, generationResponseId: response.id || null, generationModel: response.model || model });
+}
+
+async function publishDiscoveryDraft(openai, model, generated, collected, log, options = {}) {
+  const catalog = citationPassages(collected.sources);
+  const supplied = options.proposals || [];
+  if (!Array.isArray(generated) || generated.length > 3 || !Array.isArray(supplied) || supplied.length > 3) throw new Error('Draft exceeds bounds');
+  require('./pinned-sources').validateProposals(supplied, catalog, validConfidence);
+  const candidates = [...generated, ...supplied];
+  const decisions = await auditConnections(openai, model, candidates, catalog, log);
+  for (const [i,c] of candidates.entries()) {
+    const fits = (value, limit) => typeof value === 'string' && value.trim().length > 0 && value.length <= limit;
+    const formatSafe = fits(c.title,120) && fits(c.relationship,1500) && fits(c.limit,1500)
+      && Array.isArray(c.words) && c.words.length >= 1 && c.words.length <= 3
+      && c.words.every(w => fits(w?.term,90) && fits(w?.fit,500) && ['candidate','coined'].includes(w.kind));
+    // Never turn a fully reviewed sentence into a different one by clipping it.
+    if (!formatSafe && decisions[i]) { decisions[i].accepted = false; decisions[i].failed.push('publication_format'); }
+    const refs = Array.isArray(c.evidence) ? c.evidence : Object.entries(c.evidence || {}).filter(([,id]) => id !== null).map(([source,passage]) => ({ source, passage }));
+    const matched = refs.map(r => evidence(r, collected.sources, catalog)).filter(Boolean);
+    if (new Set(matched.map(r => r.source.id)).size < 2 || !['observed','interpretive','creative'].includes(c.kind)
+      || (c.confidence !== undefined && !validConfidence(c.confidence))) {
+      if (decisions[i]) { decisions[i].accepted = false; decisions[i].failed.push('publication_evidence'); }
+    }
+  }
+  const accepted = candidates.filter((_, i) => decisions[i]?.accepted === true);
+  const body = renderDiscovery({ connections: accepted,
+    audit: { checked: decisions.length, withheld: candidates.length - accepted.length } }, collected, log);
+  const fingerprint = c => createHash('sha256').update(JSON.stringify(c)).digest('hex');
+  const receipt = { version: 1, commit: process.env.RENDER_GIT_COMMIT || null,
+    deliveryId: options.deliveryId || null, inputSha256: options.inputSha256 || null,
+    generation: { responseId: options.generationResponseId || null, model: options.generationModel || model, candidates: generated.length },
+    sources: collected.sources.map(({ id, url, commit, contentSha256 }) => ({ id, url, commit, contentSha256 })),
+    decisions: candidates.map((c, i) => ({ id: `C${i + 1}`, origin: i < generated.length ? 'generated' : 'supplied', sha256: fingerprint(c),
+      accepted: decisions[i]?.accepted === true, checks: decisions[i]?.checks || {}, failed: decisions[i]?.failed || ['missing_review'],
+      reason: (decisions[i]?.reason || 'Missing review.').slice(0,600),
+      fields: Object.fromEntries(Object.entries(decisions[i]?.fields || {}).map(([k,v]) => [k,{ status:v.status, stance:v.stance, proposition:v.proposition, reason:v.reason.slice(0,300) }])),
+      responseId: decisions[i]?.responseId || null, model: decisions[i]?.model || null, reviewedAt: decisions[i]?.reviewedAt || null })),
+    readyToPublishAt: new Date().toISOString() };
+  const rows = receipt.decisions.map(d => `| ${d.id} | ${d.origin} | ${d.accepted ? 'Accepted' : 'Withheld'} | ${d.failed.length ? d.failed.map(x => safeText(x,80)).join(', ') : 'All required checks passed'} |`);
+  const result = body + '\n\n<details><summary>Publication decisions</summary>\n\n'
+    + 'Generated and supplied proposals use the same publication gate. A failed, uncertain or missing required check withholds the whole proposal. Supplied proposals are drafts to assess, not endorsed findings.\n\n'
+    + '| ID | Origin | Decision | Failed or missing checks |\n|---|---|---|---|\n' + rows.join('\n')
+    + '\n\n</details>\n<!-- publication-receipt:' + Buffer.from(JSON.stringify(receipt)).toString('base64') + ' -->';
+  if (result.length > 60000) throw Object.assign(new Error('Report too large'), { code: 'report_too_large' });
+  return result;
 }
 
 async function checkComparisonExamples(openai, model, log, suite = "comparison") {
@@ -345,7 +389,7 @@ function createDiscoveryHandler({ octokitForContext, config, openai, model, skil
   const running = new Set();
   async function handle(context) {
     const { issue, repository, sender } = context.payload;
-    const match = /^\[discover language\](?:\s+(preview|check (?:(?:corpus|count|support) )?examples|batch\s+(\d+)|review report\s+(\d+)|continue\s+(\d+)))?\s*$/i.exec(issue?.title || "");
+    const match = /^\[discover language\](?:\s+(preview|sources|check (?:(?:corpus|count|support) )?examples|batch\s+(\d+)|review report\s+(\d+)|continue\s+(\d+)))?\s*$/i.exec(issue?.title || "");
     if (!match || issue?.user?.type === "Bot" || sender?.type === "Bot"
       || sender?.login?.toLowerCase() !== config.owner.toLowerCase()
       || repository?.owner?.login?.toLowerCase() !== config.owner.toLowerCase()
@@ -383,6 +427,12 @@ function createDiscoveryHandler({ octokitForContext, config, openai, model, skil
             : match[1].toLowerCase() === "check count examples" ? "counts"
             : match[1].toLowerCase() === "check support examples" ? "support" : "comparison";
           body = await checkComparisonExamples(openai, model, log, suite);
+        } else if (match[1]?.toLowerCase() === "sources") {
+          const { parseSourceRequest, collectPinnedSources, validateProposals } = require("./pinned-sources");
+          const request = parseSourceRequest(issue.body, config, eligible);
+          const collected = await collectPinnedSources(octokit, request, config);
+          validateProposals(request.proposals, citationPassages(collected.sources), validConfidence);
+          body = await generateDiscovery(openai, model, skills, collected, log, [], { proposals: request.proposals, inputSha256: createHash("sha256").update(issue.body).digest("hex"), deliveryId: context.id || null });
         } else if (match[3]) {
           const { reviewPublishedReport } = require("./report-review");
           body = await reviewPublishedReport({ octokit, config, reportIssue: Number(match[3]), openai, model, log,
@@ -435,4 +485,4 @@ function createDiscoveryHandler({ octokitForContext, config, openai, model, skil
   return { handle, waitForIdle: () => Promise.all([...jobs]) };
 }
 
-module.exports = { eligible, validateConfig, passages, citationPassages, driftHints, safeText, collectSources, evidence, renderDiscovery, generateDiscovery, checkComparisonExamples, createDiscoveryHandler };
+module.exports = { eligible, validateConfig, passages, citationPassages, driftHints, safeText, collectSources, evidence, renderDiscovery, generateDiscovery, publishDiscoveryDraft, checkComparisonExamples, createDiscoveryHandler };
