@@ -56,3 +56,19 @@ test('refusals and provider failures do not trigger validation retries', async()
     assert.equal(calls,1);
   }
 });
+
+test('the response schema restricts quotations to unchanged Unicode source spans', async()=>{
+  const original='The Socio-Didact preserves Sens while adjusting Sin.\n\nA′=ΔU; M′=J; div(u0)=−AHCφ+AHCφ=0.\n'+'x'.repeat(1599)+'😀'+'y'.repeat(2000);
+  let checked=false;
+  const api={chat:{completions:{create:async request=>{
+    const choices=request.response_format.json_schema.schema.properties.items.items.properties.quote.enum;
+    assert.ok(choices.includes('The Socio-Didact preserves Sens while adjusting Sin.'));
+    assert.ok(choices.includes('A′=ΔU; M′=J; div(u0)=−AHCφ+AHCφ=0.'));
+    for(const quote of choices){assert.ok(original.includes(quote));assert.ok(quote.length<=1600);assert.ok(quote.isWellFormed());}
+    assert.equal(request.messages.at(-1).content,original);
+    checked=true;const result=item();result.quote=choices[0];
+    return {choices:[{finish_reason:'stop',message:{content:JSON.stringify({items:[result]})}}]};
+  }}}};
+  assert.match(await reviewIdea(api,'gpt-5.4-mini','',original),/preserves Sens while adjusting Sin/);
+  assert.equal(checked,true);
+});

@@ -18,7 +18,9 @@ and replies publicly; use public material only.
 
 Explicit idea reviews use the configured comparison model by default
 (`IDEA_MODEL` can override it), with a structured response and validated
-confidence bands, reasons and exact input quotations. Incomplete or malformed
+confidence bands, reasons and exact input quotations selected from literal
+source spans (up to 250 spans / 100,000 source characters). Larger inputs fail
+explicitly rather than being silently cut. Incomplete or malformed
 responses are not published. A validation failure permits one regeneration
 with a fixed diagnostic; a second failure stops, as do refusals and API errors.
 Diagnostics contain codes, not submitted text or model responses.
