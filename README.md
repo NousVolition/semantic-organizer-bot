@@ -7,6 +7,15 @@ direction and wording with the author. It does not edit source files.
 
 ## Discover language across repositories
 
+To review one of your ideas directly, open an issue here titled `[Review idea]`
+and include the wording, intended meaning, evidence and any claim left unproved.
+The owner-only command works even when automatic text reviews are off. It can
+offer grounded encouragement, optional stronger wording, and a confidence tag
+with reasons and ways to strengthen or narrow the claim. For proposed word
+roles, include the whole sentence and intended reading. This is a fallible
+language review, separate from lambeq's diagram construction. It uses the API
+and replies publicly; use public material only.
+
 The owner opens an issue in this bot repository with one of these exact titles:
 
 - `[Discover language] preview` — read the first source batch and show its
@@ -15,6 +24,14 @@ The owner opens an issue in this bot repository with one of these exact titles:
   connections report when API credits are available.
 - `[Discover language] batch 2` — examine the next batch; subsequent batch
   numbers work the same way.
+- `[Discover language] continue 123` — continue the complete-text scan recorded
+  in issue #123, using exactly the same source commits and reading settings.
+  A preview continues with its current batch for analysis; a completed analysis
+  advances one batch. A changed configuration requires a new scan.
+- `[Discover language] check support examples` — run 12 independent model
+  checks of grounded encouragement, confidence scope, withheld proof, preserved
+  language, reset versus recovery, and empty comparisons. These synthetic cases
+  test the publication reviewer, not fresh discovery or formal proof.
 - `[Discover language] check examples` — run a paid regression check against
   22 examples using pinned public excerpts in 22 independent bounded calls.
   These include the seven corrected comparisons, sound controls, withheld proof
@@ -35,8 +52,8 @@ The owner opens an issue in this bot repository with one of these exact titles:
   correction are skipped. The owner-only command uses one independent model call per finding
   for up to three saved findings and shares the discovery concurrency limit.
 
-Batch 3 has run; its report is on the matching issue. Open the next numbered
-issue (for example, `[Discover language] batch 4`) to continue the scan.
+Start a new complete-text scan with a preview, then use the continuation title
+shown in each report. Older sampled batch numbers do not describe this new index.
 
 The report appears as a bot comment on that issue. Connections are labeled
 **observed**, **interpretive**, or **creative**. Each published connection needs
@@ -50,6 +67,15 @@ verifies the cited text. A separate high-reasoning model call for each connectio
 comparison against all collected context for its cited files, checking study
 provenance, construction/version, quantitative comparability and claim scope.
 Each comparison is reviewed alone so a nearby corrected example cannot replace its claims.
+Each new connection also carries **High**, **Medium (lower/middle/upper)**,
+**Low**, or **Not assessed** confidence in the idea as stated, with its evidence
+basis, an optional way to strengthen it, and any needed narrowing. These are
+qualitative model judgments, not probabilities or grades of the author. The
+confidence explanation is checked by the publication reviewer along with the
+other fields. Low support may mean an untested creative possibility, not a false
+or worthless idea. Missing assessments are never invented as high confidence.
+Understatement checks can offer firmer wording for a demonstrated narrow result
+while retaining deliberate modesty, unusual language and withheld proof claims.
 The review first records a proposition and assertion stance (asserted, withheld,
 conditional, attributed, contrast or mixed) for each field. It then gives a separate verdict and reason for the title,
 relationship, limitation and every suggested term with its explanation. A true
@@ -98,15 +124,29 @@ initial sources are the public `My-Sources-Project-ALL` and `Nous-Volition`
 research repositories. The public reporting setup refuses private sources.
 Private research needs separate access approval and a private reporting setup.
 
-The collector indexes Markdown, plain text, reStructuredText and TeX paths on
-each repository's default branch. It excludes archives, common generated-data
-directories, credential paths, binaries, and files over the size limit. Identical
-file copies are counted once. Files are interleaved across repositories; each
-batch covers up to 16 files. Long files contribute up to 6,000 characters from
-several positions, with original line numbers. Reports state the selection and
-sampling; a batch is not an exhaustive reading of the account. Batch membership
-can change when source commits change. It does not search PDFs, images, issues,
-or every line of long documents.
+The default `readingMode: complete` indexes Markdown, plain text,
+reStructuredText and TeX, including research text in archive, data, results and
+analysis directories. It retains credential, dependency, Git metadata, binary
+and size exclusions. Files are capped at 1 MB; an index above 2,000 eligible
+files or 50 MB fails explicitly instead of silently truncating. Invalid UTF-8,
+empty files and excluded formats are counted in coverage. Identical blob copies
+are deduplicated, so they never masquerade as independent evidence.
+
+Every character of readable eligible text is assigned to overlapping sections
+of up to 6,000 characters. A batch selects up to 16 sections interleaved across
+documents; a tail batch may repeat one other-file section for comparison context.
+Original line locations and character ranges are retained. Continuations pin
+the source commits and settings in the preceding bot report; they survive a
+service restart. A numbered batch opened directly starts from current snapshots
+and is not a continuation. Previews collect text without an OpenAI call.
+
+Coverage means text made available in those batches, not a guarantee that the
+model catches every issue. Connections are compared within a batch, not across
+every possible pair of documents. PDF, Word, image, private-repository and live
+Miro ingestion are not enabled. Board lessons were incorporated into shared
+rules; the service does not independently synchronize the board. The optional
+`readingMode: sampled` retains the earlier sampled collector for bounded previews.
+Saved findings from either mode can be rechecked against their original context.
 
 ### Optional local Drift Scan
 
@@ -153,6 +193,9 @@ opened by `NousVolition` in this bot repository. Keep the exact template title.
   a real subject-verb-object string diagram from those explicit assignments.
   It does not choose or verify the roles. No quantum circuit or semantic
   comparison is executed. The JSON may be placed in one `json` code block.
+  The report tags assignment correctness **Not assessed**, explaining what
+  context would be needed to assess the roles. A completed HermiT result is
+  scoped to the supplied axioms; their real-world truth remains **Not assessed**.
 
 **Automatic sentence parsing is currently unavailable.** The Bobcat model
 download host does not resolve, and no verified working official replacement

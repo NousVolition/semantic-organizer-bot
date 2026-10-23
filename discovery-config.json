@@ -1,6 +1,7 @@
 {
   "owner": "NousVolition",
   "controlRepository": "semantic-organizer-bot",
+  "readingMode": "complete",
   "repositories": ["My-Sources-Project-ALL", "Nous-Volition"],
   "filesPerBatch": 16,
   "charactersPerFile": 6000,

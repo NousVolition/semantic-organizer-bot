@@ -1,14 +1,18 @@
 const { createHash } = require("node:crypto");
 const { COMPARISON_RULES, comparisonModel, auditConnections } = require("./comparison-audit");
+const { collectCompleteSources, settingsKey, validateSnapshot, readingRecord, parseReadingRecord } = require('./complete-reading');
+const { CONFIDENCE_RULES, confidenceSchema, validConfidence, renderConfidence } = require('./confidence');
 
-function eligible(path) {
+function eligible(path, includeResearch = false) {
   return /\.(md|txt|rst|tex)$/i.test(path)
-    && !/(^|\/)(node_modules|vendor|archive|data|results|analysis|\.git|\.github)(\/|$)/i.test(path)
+    && !/(^|\/)(node_modules|vendor|\.git|\.github)(\/|$)/i.test(path)
+    && (includeResearch || !/(^|\/)(archive|data|results|analysis)(\/|$)/i.test(path))
     && !/(^|\/)(requirements|test_log|LICENSE|CODE_OF_CONDUCT|AGENTS|SKILL)(\.|$)/i.test(path)
     && !/(^|\/)(\.env|secrets?|credentials?)(\.|\/|$)/i.test(path);
 }
 
 function validateConfig(config) {
+  if (config.readingMode !== undefined && !['sampled', 'complete'].includes(config.readingMode)) throw new Error('Invalid reading mode');
   if (!/^[A-Za-z0-9-]+$/.test(config.owner)
     || !/^[A-Za-z0-9_.-]+$/.test(config.controlRepository)
     || !Array.isArray(config.repositories) || !config.repositories.length
@@ -45,9 +49,11 @@ function passages(text, budget) {
   return result;
 }
 
-async function collectSources(octokit, config, batch = 1) {
+async function collectSources(octokit, config, batch = 1, snapshot) {
   validateConfig(config);
   if (!Number.isInteger(batch) || batch < 1 || batch > 10000) throw new Error("Invalid batch");
+  if (config.readingMode === 'complete') return collectCompleteSources(octokit, config, batch, path => eligible(path, true), snapshot);
+  if (snapshot) throw new Error('Pinned continuation requires complete reading mode');
   const repositories = [];
   const seen = new Set();
   let duplicateFiles = 0;
@@ -179,6 +185,17 @@ function safeText(text, maximum = 1500) {
 }
 
 function coverage(collected) {
+  if (collected.mode === 'complete') {
+    const e = collected.excluded;
+    const lines = ['## Sources and coverage', `Complete-text batch ${collected.batch} of ${collected.totalBatches}: ${collected.selectedWindows} overlapping sections from ${collected.sources.length} files. The pinned index contains ${collected.totalWindows} sections across ${collected.readableFiles} readable, distinct text files.`,
+      'Every character of eligible readable text is assigned to a section; this batch covers only the sections below. This is input coverage, not a guarantee that the model notices every issue. Cross-file connections are compared within a batch, not across every possible pair in the account. A tail batch may include one previously read section from another file as comparison context.',
+      `${collected.duplicateFiles} identical copies deduplicated. Excluded: ${e.pathOrFormat} paths/formats, ${e.oversized} over-size or unknown-size files, ${e.unreadable} empty/binary/invalid-UTF-8 files. PDF, Word and image extraction are not enabled.`];
+    for (const s of collected.sources) lines.push(`- [${safeText(`${s.repository}/${s.path}`, 300)}](${s.url}) — sections ${s.windows.join(', ')} of ${s.totalWindows}`);
+    for (const r of collected.repositories) lines.push(`- Snapshot: ${safeText(r.repo)} at \`${r.commit}\``);
+    if (collected.batch < collected.totalBatches) lines.push('\nTo continue the same snapshots, open an issue titled `[Discover language] continue ISSUE_NUMBER`, replacing ISSUE_NUMBER with this report’s issue number. A preview continues with the same batch for analysis.');
+    else lines.push('\nThis is the final indexed batch. Earlier batches still need to have been run for complete analysis coverage.');
+    return lines.join('\n');
+  }
   const lines = ["## Sources and coverage", `Batch ${collected.batch} of ${collected.totalBatches || 0}: ${collected.sources.length} files read from ${collected.totalFiles} eligible, distinct text files. ${collected.duplicateFiles} identical file copies were deduplicated.`,
     "Large files contain sampled passages from several positions, not a full reading. Binary files, archives, generated data, and common credential paths are excluded. No claim of an exhaustive GitHub search is made."];
   for (const source of collected.sources) lines.push(`- [${safeText(`${source.repository}/${source.path}`, 300)}](${source.url})${source.sampled ? " — sampled" : " — full text"}`);
@@ -215,6 +232,7 @@ function renderDiscovery(result, collected, log) {
       const kind = word.kind === "coined" ? "proposed coinage" : "candidate usage, not dictionary-verified";
       output.push(`\n- **${safeText(word.term, 90)}** (${kind}): ${safeText(word.fit, 500)}`);
     }
+    output.push(renderConfidence(item.confidence, safeText));
     accepted++;
   }
   if (!accepted) output.push("\nNo connection with two verifiable source quotations passed the publication checks. This is not evidence that no connection exists.");
@@ -237,6 +255,7 @@ function discoverySchema(catalog) {
     kind: { type: "string", enum: ["observed", "interpretive", "creative"] },
     relationship: string,
     limit: string,
+    confidence: confidenceSchema(),
     evidence: object(sourceSlots),
     words: { type: "array", minItems: 1, maxItems: 3, items: object({ term: string,
       kind: { type: "string", enum: ["candidate", "coined"] }, fit: string }) }
@@ -244,6 +263,7 @@ function discoverySchema(catalog) {
 }
 
 async function generateDiscovery(openai, model, skills, collected, log, driftPairs = []) {
+  skills = `${skills || ''}\n\n${CONFIDENCE_RULES}`;
   const catalog = citationPassages(collected.sources);
   if (new Set(catalog.filter(item => item.quote.length >= 15).map(item => item.source.id)).size < 2) return renderDiscovery({ connections: [] }, collected);
   const generation = /^gpt-5\.4-mini(?:-|$)/.test(model)
@@ -269,17 +289,21 @@ async function generateDiscovery(openai, model, skills, collected, log, driftPai
   const draft = JSON.parse(choice.message.content);
   if (!Array.isArray(draft.connections) || draft.connections.length > 3)
     throw Object.assign(new Error("Invalid discovery draft"), { code: "invalid_discovery" });
+  if (draft.connections.some(c => c.confidence !== undefined && !validConfidence(c.confidence)))
+    throw Object.assign(new Error('Invalid confidence assessment'), { code: 'invalid_discovery' });
   const decisions = await auditConnections(openai, model, draft.connections, catalog, log);
   return renderDiscovery({ connections: draft.connections.filter((_, i) => decisions[i].accepted),
     audit: { checked: decisions.length, withheld: decisions.filter(d => !d.accepted).length } }, collected, log);
 }
 
 async function checkComparisonExamples(openai, model, log, suite = "comparison") {
-  if (!["comparison", "corpus", "counts"].includes(suite)) throw new Error("Unknown comparison example suite");
+  if (!["comparison", "corpus", "counts", "support"].includes(suite)) throw new Error("Unknown comparison example suite");
   const corpusOnly = suite === "corpus";
   const countOnly = suite === "counts";
+  const supportOnly = suite === 'support';
   const suites = corpusOnly ? [require("./fixtures/corpus-examples.json")]
     : countOnly ? [require("./fixtures/count-examples.json")]
+    : supportOnly ? [require('./fixtures/support-examples.json')]
     : [require("./fixtures/comparison-examples.json"), require("./fixtures/scope-examples.json")];
   const fixtures = { sources: suites.flatMap(s => s.sources), examples: suites.flatMap(s => s.examples) };
   const catalog = citationPassages(fixtures.sources);
@@ -296,15 +320,15 @@ async function checkComparisonExamples(openai, model, log, suite = "comparison")
   const passed = matches.filter(Boolean).length;
   const output = ["# Comparison regression check", `${passed} of ${fixtures.examples.length} expected decisions matched.`,
     `Comparison checker: ${safeText(comparisonModel(model), 100)}.`,
-    `This on-demand check uses ${corpusOnly ? "synthetic corpus examples and corrected controls" : countOnly ? "synthetic count-scope examples and corrected controls" : "pinned public excerpts, historical mistakes, corrected controls and assertion-scope probes"} in ${fixtures.examples.length} independent bounded calls. Expected answers and field targets are kept out of model requests. A match requires the expected decision and any targeted failure or assertion stance. It tests the publication review, not a fresh search or a formal proof.`];
+    `This on-demand check uses ${supportOnly ? "synthetic grounded-support examples and corrected controls" : corpusOnly ? "synthetic corpus examples and corrected controls" : countOnly ? "synthetic count-scope examples and corrected controls" : "pinned public excerpts, historical mistakes, corrected controls and assertion-scope probes"} in ${fixtures.examples.length} independent bounded calls. Expected answers and field targets are kept out of model requests. A match requires the expected decision and any targeted failure or assertion stance. It tests the publication review, not a fresh search or a formal proof.`];
   for (const [i, d] of decisions.entries()) {
     const example = fixtures.examples[i];
     output.push(`\n## ${safeText(example.case, 120)}: ${safeText(example.connection.title, 120)}\nExpected: ${example.expectedAccept ? "keep" : "withhold"}. Actual: ${d.accepted ? "keep" : "withhold"}. **${matches[i] ? "PASS" : "FAIL"}**\n\n${safeText(d.reason, 700)}`);
     if (example.expectedNotPass?.length) output.push(`Targeted checks: ${safeText(example.expectedNotPass.join(", "))}. Flagged: ${safeText(d.failed.join(", ") || "none")}.`);
     if (example.expectedStances) for (const key of Object.keys(example.expectedStances)) output.push(`Assertion stance for ${safeText(key)}: ${safeText(d.fields[key]?.stance || "missing")}.`);
   }
-  output.push(corpusOnly || countOnly ? `\n## Evaluation source\nSynthetic examples maintained in fixtures/${countOnly ? "count" : "corpus"}-examples.json; these are not quotations from the research repositories.` : "\n## Pinned sources");
-  if (!corpusOnly && !countOnly) for (const source of fixtures.sources) output.push(`- [${safeText(source.path, 250)}](${source.url})`);
+  output.push(corpusOnly || countOnly || supportOnly ? `\n## Evaluation source\nSynthetic examples maintained in fixtures/${supportOnly ? 'support' : countOnly ? "count" : "corpus"}-examples.json; these are not quotations from the research repositories.` : "\n## Pinned sources");
+  if (!corpusOnly && !countOnly && !supportOnly) for (const source of fixtures.sources) output.push(`- [${safeText(source.path, 250)}](${source.url})`);
   const record = { version: 2, model: comparisonModel(model), passed, total: decisions.length, results: decisions.map((d, i) => ({ case: fixtures.examples[i].case,
     expectedAccept: fixtures.examples[i].expectedAccept, actualAccept: d.accepted, matched: matches[i], failed: d.failed,
     supportingPassages: d.supportingPassages,
@@ -321,7 +345,7 @@ function createDiscoveryHandler({ octokitForContext, config, openai, model, skil
   const running = new Set();
   async function handle(context) {
     const { issue, repository, sender } = context.payload;
-    const match = /^\[discover language\](?:\s+(preview|check (?:(?:corpus|count) )?examples|batch\s+(\d+)|review report\s+(\d+)))?\s*$/i.exec(issue?.title || "");
+    const match = /^\[discover language\](?:\s+(preview|check (?:(?:corpus|count|support) )?examples|batch\s+(\d+)|review report\s+(\d+)|continue\s+(\d+)))?\s*$/i.exec(issue?.title || "");
     if (!match || issue?.user?.type === "Bot" || sender?.type === "Bot"
       || sender?.login?.toLowerCase() !== config.owner.toLowerCase()
       || repository?.owner?.login?.toLowerCase() !== config.owner.toLowerCase()
@@ -344,7 +368,7 @@ function createDiscoveryHandler({ octokitForContext, config, openai, model, skil
       // restart interrupted the job before publishing, a redelivery must not start a second
       // run that would look like a fresh job once the unfinished comment is updated by hand.
       if (comments.some(item => item.user?.type === "Bot" && item.body?.startsWith(marker))) { running.delete(key); return; }
-      const status = /^check (?:(?:corpus|count) )?examples$/i.test(match[1] || "")
+      const status = /^check (?:(?:corpus|count|support) )?examples$/i.test(match[1] || "")
         ? "Checking the selected comparison examples and valid controls. The result will show expected and actual decisions."
         : match[3] ? "Reviewing the existing findings against their pinned source passages. The result will show which comparisons and word suggestions pass the new checks."
         : "Reading the configured public source repositories. This is a bounded source batch; a coverage report will show what was read.";
@@ -354,16 +378,30 @@ function createDiscoveryHandler({ octokitForContext, config, openai, model, skil
     const job = (async () => {
       let body;
       try {
-        if (/^check (?:(?:corpus|count) )?examples$/i.test(match[1] || "")) {
+        if (/^check (?:(?:corpus|count|support) )?examples$/i.test(match[1] || "")) {
           const suite = match[1].toLowerCase() === "check corpus examples" ? "corpus"
-            : match[1].toLowerCase() === "check count examples" ? "counts" : "comparison";
+            : match[1].toLowerCase() === "check count examples" ? "counts"
+            : match[1].toLowerCase() === "check support examples" ? "support" : "comparison";
           body = await checkComparisonExamples(openai, model, log, suite);
         } else if (match[3]) {
           const { reviewPublishedReport } = require("./report-review");
           body = await reviewPublishedReport({ octokit, config, reportIssue: Number(match[3]), openai, model, log,
             helpers: { eligible, passages, citationPassages, safeText } });
         } else {
-        const collected = await collectSources(octokit, config, Number(match[2] || 1));
+        let batch = Number(match[2] || 1), snapshot;
+        if (match[4]) {
+          const previousIssue = Number(match[4]);
+          if (!Number.isSafeInteger(previousIssue) || previousIssue < 1) throw new Error('Invalid continuation issue');
+          const previousMarker = `<!-- semantic-discovery:${createHash('sha256').update(`${config.owner}/${config.controlRepository}#${previousIssue}`).digest('hex').slice(0, 16)} -->`;
+          const previous = await octokit.paginate(octokit.issues.listComments, { owner: config.owner, repo: config.controlRepository, issue_number: previousIssue, per_page: 100 });
+          const reports = previous.filter(c => c.user?.type === 'Bot' && c.body?.startsWith(previousMarker) && c.body.includes('<!-- complete-reading:'));
+          if (reports.length !== 1) throw new Error('One completed reading report is required');
+          const record = parseReadingRecord(reports[0].body);
+          if (config.readingMode !== 'complete' || record.settingsKey !== settingsKey(config)) throw new Error('Reading settings changed; start a new scan');
+          validateSnapshot(record.repositories, config);
+          batch = record.nextBatch; snapshot = record.repositories;
+        }
+        const collected = await collectSources(octokit, config, batch, snapshot);
         const preview = match[1]?.toLowerCase() === "preview";
         let driftPairs = [];
         if (!preview && typeof driftScanner === "function") {
@@ -379,11 +417,13 @@ function createDiscoveryHandler({ octokitForContext, config, openai, model, skil
         body = preview ? `# Source preview\nNo model request was made.\n\n${coverage(collected)}`
           : !collected.sources.length ? `# No readable sources in this batch\n\n${coverage(collected)}`
           : await generateDiscovery(openai, model, skills, collected, log, driftPairs);
+        if (collected.mode === 'complete') body += `\n<!-- complete-reading:${Buffer.from(JSON.stringify(readingRecord(collected, preview ? collected.batch : collected.batch + 1))).toString('base64')} -->`;
         }
       } catch (error) {
         const quota = ["credit_balance_exhausted", "insufficient_quota"].includes(error.code) || error.type === "insufficient_quota";
         body = quota ? "# Discovery paused\nThe OpenAI API account has no available credit. No generated findings were published. After billing is ready, open a new discovery issue to retry."
           : error.code === "private_source" ? "# Discovery stopped\nA configured source is private. This public reporting setup cannot read or publish private-source material. Use a separately approved private reporting setup."
+          : error.code === 'reading_capacity' ? '# Reading index exceeds capacity\nThe complete index exceeds 2,000 eligible files or 50 MB. No tail was silently omitted. Narrow the configured public source set or increase capacity deliberately before retrying.'
           : "# Discovery could not finish\nNo complete report was produced. Check the service logs, source access, and configuration; then open a new discovery issue to retry.";
         log.error({ status: Number.isInteger(error.status) ? error.status : undefined,
           code: /^[a-z_]{1,64}$/.test(error.code || "") ? error.code : undefined }, "Source discovery failed");

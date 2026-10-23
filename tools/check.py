@@ -149,8 +149,10 @@ def escaped(value):
 def report(result):
     lines = ["<!-- seo-language-tool-result -->", "## Requested language tool check", ""]
     if result["status"] != "completed":
+        lines += ["**Confidence: Not assessed** — The tool did not complete; no conclusion about your idea follows.", ""]
         lines += ["**Check did not complete.** No formal result is being claimed.", "", escaped(result["error"])]
     elif "consistent" in result:
+        lines += ["**Confidence: High for the reported formal result within the supplied axioms; not assessed for their real-world truth.** The reasoner checked this ontology. To extend the claim, justify the axioms and their mapping to the intended domain.", ""]
         lines += ["**HermiT ran:** the supplied ontology is **" + ("consistent" if result["consistent"] else "inconsistent") + "**."]
         if result["consistent"]:
             classes = result["unsatisfiable_classes"]
@@ -161,6 +163,7 @@ def report(result):
         lines += ["", "An inconsistent result means these axioms cannot all hold together; this check does not identify a minimal explanation."] if not result["consistent"] else []
         lines += ["", escaped(result["limits"]), "", "Runtime: Owlready2 " + result["owlready2_version"] + "; bundled HermiT jar SHA-256: `" + result["jar_sha256"] + "`."]
     else:
+        lines += ["**Confidence: Not assessed for the correctness of your role assignments.** lambeq constructed the diagram from the roles you supplied; it did not choose or validate them. To assess them, provide the complete sentence and intended reading, compare plausible roles, and keep alternate parses when context is ambiguous.", ""]
         lines += ["**lambeq ran:** constructed a string diagram from your explicitly supplied word roles.", "", "> " + escaped(result["sentence"]), "", "Output type: " + escaped(result["output_type"]) + ". The two noun wires connect to the verb's two argument positions, leaving one sentence wire.", "", "| Diagram element | Input type | Output type |", "| --- | --- | --- |"]
         lines += ["| " + " | ".join(escaped(box[key]) for key in ("name", "input_type", "output_type")) + " |" for box in result["boxes"][:50]]
         lines += ["", "Download **sentence-diagram.svg** from the run's **language-tool-result** artifact for the picture.", "", escaped(result["limits"]), "", "Runtime: lambeq " + result["lambeq_version"] + "."]

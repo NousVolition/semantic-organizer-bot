@@ -1,0 +1,472 @@
+{
+  "description": "Synthetic paired probes for grounded encouragement, confidence scope and corpus-board lessons. Not source quotations. Expected answers are evaluation-only.",
+  "sources": [
+    {
+      "id": "S301",
+      "repository": "NousVolition/semantic-organizer-bot",
+      "path": "synthetic/source-1.txt",
+      "url": "https://github.com/NousVolition/semantic-organizer-bot/blob/main/fixtures/support-examples.json",
+      "sampled": false,
+      "excerpts": [
+        {
+          "startLine": 1,
+          "text": "Controlled synthetic passage: Under the stated positive scale assumptions the Cartesian derivatives sum to -A*H*C*phi + A*H*C*phi = 0 exactly. Polynomial-times-decaying-exponential components establish smoothness and finite energy. Global smooth evolution is not proved here."
+        }
+      ]
+    },
+    {
+      "id": "S302",
+      "repository": "NousVolition/semantic-organizer-bot",
+      "path": "synthetic/source-2.txt",
+      "url": "https://github.com/NousVolition/semantic-organizer-bot/blob/main/fixtures/support-examples.json",
+      "sampled": false,
+      "excerpts": [
+        {
+          "startLine": 1,
+          "text": "Controlled synthetic passage: Author note: 'Maybe this is just an unchecked guess.' The adjacent initial-field derivation is supplied. Firmer wording is wanted for its proved result while withholding a claim about global evolution. 'Withheld proof' names that withheld claim, not a concealed proof."
+        }
+      ]
+    },
+    {
+      "id": "S303",
+      "repository": "NousVolition/semantic-organizer-bot",
+      "path": "synthetic/source-3.txt",
+      "url": "https://github.com/NousVolition/semantic-organizer-bot/blob/main/fixtures/support-examples.json",
+      "sampled": false,
+      "excerpts": [
+        {
+          "startLine": 1,
+          "text": "Controlled synthetic passage: Model: A'=DeltaU, J=A, M'=J, A(0)=M(0)=0. Unit-duration +1 then -1 pulses give A(2)=J(2)=0 and M(2)=1; reversing them gives M(2)=-1 with A(2)=J(2)=0."
+        }
+      ]
+    },
+    {
+      "id": "S304",
+      "repository": "NousVolition/semantic-organizer-bot",
+      "path": "synthetic/source-4.txt",
+      "url": "https://github.com/NousVolition/semantic-organizer-bot/blob/main/fixtures/support-examples.json",
+      "sampled": false,
+      "excerpts": [
+        {
+          "startLine": 1,
+          "text": "Controlled synthetic passage: Companion calculation: M(t)=integral_0^t (t-s)*DeltaU(s) ds. Stored input and source rate can reset while the field retains a timing contribution. No empirical calibration is supplied."
+        }
+      ]
+    },
+    {
+      "id": "S305",
+      "repository": "NousVolition/semantic-organizer-bot",
+      "path": "synthetic/source-5.txt",
+      "url": "https://github.com/NousVolition/semantic-organizer-bot/blob/main/fixtures/support-examples.json",
+      "sampled": false,
+      "excerpts": [
+        {
+          "startLine": 1,
+          "text": "Controlled synthetic passage: Matching rules leave zero eligible pairs; observed unequal pairs=0. Selection and adaptation are possible explanations, not observed causes."
+        }
+      ]
+    },
+    {
+      "id": "S306",
+      "repository": "NousVolition/semantic-organizer-bot",
+      "path": "synthetic/source-6.txt",
+      "url": "https://github.com/NousVolition/semantic-organizer-bot/blob/main/fixtures/support-examples.json",
+      "sampled": false,
+      "excerpts": [
+        {
+          "startLine": 1,
+          "text": "Controlled synthetic passage: The universal condition is vacuously satisfied on an empty set, but no pair was compared. This does not demonstrate observed agreement. Report matching rules and the comparison denominator."
+        }
+      ]
+    },
+    {
+      "id": "S307",
+      "repository": "NousVolition/semantic-organizer-bot",
+      "path": "synthetic/source-7.txt",
+      "url": "https://github.com/NousVolition/semantic-organizer-bot/blob/main/fixtures/support-examples.json",
+      "sampled": false,
+      "excerpts": [
+        {
+          "startLine": 1,
+          "text": "Controlled synthetic passage: The Socio-Didact preserves Sens while adjusting Sin. Sens means intended meaning; Sin means socially encoded expression. This is conceptual language, not proof that every adaptation retains intent."
+        }
+      ]
+    },
+    {
+      "id": "S308",
+      "repository": "NousVolition/semantic-organizer-bot",
+      "path": "synthetic/source-8.txt",
+      "url": "https://github.com/NousVolition/semantic-organizer-bot/blob/main/fixtures/support-examples.json",
+      "sampled": false,
+      "excerpts": [
+        {
+          "startLine": 1,
+          "text": "Controlled synthetic passage: A hypothetical writer changes expression while trying to retain intent. Whether meaning remains stable needs contextual comparison. 'Not bad' here is deliberate understated approval, not an assertion of weak performance."
+        }
+      ]
+    }
+  ],
+  "examples": [
+    {
+      "case": "initial-result-underrated",
+      "expectedAccept": false,
+      "expectedNotPass": [
+        "relationship",
+        "word_1"
+      ],
+      "connection": {
+        "title": "Only an unchecked guess",
+        "kind": "interpretive",
+        "relationship": "Because evolution is unproved, the initial-field identity is only an unchecked guess.",
+        "limit": "Global evolution is unproved.",
+        "evidence": {
+          "S301": "S301P1",
+          "S302": "S302P1"
+        },
+        "words": [
+          {
+            "term": "tentative observation",
+            "kind": "candidate",
+            "fit": "The cancellation establishes nothing."
+          }
+        ],
+        "confidence": {
+          "level": "high",
+          "band": "none",
+          "basis": "The supplied cancellation establishes the initial-field result.",
+          "strengthen": "Changed fields or later evolution need separate justification.",
+          "pullBack": "Keep global smooth evolution unproved here."
+        }
+      }
+    },
+    {
+      "case": "initial-result-grounded-lift",
+      "expectedAccept": true,
+      "connection": {
+        "title": "State the result firmly",
+        "kind": "interpretive",
+        "relationship": "The cancellation proves divergence freedom for this initial field; tentative wording undersells that result.",
+        "limit": "Global smooth evolution is not proved here.",
+        "evidence": {
+          "S301": "S301P1",
+          "S302": "S302P1"
+        },
+        "words": [
+          {
+            "term": "established initial-field identity",
+            "kind": "candidate",
+            "fit": "Firmer wording supported by the derivation without extending to all time."
+          }
+        ],
+        "confidence": {
+          "level": "high",
+          "band": "none",
+          "basis": "The supplied cancellation establishes the initial-field result.",
+          "strengthen": "Changed fields or later evolution need separate justification.",
+          "pullBack": "Keep global smooth evolution unproved here."
+        }
+      }
+    },
+    {
+      "case": "encouragement-overreaches",
+      "expectedAccept": false,
+      "expectedNotPass": [
+        "relationship",
+        "word_1"
+      ],
+      "connection": {
+        "title": "A global breakthrough",
+        "kind": "interpretive",
+        "relationship": "The cancellation proves global smooth evolution.",
+        "limit": "Initial-field assumptions apply.",
+        "evidence": {
+          "S301": "S301P1",
+          "S302": "S302P1"
+        },
+        "words": [
+          {
+            "term": "global proof",
+            "kind": "candidate",
+            "fit": "The initial identity proves the evolution theorem."
+          }
+        ],
+        "confidence": {
+          "level": "high",
+          "band": "none",
+          "basis": "The supplied cancellation establishes the initial-field result.",
+          "strengthen": "Changed fields or later evolution need separate justification.",
+          "pullBack": "Keep global smooth evolution unproved here."
+        }
+      }
+    },
+    {
+      "case": "withheld-proof-confident-scope",
+      "expectedAccept": true,
+      "connection": {
+        "title": "Withheld proof",
+        "kind": "interpretive",
+        "relationship": "The initial identity is proved; a claim of proof of global evolution is withheld. This neither conceals a proof nor retracts the initial result.",
+        "limit": "No all-time conclusion follows from the identity alone.",
+        "evidence": {
+          "S301": "S301P1",
+          "S302": "S302P1"
+        },
+        "words": [
+          {
+            "term": "bounded confidence",
+            "kind": "candidate",
+            "fit": "Be firm about the initial result while preserving the withheld evolution claim."
+          }
+        ],
+        "confidence": {
+          "level": "high",
+          "band": "none",
+          "basis": "The supplied cancellation establishes the initial-field result.",
+          "strengthen": "Changed fields or later evolution need separate justification.",
+          "pullBack": "Keep global smooth evolution unproved here."
+        }
+      }
+    },
+    {
+      "case": "reset-equals-recovery",
+      "expectedAccept": false,
+      "expectedNotPass": [
+        "relationship",
+        "word_1",
+        "confidence"
+      ],
+      "connection": {
+        "title": "Complete recovery",
+        "kind": "interpretive",
+        "relationship": "Both sequences restore the entire field because final A and J are zero.",
+        "limit": "These are model results.",
+        "evidence": {
+          "S303": "S303P1",
+          "S304": "S304P1"
+        },
+        "words": [
+          {
+            "term": "complete reset",
+            "kind": "candidate",
+            "fit": "Final M is zero in both sequences."
+          }
+        ],
+        "confidence": {
+          "level": "high",
+          "band": "none",
+          "basis": "A=J=0 verifies full recovery.",
+          "strengthen": "No further evidence needed.",
+          "pullBack": "No narrowing needed."
+        }
+      }
+    },
+    {
+      "case": "reset-retains-contribution",
+      "expectedAccept": true,
+      "connection": {
+        "title": "Reset is not recovery",
+        "kind": "interpretive",
+        "relationship": "Both sequences reset A and J but retain opposite nonzero final M.",
+        "limit": "This model consequence is not empirical validation of human memory.",
+        "evidence": {
+          "S303": "S303P1",
+          "S304": "S304P1"
+        },
+        "words": [
+          {
+            "term": "timing trace",
+            "kind": "candidate",
+            "fit": "Names the retained timing contribution in this model."
+          }
+        ],
+        "confidence": {
+          "level": "high",
+          "band": "none",
+          "basis": "The integrals and values support this model comparison.",
+          "strengthen": "Empirical calibration is needed for a real-system claim.",
+          "pullBack": "Keep the stated model and input assumptions."
+        }
+      }
+    },
+    {
+      "case": "empty-comparison-overclaim",
+      "expectedAccept": false,
+      "expectedNotPass": [
+        "relationship",
+        "word_1",
+        "confidence"
+      ],
+      "connection": {
+        "title": "Verified consistency",
+        "kind": "interpretive",
+        "relationship": "Zero unequal pairs proves observed consistency.",
+        "limit": "Matching rules are explicit.",
+        "evidence": {
+          "S305": "S305P1",
+          "S306": "S306P1"
+        },
+        "words": [
+          {
+            "term": "tested agreement",
+            "kind": "candidate",
+            "fit": "Zero eligible pairs verifies observed agreement."
+          }
+        ],
+        "confidence": {
+          "level": "high",
+          "band": "none",
+          "basis": "Zero violations verifies agreement.",
+          "strengthen": "No further comparison needed.",
+          "pullBack": "No narrowing needed."
+        }
+      }
+    },
+    {
+      "case": "empty-comparison-kept",
+      "expectedAccept": true,
+      "connection": {
+        "title": "Keep the denominator visible",
+        "kind": "interpretive",
+        "relationship": "The condition is vacuously satisfied, but zero eligible pairs supplies no observed agreement.",
+        "limit": "No selection mechanism is established.",
+        "evidence": {
+          "S305": "S305P1",
+          "S306": "S306P1"
+        },
+        "words": [
+          {
+            "term": "untested consistency",
+            "kind": "candidate",
+            "fit": "Names a condition with no eligible observed comparison."
+          }
+        ],
+        "confidence": {
+          "level": "low",
+          "band": "none",
+          "basis": "Empirical consistency lacks support because no pair was compared.",
+          "strengthen": "Obtain informative comparisons under declared matching rules.",
+          "pullBack": "Do not describe an empty comparison as verified observed agreement."
+        }
+      }
+    },
+    {
+      "case": "confidence-alone-overclaims",
+      "expectedAccept": false,
+      "expectedNotPass": [
+        "confidence"
+      ],
+      "connection": {
+        "title": "Intent and expression",
+        "kind": "interpretive",
+        "relationship": "The phrase distinguishes intent from expression within this framework.",
+        "limit": "The example is hypothetical.",
+        "evidence": {
+          "S307": "S307P1",
+          "S308": "S308P1"
+        },
+        "words": [
+          {
+            "term": "preserves Sens while adjusting Sin",
+            "kind": "candidate",
+            "fit": "Retain the local terms and conceptual distinction."
+          }
+        ],
+        "confidence": {
+          "level": "high",
+          "band": "none",
+          "basis": "All people always preserve intent when adapting expression.",
+          "strengthen": "No comparison could change this.",
+          "pullBack": "No narrowing needed."
+        }
+      }
+    },
+    {
+      "case": "medium-support-keeps-language",
+      "expectedAccept": true,
+      "connection": {
+        "title": "Intent and expression",
+        "kind": "interpretive",
+        "relationship": "The phrase distinguishes intent from expression within this framework.",
+        "limit": "The example is hypothetical.",
+        "evidence": {
+          "S307": "S307P1",
+          "S308": "S308P1"
+        },
+        "words": [
+          {
+            "term": "preserves Sens while adjusting Sin",
+            "kind": "candidate",
+            "fit": "Retain the local terms and conceptual distinction."
+          }
+        ],
+        "confidence": {
+          "level": "medium",
+          "band": "middle",
+          "basis": "The distinction is explicit, but stability of intent in a real case is unestablished.",
+          "strengthen": "Compare original and revised wording in context.",
+          "pullBack": "Keep the description conceptual, not universal."
+        }
+      }
+    },
+    {
+      "case": "understatement-misread",
+      "expectedAccept": false,
+      "expectedNotPass": [
+        "relationship",
+        "word_1"
+      ],
+      "connection": {
+        "title": "Weak language",
+        "kind": "interpretive",
+        "relationship": "The deliberate 'not bad' proves the writer has low ability.",
+        "limit": "This is a conceptual example.",
+        "evidence": {
+          "S307": "S307P1",
+          "S308": "S308P1"
+        },
+        "words": [
+          {
+            "term": "ordinary language",
+            "kind": "candidate",
+            "fit": "Sens and Sin must be removed because they show confusion."
+          }
+        ],
+        "confidence": {
+          "level": "medium",
+          "band": "middle",
+          "basis": "The distinction is explicit, but stability of intent in a real case is unestablished.",
+          "strengthen": "Compare original and revised wording in context.",
+          "pullBack": "Keep the description conceptual, not universal."
+        }
+      }
+    },
+    {
+      "case": "deliberate-understatement-kept",
+      "expectedAccept": true,
+      "connection": {
+        "title": "Keep the chosen voice",
+        "kind": "interpretive",
+        "relationship": "Keep the local phrase and 'not bad' as deliberate understated approval.",
+        "limit": "The example does not prove unchanged intent in every real adaptation.",
+        "evidence": {
+          "S307": "S307P1",
+          "S308": "S308P1"
+        },
+        "words": [
+          {
+            "term": "preserves Sens while adjusting Sin",
+            "kind": "candidate",
+            "fit": "Retain the conceptual distinction; deliberate restrained approval need not be corrected."
+          }
+        ],
+        "confidence": {
+          "level": "medium",
+          "band": "middle",
+          "basis": "The distinction is explicit, but stability of intent in a real case is unestablished.",
+          "strengthen": "Compare original and revised wording in context.",
+          "pullBack": "Keep the description conceptual, not universal."
+        }
+      }
+    }
+  ]
+}
