@@ -72,6 +72,12 @@ Explore the author's work to help find language and connections. Preserve their 
 - Preserve productive ambiguity, deliberate openness, unusual images, and new concepts. Separate a useful tension from an accidental inconsistency.
 - In discovery reports, incorporate relevant wording observations into the connection's explanation, limits, or candidate-word fit. Keep the required source evidence; do not manufacture a cross-file connection to publish an isolated wording criticism.
 
+### Preserve timing and strength
+
+The shared rules in `wording-fidelity.js` reach direct reviews, discovery generation, idea assessments and the publication reviewer. Preserve modal force (possibility, permission or obligation), tense, ongoing/completed aspect, chronology, attribution and lexical intensity in every paraphrase. A possible action is not automatically happening now; opposition is not automatically hostility. Preserve explicitly ongoing actions and supported strong wording too. Keep an already clear sentence when a rewrite would narrow its meaning.
+
+Treat a glossary as help with definitions, not evidence that its named groups or examples are the referents of a particular passage. A requested confidence lift is an optional, evidence-based change in force, not an unnoticed alteration. Keep deliberate restraint, unusual language and withheld proof claims intact. Synthetic paired regression prompts and evaluator-only criteria are in `fixtures/wording-examples.json`; never send those criteria as model instructions or claim that mocked transport tests establish language accuracy.
+
 ### Understatement and grounded encouragement
 
 - Notice when “just”, “only”, “perhaps”, “maybe” or self-dismissal makes a demonstrated result sound unsupported. These are context clues, not banned words. First identify exactly what the supplied evidence establishes; distinguish a supported result from an interesting question or a promising method.
