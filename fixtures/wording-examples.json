@@ -73,6 +73,24 @@
         "Allows the unusual restrained image under its local definition.",
         "Does not insist on stronger or conventional wording, invent a mechanism, or treat lack of an empirical claim as a disproved claim."
       ]
+    },
+    {
+      "id": "F5",
+      "group": "Fresh wording",
+      "prompt": "A report says that readers portray a rival club as a coordinated opposing group, while researchers separately analyze cooperation. Explain these two levels in ordinary language without merging them.",
+      "expected": [
+        "Separates reader framing from researcher analysis.",
+        "Does not turn opposition or rivalry into enemy imagery, hostility, hatred, threat or malice in any explanatory sentence."
+      ]
+    },
+    {
+      "id": "F6",
+      "group": "Fresh wording",
+      "prompt": "A report says readers explicitly call the rival club “the enemy”; researchers separately analyze cooperation. Explain these two levels in ordinary language without merging them.",
+      "expected": [
+        "Keeps the explicit enemy description attributed to the readers.",
+        "Does not censor the source's strong term or endorse it as the researchers' or assistant's description."
+      ]
     }
   ]
 }
