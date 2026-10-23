@@ -23,6 +23,7 @@ function api({failure,generated=[proposal('Generated safe')]}={}) {
   return {requests,chat:{completions:{create:async request=>{
     requests.push(request);
     if(request.response_format.json_schema.name==='language_discovery')return response({connections:generated},'generation-id');
+    if(request.response_format.json_schema.name==='word_meaning_audit')return require('./helpers/word-response')(request);
     const c=JSON.parse(request.messages[1].content).candidates[0];
     const checks=Object.fromEntries(CHECKS.map(x=>[x,'pass']));
     if(failure && c.fields.title==='Supplied blocked') {
@@ -124,11 +125,23 @@ test('actual issue handler collects, generates, gates, and posts once; unauthori
   gh.paginate=async()=>comments;
   gh.issues={listComments:()=>{},createComment:async p=>{comments.push({user:{type:'Bot'},body:p.body});return {data:{id:99}};},updateComment:async p=>{updates.push(p);comments[0].body=p.body;}};
   const handler=createDiscoveryHandler({config,openai:client,model:'mock',skills:'',log:{info(){},error(){}}});
-  const body=JSON.stringify({sources:urls,proposals:[proposal('Supplied blocked')]});
+  const crypto=require('node:crypto');
+  const {publicKey,privateKey}=crypto.generateKeyPairSync('rsa',{modulusLength:2048});
+  const capturePublicKey=publicKey.export({type:'spki',format:'pem'});
+  const body=JSON.stringify({sources:urls,proposals:[proposal('Supplied blocked')],capturePublicKey});
   const context={id:'delivery-test',payload:{sender:{type:'User',login:'example'},repository:{name:'bot',full_name:'example/bot',owner:{login:'example'}},issue:{number:9,title:'[Discover language] sources',body,user:{type:'User'}}},octokit:gh,issue:()=>({owner:'example',repo:'bot',issue_number:9})};
   await handler.handle({...context,payload:{...context.payload,sender:{type:'User',login:'other'}}});assert.equal(client.requests.length,0);
   await handler.handle(context);await handler.waitForIdle();
   assert.equal(updates.length,1);assert.doesNotMatch(updates[0].body,/## Supplied blocked/);assert.match(updates[0].body,/## Generated safe/);
   assert.equal(receipt(updates[0].body).deliveryId,'delivery-test');assert.equal(receipt(updates[0].body).inputSha256,createHash('sha256').update(body).digest('hex'));
+  const capture=receipt(updates[0].body).capture;
+  const key=crypto.privateDecrypt({key:privateKey,oaepHash:'sha256'},Buffer.from(capture.wrappedKey,'base64'));
+  const decoder=crypto.createDecipheriv('aes-256-gcm',key,Buffer.from(capture.iv,'base64'));decoder.setAuthTag(Buffer.from(capture.tag,'base64'));
+  const decoded=JSON.parse(require('node:zlib').gunzipSync(Buffer.concat([decoder.update(Buffer.from(capture.data,'base64')),decoder.final()])));
+  assert.deepEqual(decoded.candidates,[proposal('Generated safe'),proposal('Supplied blocked')]);
+  assert.equal(decoded.decisions[1].rawReview.checks.definition_fidelity,'fail');
+  assert.equal(decoded.decisions[0].wordAudit.rawReview.word_1.status,'pass');
+  assert.deepEqual(decoded.sources.map(s=>s.excerpts[0].text),sourceText);
+  assert.ok(client.requests.every(req=>!JSON.stringify(req.messages).includes('BEGIN PUBLIC KEY')));
   const calls=client.requests.length;await handler.handle(context);await handler.waitForIdle();assert.equal(client.requests.length,calls);assert.equal(updates.length,1);
 });

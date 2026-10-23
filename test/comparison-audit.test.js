@@ -202,6 +202,7 @@ test("a failed comparison never reaches the published discovery report", async (
   let calls = 0;
   const client = { chat: { completions: { create: async request => {
     calls++;
+    if (request.response_format.json_schema.name === "word_meaning_audit") return require('./helpers/word-response')(request);
     if (request.response_format.json_schema.name === "language_discovery") {
       assert.equal(request.model, 'gpt-5.4-mini');
       return response({ connections: items });
@@ -212,7 +213,7 @@ test("a failed comparison never reaches the published discovery report", async (
     return response(review);
   } } } };
   const report = await generateDiscovery(client, "gpt-5.4-mini", "", { batch: 1, totalFiles: 6, totalBatches: 1, duplicateFiles: 0, sources: fixtures.sources });
-  assert.equal(calls, 3);
+  assert.equal(calls, 4);
   assert.ok(!report.includes(items[0].title));
   assert.ok(report.includes(items[1].title));
   assert.match(report, /1 of 2 proposals were withheld/);

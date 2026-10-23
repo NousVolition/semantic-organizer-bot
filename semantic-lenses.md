@@ -36,4 +36,8 @@ Confidence belongs to the particular claim and kind of support. A definition may
 
 ## Use before publication
 
+For limitations, distinguish a boundary of the supplied evidence from a claim that something does not exist. "No measurement is established in these notes" can follow from the supplied definitional material. "These are not measured variables" can additionally assert a methodological fact; scope that claim explicitly or require evidence for it. Read the whole context before assigning scope: an explicit local scope is not a universal absence claim, and a supplied measurement or derivation must not be erased by a generic caveat. Do not infer empirical validation merely from a definition or a lack of contradiction.
+
+Before publishing a word suggestion, a focused word-meaning review separately compares the source sense, proposed sense and a contrast case. An undisclosed material change prevents publication even if the broad review passed. This extra reader does not establish infallibility; retained live examples are needed to assess its behavior.
+
 Decide reference_fidelity, inference_fidelity, relation_fidelity and voice_fidelity for every candidate, including titles, explanations, limitations and confidence reasons. A dimension not invoked may pass. A relevant unsupported change fails; missing necessary context is uncertain. Preserve useful valid connections and wording as carefully as you catch errors. These are fallible reading checks, not a claim that a parser, reasoner or proof assistant ran.

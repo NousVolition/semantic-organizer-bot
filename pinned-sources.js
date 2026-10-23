@@ -5,7 +5,7 @@ function parseSourceRequest(body, config, eligible) {
   if (typeof body !== 'string' || Buffer.byteLength(body) > 24000) throw invalid();
   let request;
   try { request = JSON.parse(body.replace(/^```json\s*\n([\s\S]*?)\n```\s*$/, '$1')); } catch { throw invalid(); }
-  if (!request || Object.keys(request).some(k => !['sources', 'proposals'].includes(k))
+  if (!request || Object.keys(request).some(k => !['sources', 'proposals', 'capturePublicKey'].includes(k))
     || !Array.isArray(request.sources) || request.sources.length < 2 || request.sources.length > 4
     || (request.proposals !== undefined && (!Array.isArray(request.proposals) || request.proposals.length > 3))) throw invalid();
   const sources = request.sources.map((raw, i) => {
@@ -22,7 +22,10 @@ function parseSourceRequest(body, config, eligible) {
       url: `https://github.com/${owner}/${repo}/blob/${commit}/${path.split('/').map(encodeURIComponent).join('/')}` };
   });
   if (new Set(sources.map(s => s.url)).size !== sources.length) throw invalid();
-  return { sources, proposals: request.proposals || [] };
+  if(request.capturePublicKey !== undefined) {
+    try { require('./audit-capture').captureKey(request.capturePublicKey); } catch { throw invalid(); }
+  }
+  return { sources, proposals: request.proposals || [], capturePublicKey: request.capturePublicKey };
 }
 
 async function collectPinnedSources(octokit, request, config) {
