@@ -74,6 +74,10 @@ Explore the author's work to help find language and connections. Preserve their 
 
 ### Preserve timing and strength
 
+Keep “as stated” without assuming “as written.” Preserve an explicit written or spoken source when supplied. Separately, “researchers analyze cooperation” identifies their topic or activity; it does not establish that they observed cooperation or found a pattern. Preserve genuine reported observations when present, with their attribution and scope. These checks apply to explanatory glosses and confidence reasons too.
+
+Additional paired probes in `fixtures/source-status-examples.json` cover unspecified versus explicit medium, research topics versus observations, hypotheses, planned versus completed work, definitions, causal scope, counts, adjacent proofs and optional confidence lifts. Their expected criteria belong to evaluation only, never to the model's answer input.
+
 The shared rules in `wording-fidelity.js` reach direct reviews, discovery generation, idea assessments and the publication reviewer. Preserve modal force (possibility, permission or obligation), tense, ongoing/completed aspect, chronology, attribution and lexical intensity in every paraphrase. A possible action is not automatically happening now; opposition is not automatically hostility. Preserve explicitly ongoing actions and supported strong wording too. Keep an already clear sentence when a rewrite would narrow its meaning.
 
 Treat a glossary as help with definitions, not evidence that its named groups or examples are the referents of a particular passage. A requested confidence lift is an optional, evidence-based change in force, not an unnoticed alteration. Keep deliberate restraint, unusual language and withheld proof claims intact. Synthetic paired regression prompts and evaluator-only criteria are in `fixtures/wording-examples.json`; never send those criteria as model instructions or claim that mocked transport tests establish language accuracy.
