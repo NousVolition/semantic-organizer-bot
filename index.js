@@ -125,7 +125,11 @@ module.exports = (app, { getRouter } = {}) => {
 
   // Issues
   app.on("issues.opened", async (context) => {
-    if (process.env.ENABLE_TEXT_REVIEWS !== "true" || !openai || context.payload.sender?.type === "Bot" || context.payload.issue.user?.type === "Bot"
+    const requested = /^\[review idea\](?:\s|$)/i.test(context.payload.issue.title || '');
+    if (requested && (context.payload.sender?.login?.toLowerCase() !== discoveryConfig.owner.toLowerCase()
+      || context.payload.repository?.owner?.login?.toLowerCase() !== discoveryConfig.owner.toLowerCase()
+      || context.payload.repository?.name !== discoveryConfig.controlRepository)) return;
+    if ((!requested && process.env.ENABLE_TEXT_REVIEWS !== "true") || !openai || context.payload.sender?.type === "Bot" || context.payload.issue.user?.type === "Bot"
       || /^\[(discover language|check ontology|diagram word roles|diagram sentence)\]/i.test(context.payload.issue.title || "")) return;
 
     const issue = context.payload.issue;

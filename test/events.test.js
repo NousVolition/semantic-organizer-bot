@@ -117,6 +117,23 @@ test("a word-choice question in an issue title can be reviewed without a body", 
   await receive("issues", { action: "opened", issue: { number: 7, title, body: null, user: { type: "User" } } });
 });
 
+test('owner-requested idea reviews work with automatic reviews disabled and receive confidence rules', async () => {
+  delete process.env.ENABLE_TEXT_REVIEWS;
+  nock('https://api.openai.com').post('/v1/chat/completions', body => {
+    assert.match(body.messages[0].content, /Understatement and grounded encouragement/);
+    assert.match(body.messages[0].content, /Medium: there is relevant support/);
+    assert.match(body.messages[0].content, /not a calibrated probability/);
+    return body.messages.at(-1).content.includes(source);
+  }).reply(200, {choices:[{message:{content:'Confidence: medium (middle). Here is the evidence boundary.'}}]});
+  nock('https://api.github.com').post('/repos/NousVolition/semantic-organizer-bot/issues/7/comments', b => b.body.includes('Confidence: medium')).reply(201,{id:1});
+  await receive('issues',{action:'opened',sender:{type:'User',login:'NousVolition'},repository:{name:'semantic-organizer-bot',owner:{login:'NousVolition'}},issue:{number:7,title:'[Review idea]',body:source,user:{type:'User'}}});
+});
+
+test('other users and repositories cannot trigger the explicit idea command', async () => {
+  for (const [login, name] of [['other','semantic-organizer-bot'],['NousVolition','other']])
+    await receive('issues',{action:'opened',sender:{type:'User',login},repository:{name,owner:{login:'NousVolition'}},issue:{number:7,title:'[Review idea]',body:source,user:{type:'User'}}});
+});
+
 test("the bot ignores its own generated issues and other bot events", async () => {
   await receive("issues", { action: "opened", issue: { number: 7, body: source, user: { type: "Bot" } } });
   await receive("pull_request", { action: "edited", sender: { type: "Bot" }, pull_request: { number: 8, body: source } });

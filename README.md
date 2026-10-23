@@ -7,6 +7,15 @@ direction and wording with the author. It does not edit source files.
 
 ## Discover language across repositories
 
+To review one of your ideas directly, open an issue here titled `[Review idea]`
+and include the wording, intended meaning, evidence and any claim left unproved.
+The owner-only command works even when automatic text reviews are off. It can
+offer grounded encouragement, optional stronger wording, and a confidence tag
+with reasons and ways to strengthen or narrow the claim. For proposed word
+roles, include the whole sentence and intended reading. This is a fallible
+language review, separate from lambeq's diagram construction. It uses the API
+and replies publicly; use public material only.
+
 The owner opens an issue in this bot repository with one of these exact titles:
 
 - `[Discover language] preview` — read the first source batch and show its
