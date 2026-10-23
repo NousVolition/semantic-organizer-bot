@@ -63,7 +63,7 @@ test('supplied proposals reject grading keys, unknown passages and single-source
 
 test('new required checks mechanically withhold drafts before the real renderer, including missing judgments',async()=>{
   const collected=await collectPinnedSources(github(),parseSourceRequest(JSON.stringify({sources:urls}),config,eligible),config);
-  for(const key of ['definition_fidelity','count_scope'])for(const status of ['fail','uncertain',undefined]){
+  for(const key of CHECKS)for(const status of ['fail','uncertain',undefined]){
     const client=api({failure:{key,status}}),bad=proposal('Supplied blocked');
     const report=await generateDiscovery(client,'mock','',collected,null,[],{proposals:[bad]});
     const visible=report.split('<!-- publication-receipt:')[0];

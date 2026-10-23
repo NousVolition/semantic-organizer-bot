@@ -16,6 +16,8 @@ The rules are grouped so you can find them quickly:
 
 New topics are added under the matching group. The bot loads this file when its process starts. A deployment or restart loads changes. The application selects the response-format section for the requested mode.
 
+The shared [reading lenses](semantic-lenses.md) add context, reference, implication, relation types and voice checks to every review mode and the independent publication gate. The owner's glossary supplies local meanings, not a single master analogy: Socio-Didact, membership cues, the observer layer, boundary margins, situational orientations and mathematical distinctions matter alongside Sens/Sin. Find the distinction actually supported by the passage. Add new local terms with their defining context and version; do not silently promote a proposed extension into an established definition. Rule edits change instructions, not model training, and need behavioral testing.
+
 ## 1. Core role and intent
 
 ### Role: adviser, not decision-maker
