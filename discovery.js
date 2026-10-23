@@ -256,7 +256,7 @@ function discoverySchema(catalog) {
     kind: { type: "string", enum: ["observed", "interpretive", "creative"] },
     relationship: string,
     limit: string,
-    confidence: confidenceSchema(),
+    confidence: confidenceSchema({ constrainLevelBand: true }),
     evidence: object(sourceSlots),
     words: { type: "array", minItems: 1, maxItems: 3, items: object({ term: string,
       kind: { type: "string", enum: ["candidate", "coined"] }, fit: string }) }
@@ -290,8 +290,17 @@ async function generateDiscovery(openai, model, skills, collected, log, driftPai
   const draft = JSON.parse(choice.message.content);
   if (!Array.isArray(draft.connections) || draft.connections.length > 3)
     throw Object.assign(new Error("Invalid discovery draft"), { code: "invalid_discovery" });
-  if (draft.connections.some(c => c.confidence !== undefined && !validConfidence(c.confidence)))
-    throw Object.assign(new Error('Invalid confidence assessment'), { code: 'invalid_discovery' });
+  const invalidConfidence = draft.connections.map((c, index) => ({ c, index }))
+    .filter(({c}) => c.confidence !== undefined && !validConfidence(c.confidence));
+  if (invalidConfidence.length) {
+    // Record only validation metadata, never the draft or private source text.
+    log?.info?.({ responseId: response.id || null, invalid: invalidConfidence.map(({c,index}) => ({
+      index, level: ['high','medium','low','not_assessed'].includes(c.confidence?.level) ? c.confidence.level : 'invalid',
+      band: ['lower','middle','upper','none'].includes(c.confidence?.band) ? c.confidence.band : 'invalid',
+      invalidTextFields: ['basis','strengthen','pullBack'].filter(k => typeof c.confidence?.[k] !== 'string' || !c.confidence[k].trim() || c.confidence[k].length > 1200)
+    })) }, 'Invalid discovery confidence');
+    throw Object.assign(new Error('Invalid confidence assessment'), { code: 'invalid_discovery_confidence' });
+  }
   return publishDiscoveryDraft(openai, model, draft.connections, collected, log,
     { ...options, generationResponseId: response.id || null, generationModel: response.model || model });
 }

@@ -94,6 +94,31 @@ test('a passing review cannot cause a truncated claim to be published',async()=>
   assert.ok(receipt(report).decisions[0].failed.includes('publication_format'));
 });
 
+test('generation schema permits only usable confidence combinations and bounded nonblank explanations',async()=>{
+  const collected=await collectPinnedSources(github(),parseSourceRequest(JSON.stringify({sources:urls}),config,eligible),config);
+  const client=api();await generateDiscovery(client,'mock','',collected);
+  const branches=client.requests[0].response_format.json_schema.schema.properties.connections.items.properties.confidence.anyOf;
+  const admitted=[];
+  for(const branch of branches) for(const level of branch.properties.level.enum) for(const band of branch.properties.band.enum) admitted.push(level+':'+band);
+  assert.deepEqual(admitted.sort(),['medium:lower','medium:middle','medium:upper','high:none','low:none','not_assessed:none'].sort());
+  for(const branch of branches) for(const key of ['basis','strengthen','pullBack']) {
+    const field=branch.properties[key];
+    assert.equal(field.minLength,1);assert.equal(field.maxLength,1200);
+    assert.equal(new RegExp(field.pattern).test('  \n\t'),false);
+    assert.equal(new RegExp(field.pattern).test('A bounded explanation.'),true);
+  }
+});
+
+test('invalid confidence stops before review and logs metadata without source or draft text',async()=>{
+  const collected=await collectPinnedSources(github(),parseSourceRequest(JSON.stringify({sources:urls}),config,eligible),config);
+  const logs=[],client=api({generated:[{...proposal('private draft marker'),confidence:{level:'high',band:'upper',basis:'private basis marker',strengthen:' ',pullBack:'Keep scope.'}}]});
+  await assert.rejects(generateDiscovery(client,'mock','',collected,{info:(data,message)=>logs.push({data,message})}),{code:'invalid_discovery_confidence'});
+  assert.equal(client.requests.length,1);
+  assert.deepEqual(logs[0].data.invalid,[{index:0,level:'high',band:'upper',invalidTextFields:['strengthen']}]);
+  assert.equal(logs[0].data.responseId,'generation-id');
+  assert.doesNotMatch(JSON.stringify(logs),/private draft marker|private basis marker/);
+});
+
 test('actual issue handler collects, generates, gates, and posts once; unauthorized and redelivered requests do not run',async()=>{
   const gh=github(),comments=[],updates=[],client=api({failure:{key:'definition_fidelity',status:'fail'}});
   gh.paginate=async()=>comments;
