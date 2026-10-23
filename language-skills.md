@@ -297,7 +297,7 @@ Comparison lessons from source review:
 
 ### Owner's glossary
 
-The owner's combined-corpus definitions are maintained in [corpus-definitions.md](corpus-definitions.md). The application loads that file into both direct review and discovery, and separately into the comparison reviewer. It defines Sens, Sin, Socio-Didact, boundary margin, membership cues, and situational orientations, with math and logic distinctions that preserve their scope. These are local meanings, not universal definitions. Add further entries here in this form:
+The owner's combined-corpus definitions are maintained in [corpus-definitions.md](corpus-definitions.md). The application loads that file into both direct review and discovery, and separately into the comparison reviewer. It includes Sens, Sin, Socio-Didact, boundary margin, membership cues, situational orientations, and the versioned two-in-one meanings of Smoke, Clay, Water, Mist, Fog and Wind. It retains the undefined roles of heavy water and Peroxide, distinctions about memory and time, and mathematical limits. These are local meanings, not universal definitions. Add further entries here in this form:
 
 ```text
 Term: [your term]
