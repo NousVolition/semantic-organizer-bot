@@ -302,7 +302,7 @@ async function generateDiscovery(openai, model, skills, collected, log, driftPai
     throw Object.assign(new Error('Invalid confidence assessment'), { code: 'invalid_discovery_confidence' });
   }
   return publishDiscoveryDraft(openai, model, draft.connections, collected, log,
-    { ...options, generationResponseId: response.id || null, generationModel: response.model || model });
+    { ...options, generationResponseId: response.id || null, generationModel: response.model || model, generationUsage: response.usage || null });
 }
 
 async function publishDiscoveryDraft(openai, model, generated, collected, log, options = {}) {
@@ -326,6 +326,19 @@ async function publishDiscoveryDraft(openai, model, generated, collected, log, o
       if (decisions[i]) { decisions[i].accepted = false; decisions[i].failed.push('publication_evidence'); }
     }
   }
+  // A concise second reader examines lexical changes that the broad review can miss.
+  // Run only for otherwise publishable drafts; a rejection cannot be rescued here.
+  for (const [i,c] of candidates.entries()) {
+    if (!decisions[i]?.accepted) continue;
+    const wordAudit = await require('./word-meaning-audit').auditWordMeanings(openai,comparisonModel(model),c,catalog,log);
+    decisions[i].wordAudit = wordAudit;
+    decisions[i].checks.word_meaning = wordAudit.accepted ? 'pass' : 'fail';
+    if(!wordAudit.accepted) {
+      decisions[i].accepted = false;
+      decisions[i].failed.push('word_meaning');
+      decisions[i].reason += ' ' + Object.entries(wordAudit.fields).filter(([,v])=>v.status!=='pass').map(([k,v])=>`${k}: ${v.reason||'Incomplete word meaning review.'}`).join(' ');
+    }
+  }
   const accepted = candidates.filter((_, i) => decisions[i]?.accepted === true);
   const body = renderDiscovery({ connections: accepted,
     audit: { checked: decisions.length, withheld: candidates.length - accepted.length } }, collected, log);
@@ -338,8 +351,12 @@ async function publishDiscoveryDraft(openai, model, generated, collected, log, o
       accepted: decisions[i]?.accepted === true, checks: decisions[i]?.checks || {}, failed: decisions[i]?.failed || ['missing_review'],
       reason: (decisions[i]?.reason || 'Missing review.').slice(0,600),
       fields: Object.fromEntries(Object.entries(decisions[i]?.fields || {}).map(([k,v]) => [k,{ status:v.status, stance:v.stance, proposition:v.proposition, reason:v.reason.slice(0,300) }])),
-      responseId: decisions[i]?.responseId || null, model: decisions[i]?.model || null, reviewedAt: decisions[i]?.reviewedAt || null })),
+      responseId: decisions[i]?.responseId || null, model: decisions[i]?.model || null, reviewedAt: decisions[i]?.reviewedAt || null,
+      wordAudit: decisions[i]?.wordAudit ? {accepted:decisions[i].wordAudit.accepted,responseId:decisions[i].wordAudit.responseId,model:decisions[i].wordAudit.model,reviewedAt:decisions[i].wordAudit.reviewedAt,statuses:Object.fromEntries(Object.entries(decisions[i].wordAudit.fields).map(([k,v])=>[k,v.status]))} : null })),
     readyToPublishAt: new Date().toISOString() };
+  if(options.capturePublicKey) receipt.capture = require('./audit-capture').encryptCapture({version:1,commit:receipt.commit,
+    inputSha256:receipt.inputSha256,generation:{...receipt.generation,usage:options.generationUsage||null},
+    sources:collected.sources,candidates,decisions},options.capturePublicKey);
   const rows = receipt.decisions.map(d => `| ${d.id} | ${d.origin} | ${d.accepted ? 'Accepted' : 'Withheld'} | ${d.failed.length ? d.failed.map(x => safeText(x,80)).join(', ') : 'All required checks passed'} |`);
   const result = body + '\n\n<details><summary>Publication decisions</summary>\n\n'
     + 'Generated and supplied proposals use the same publication gate. A failed, uncertain or missing required check withholds the whole proposal. Supplied proposals are drafts to assess, not endorsed findings.\n\n'
@@ -441,7 +458,7 @@ function createDiscoveryHandler({ octokitForContext, config, openai, model, skil
           const request = parseSourceRequest(issue.body, config, eligible);
           const collected = await collectPinnedSources(octokit, request, config);
           validateProposals(request.proposals, citationPassages(collected.sources), validConfidence);
-          body = await generateDiscovery(openai, model, skills, collected, log, [], { proposals: request.proposals, inputSha256: createHash("sha256").update(issue.body).digest("hex"), deliveryId: context.id || null });
+          body = await generateDiscovery(openai, model, skills, collected, log, [], { proposals: request.proposals, capturePublicKey: request.capturePublicKey, inputSha256: createHash("sha256").update(issue.body).digest("hex"), deliveryId: context.id || null });
         } else if (match[3]) {
           const { reviewPublishedReport } = require("./report-review");
           body = await reviewPublishedReport({ octokit, config, reportIssue: Number(match[3]), openai, model, log,

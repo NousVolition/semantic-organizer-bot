@@ -119,7 +119,8 @@ async function auditOneConnection(openai, model, connections, catalog, log) {
   const choice = response.choices?.[0];
   if (choice?.finish_reason !== "stop" || choice.message?.refusal || !choice.message?.content)
     throw Object.assign(new Error("No complete comparison review"), { code: "incomplete_audit" });
-  const decisions = evaluateAudit(connections, JSON.parse(choice.message.content), context).map(d => ({ ...d, responseId: response.id || null, model: response.model || model, reviewedAt: new Date().toISOString() }));
+  const rawReview = JSON.parse(choice.message.content);
+  const decisions = evaluateAudit(connections, rawReview, context).map((d,i) => ({ ...d, rawReview: rawReview[`C${i+1}`], usage: response.usage || null, responseId: response.id || null, model: response.model || model, reviewedAt: new Date().toISOString() }));
   log?.info?.({ checked: decisions.length, accepted: decisions.filter(d => d.accepted).length,
     withheld: decisions.filter(d => !d.accepted).map(d => ({ id: d.id, checks: d.failed })) }, "Source discovery comparison audit");
   return decisions;

@@ -111,6 +111,7 @@ test("fabricated quotations, single-source connections and untrusted links are r
 
 test("generation receives evidence as data and the editable language rules", async () => {
   const client = { chat: { completions: { create: async request => {
+    if (request.response_format.json_schema.name === "word_meaning_audit") return require('./helpers/word-response')(request);
     if (request.response_format.json_schema.name === "comparison_audit") return passingAudit(request);
     assert.equal(request.response_format.type, "json_schema");
     assert.equal(request.response_format.json_schema.strict, true);
@@ -134,6 +135,7 @@ test("generation receives evidence as data and the editable language rules", asy
 
 test("Drift hints contain only verified IDs and remain explicitly non-evidentiary", async () => {
   const client = { chat: { completions: { create: async request => {
+    if (request.response_format.json_schema.name === "word_meaning_audit") return require('./helpers/word-response')(request);
     if (request.response_format.json_schema.name === "comparison_audit") return passingAudit(request);
     assert.match(request.messages[0].content, /local Drift Scan has supplied these cross-file heuristic candidates/);
     assert.match(request.messages[0].content, /prompts to inspect, not evidence/);
@@ -159,6 +161,10 @@ test("reasoning discovery uses compatible bounded parameters and requires word c
   const client = { chat: { completions: { create: async request => {
     calls++;
     const audit = request.response_format.json_schema.name === "comparison_audit";
+    if (request.response_format.json_schema.name === "word_meaning_audit") {
+      assert.equal(request.model,'gpt-5.4'); assert.equal(request.max_completion_tokens,6000);
+      return require('./helpers/word-response')(request);
+    }
     assert.equal(request.model, audit ? "gpt-5.4" : "gpt-5.4-mini");
     assert.equal(request.reasoning_effort, "medium");
     assert.equal(request.max_completion_tokens, 12000);
@@ -173,7 +179,7 @@ test("reasoning discovery uses compatible bounded parameters and requires word c
     return { choices: [{ finish_reason: "stop", message: { content: JSON.stringify({ connections: [item] }) } }] };
   } } } };
   assert.match(await generateDiscovery(client, "gpt-5.4-mini", "", corpus()), /meaning afterimage/);
-  assert.equal(calls, 2);
+  assert.equal(calls, 3);
 });
 
 test("passage IDs preserve Markdown, punctuation and sampled line locations", () => {
