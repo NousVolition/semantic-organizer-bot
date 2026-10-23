@@ -19,7 +19,10 @@ and replies publicly; use public material only.
 Explicit idea reviews use the configured comparison model by default
 (`IDEA_MODEL` can override it), with a structured response and validated
 confidence bands, reasons and exact input quotations. Incomplete or malformed
-responses are not published. This avoids letting a short freeform review treat
+responses are not published. A validation failure permits one regeneration
+with a fixed diagnostic; a second failure stops, as do refusals and API errors.
+Diagnostics contain codes, not submitted text or model responses.
+This avoids letting a short freeform review treat
 the author's hesitancy as evidence against a supplied derivation. Ordinary
 opt-in text reviews retain their existing separate model setting.
 
@@ -118,7 +121,7 @@ When discovery uses `gpt-5.4-mini`, the separate comparison review uses `gpt-5.4
 `COMPARISON_MODEL` overrides only this checking model; otherwise a custom discovery
 model is also used for checking. GPT-5.4 and GPT-5.4-mini reviews use medium
 reasoning and a 12,000-token completion cap (including reasoning).
-There is no automatic repair/retry loop in the application. The review adds
+Discovery and comparison reviews have no application-level repair loop. The review adds
 API cost; actual usage depends on source length and output. All calls log
 token counts separately without source text. See the usage logs and
 [discovery pricing](https://developers.openai.com/api/docs/models/gpt-5.4-mini)

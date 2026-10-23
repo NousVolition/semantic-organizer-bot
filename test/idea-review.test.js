@@ -16,3 +16,43 @@ test('missing bands, invented quotations and incomplete responses never publish'
   await assert.rejects(reviewIdea(client([bad]),'gpt-5.4-mini','',text));
   await assert.rejects(reviewIdea(client([item()],'length'),'gpt-5.4-mini','',text));
 });
+
+test('one repair attempt can recover an exact quotation without publishing the invalid draft', async()=>{
+  let calls=0;
+  const bad=item();bad.quote='Invented private draft';
+  const api={chat:{completions:{create:async request=>{
+    calls++;
+    if(calls===2){
+      assert.match(request.messages.at(-2).content,/exact contiguous phrase/);
+      assert.equal(request.messages.at(-1).content,text);
+      assert.ok(!JSON.stringify(request.messages).includes(bad.quote));
+    }
+    return {choices:[{finish_reason:'stop',message:{content:JSON.stringify({items:[calls===1?bad:item()]})}}]};
+  }}}};
+  const result=await reviewIdea(api,'gpt-5.4-mini','',text);
+  assert.equal(calls,2);assert.match(result,/Confidence: High/);assert.ok(!result.includes(bad.quote));
+});
+
+test('repeated validation failures stop after two calls with a safe diagnostic', async()=>{
+  let calls=0;const bad=item();bad.confidence.basis='private response marker'.repeat(100);
+  const api=client([bad]);const create=api.chat.completions.create;
+  api.chat.completions.create=async()=>{calls++;return create();};
+  await assert.rejects(reviewIdea(api,'gpt-5.4-mini','',text),error=>{
+    assert.equal(error.code,'idea_confidence');assert.equal(error.type,'idea_validation');
+    assert.doesNotMatch(error.message,/private response marker/);return true;
+  });
+  assert.equal(calls,2);
+});
+
+test('refusals and provider failures do not trigger validation retries', async()=>{
+  for(const refusal of [true,false]){
+    let calls=0;
+    const api={chat:{completions:{create:async()=>{
+      calls++;
+      if(refusal)return {choices:[{finish_reason:'stop',message:{refusal:'declined'}}]};
+      throw Object.assign(new Error('provider failure'),{status:401,code:'invalid_api_key'});
+    }}}};
+    await assert.rejects(reviewIdea(api,'gpt-5.4-mini','',text),error=>error.code===(refusal?'idea_refusal':'invalid_api_key'));
+    assert.equal(calls,1);
+  }
+});
