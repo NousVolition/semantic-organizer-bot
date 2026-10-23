@@ -1,5 +1,7 @@
 const { createHash } = require("node:crypto");
 const { auditConnections } = require("./comparison-audit");
+const { parseReadingRecord } = require('./complete-reading');
+const { validConfidence } = require('./confidence');
 
 function unescapeText(text) {
   return text.replace(/\\([\\`*_{}\[\]()#!|])/g, "$1")
@@ -24,8 +26,12 @@ function parseReport(body) {
     const words = [...part.matchAll(/^- \*\*(.+?)\*\* \((candidate usage, not dictionary-verified|proposed coinage)\): (.+)$/gm)]
       .map(m => ({ term: unescapeText(m[1]), kind: m[2] === "proposed coinage" ? "coined" : "candidate", fit: unescapeText(m[3]) }));
     if (!words.length || words.length > 3) throw new Error("Invalid saved word suggestions");
+    const tag = /\*\*Confidence: (High|Medium|Low|Not assessed)(?: \((lower|middle|upper)\))?\*\*[^\n]*\n\n\*\*Basis:\*\* ([\s\S]*?)\n\n\*\*To strengthen:\*\* ([\s\S]*?)\n\n\*\*To narrow:\*\* ([^\n]+)/.exec(part);
+    const confidence = tag ? { level: tag[1] === 'Not assessed' ? 'not_assessed' : tag[1].toLowerCase(), band: tag[2] || 'none',
+      basis: unescapeText(tag[3]), strengthen: unescapeText(tag[4]), pullBack: unescapeText(tag[5]) } : undefined;
+    if (confidence && !validConfidence(confidence)) throw new Error('Invalid saved confidence');
     findings.push({ number: i + 1, references, connection: { title: unescapeText(header[1]), kind: header[2],
-      relationship: unescapeText(relationship.trim()), limit: unescapeText(limit.trim()), words } });
+      relationship: unescapeText(relationship.trim()), limit: unescapeText(limit.trim()), words, ...(confidence ? { confidence } : {}) } });
   }
   return { findings, skipped };
 }
@@ -50,10 +56,11 @@ async function reviewPublishedReport({ octokit, config, reportIssue, openai, mod
   const reports = comments.filter(c => c.user?.type === "Bot" && c.body?.includes(marker) && c.body.includes("# Language and connections"));
   if (reports.length !== 1) throw new Error("One completed bot report is required");
   const report = reports[0];
+  const reading = report.body.includes('<!-- complete-reading:') ? parseReadingRecord(report.body, true) : null;
   const { findings, skipped } = parseReport(report.body.replace(/\r\n/g, "\n"));
   const sources = new Map();
   for (const finding of findings) for (const ref of finding.references) {
-    const source = pinnedSource(ref, config, helpers.eligible);
+    const source = pinnedSource(ref, config, path => helpers.eligible(path, config.readingMode === 'complete'));
     if (sources.has(source.id) && sources.get(source.id).url !== source.url) throw new Error("Inconsistent source labels");
     sources.set(source.id, source);
   }
@@ -71,7 +78,18 @@ async function reviewPublishedReport({ octokit, config, reportIssue, openai, mod
     const text = new TextDecoder("utf-8", { fatal: true }).decode(bytes);
     if (text.includes("\0")) throw new Error("Binary source");
     source.sampled = text.length > config.charactersPerFile;
-    source.excerpts = helpers.passages(text, config.charactersPerFile);
+    if (reading) {
+      const normalized = text.replace(/\r\n/g, '\n');
+      const saved = reading.sources?.find(s => s.id === source.id && s.repository === source.repository && s.path === source.path && s.commit === source.commit);
+      if (!saved || !Array.isArray(saved.ranges) || !saved.ranges.length || saved.ranges.length > 20) throw new Error('Missing complete-reading ranges');
+      source.excerpts = saved.ranges.map(r => {
+        if (!Number.isSafeInteger(r.start) || !Number.isSafeInteger(r.end) || r.start < 0 || r.end <= r.start
+          || r.end > normalized.length || r.end - r.start > 8000) throw new Error('Invalid saved reading range');
+        const startLine = 1 + (normalized.slice(0, r.start).match(/\n/g) || []).length;
+        if (startLine !== r.startLine) throw new Error('Invalid saved source location');
+        return { startLine, text: normalized.slice(r.start, r.end) };
+      });
+    } else source.excerpts = helpers.passages(text, config.charactersPerFile);
   }
   const catalog = helpers.citationPassages([...sources.values()]);
   for (const finding of findings) {
@@ -95,7 +113,7 @@ function renderReview(record, safeText) {
   const kept = record.results.filter(r => r.decision.accepted).length;
   const out = ["# Review of saved findings", `[Original report #${record.reportIssue}](${record.reportUrl})`,
     `${record.results.length} comparisons checked: ${kept} hold up under this review; ${record.results.length - kept} need qualification or more evidence.`,
-    "The existing title, explanation, limitation and each term/fit were checked against their pinned source passages. Large files remain sampled. These are fallible model judgments, not mathematical proofs or dictionary verification."];
+    "The existing title, explanation, limitation, confidence assessment when present and each term/fit were checked against their pinned source passages. Context is limited to the original sampled passages or recorded complete-reading sections. These are fallible model judgments, not mathematical proofs or dictionary verification."];
   if (record.skippedCorrectedFindings.length) out.push(`Previously corrected findings skipped: ${record.skippedCorrectedFindings.join(", ")}.`);
   const label = { pass: "Pass", fail: "Needs correction", uncertain: "Uncertain" };
   for (const result of record.results) {
@@ -109,6 +127,7 @@ function renderReview(record, safeText) {
       const field = d.fields[`word_${i + 1}`];
       out.push(`\n- **${safeText(word.term, 90)}: ${label[field.status]}** — ${safeText(field.reason, 450)}`);
     }
+    if (c.confidence) out.push(`\n- **Original confidence assessment: ${label[d.fields.confidence.status]}** — ${safeText(d.fields.confidence.reason, 450)}`);
     for (const ref of result.citations) out.push(`\n[Source ${ref.source}](${ref.url})`);
   }
   // Structured results are base64 encoded to keep raw model text out of Markdown/mentions.
