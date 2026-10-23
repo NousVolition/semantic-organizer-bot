@@ -249,6 +249,39 @@ unchanged.
 Implementation references: [Owlready2 reasoning](https://owlready2.readthedocs.io/en/latest/reasoning.html),
 [lambeq sentence input](https://docs.quantinuum.com/lambeq/tutorials/sentence-input.html).
 
+## Review selected public sources through the publication workflow
+
+The owner can open `[Discover language] sources` in this bot repository. Put a
+JSON object in the issue body with `sources`: two to four immutable GitHub blob
+URLs using full 40-character commit IDs. Only public text files in the configured
+research repositories or this control repository are allowed. Every selected file
+is read in full, up to the configured 6,000-character limit; oversized inputs stop
+instead of being silently sampled. Duplicate text is rejected.
+
+An optional `proposals` array accepts up to three draft connections in the usual
+discovery shape (`title`, `kind`, `relationship`, `limit`, `words`, `evidence`, and
+optional `confidence`). Sources are S1, S2, etc. in URL order; evidence selects the
+existing paragraph IDs such as S1P1. Supplied proposals are not endorsed findings.
+They are kept out of the generation request, then independently reviewed by the
+same gate and rendered by the same function as generated proposals. Unknown fields
+(including expected answers) and invalid citations are rejected before model work.
+
+Every discovery publication now includes a receipt with draft fingerprints,
+generation/review response IDs, source commits, field/check decisions and the
+review-completion time. Failed, uncertain or missing checks withhold the proposal.
+Definition fidelity and count scope are mandatory dimensions, including in word
+explanations and confidence reasons. Exact-word and vocabulary-group occurrence
+counts share a unit; selection scope differs. Locally defined meanings cannot be
+expanded in a gloss and then rescued by an unrelated disclaimer. Explicit proposed
+extensions and real differences in units remain valid controls.
+
+This provides a real GitHub issue → source collection → generation → independent
+review → report path for focused checks. A deliberate faulty supplied proposal
+tests the gate; it is not evidence that the generator spontaneously made that error.
+Receipts and local integration tests verify routing and filtering, while live
+evidence reviews remain fallible model judgments. Ordinary optional short reviews
+are a separate path and are not enabled by this command.
+
 ## Optional short reviews
 
 Ordinary issue/PR text reviews are off by default. Set `ENABLE_TEXT_REVIEWS=true`
