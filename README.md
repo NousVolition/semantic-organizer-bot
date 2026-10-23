@@ -16,6 +16,13 @@ roles, include the whole sentence and intended reading. This is a fallible
 language review, separate from lambeq's diagram construction. It uses the API
 and replies publicly; use public material only.
 
+Explicit idea reviews use the configured comparison model by default
+(`IDEA_MODEL` can override it), with a structured response and validated
+confidence bands, reasons and exact input quotations. Incomplete or malformed
+responses are not published. This avoids letting a short freeform review treat
+the author's hesitancy as evidence against a supplied derivation. Ordinary
+opt-in text reviews retain their existing separate model setting.
+
 The owner opens an issue in this bot repository with one of these exact titles:
 
 - `[Discover language] preview` — read the first source batch and show its
