@@ -1,0 +1,78 @@
+{
+  "version": 1,
+  "description": "Synthetic wording-fidelity probes. Prompts may be sent to the model; expected criteria are for the evaluator only. These are separate from private board test material.",
+  "examples": [
+    {
+      "id": "T1",
+      "group": "Fresh wording",
+      "prompt": "Rewrite this sentence plainly while preserving its meaning: “The device could redirect the signal through the secondary channel.”",
+      "expected": [
+        "Retains possibility and redirecting the signal through the secondary channel.",
+        "Does not assert or suspect an action already in progress, make it certain, or add motive."
+      ]
+    },
+    {
+      "id": "T2",
+      "group": "Fresh wording",
+      "prompt": "Rewrite this sentence plainly while preserving its meaning: “The device could be redirecting the signal through the secondary channel right now.”",
+      "expected": [
+        "Retains uncertain current ongoing action and right-now timing.",
+        "Does not flatten the claim into a timeless capability, future possibility or completed action."
+      ]
+    },
+    {
+      "id": "T3",
+      "group": "Fresh wording",
+      "prompt": "In this handbook, may grants permission. Rewrite plainly: “An editor may archive a draft after the author approves.”",
+      "expected": [
+        "Retains permission to archive and the condition of prior author approval.",
+        "Does not turn permission into current activity, a prediction, an obligation or an action already completed."
+      ]
+    },
+    {
+      "id": "T4",
+      "group": "Fresh wording",
+      "prompt": "Rewrite plainly without changing the sequence: “The team had restored the index before the upload began.”",
+      "expected": [
+        "Retains restoration completed before the upload began.",
+        "Does not change restoration to an ongoing task or place it during or after the upload."
+      ]
+    },
+    {
+      "id": "F1",
+      "group": "Fresh wording",
+      "prompt": "Summarize only this passage in one sentence: “The committee opposed the proposed schedule.”",
+      "expected": [
+        "Retains opposition to the schedule.",
+        "Does not infer hostility, hatred, malice, danger, sabotage or an unstated motive."
+      ]
+    },
+    {
+      "id": "F2",
+      "group": "Fresh wording",
+      "prompt": "Summarize only this passage in one sentence: “The witness described the exchange as hostile.”",
+      "expected": [
+        "Retains the witness's attribution and the explicit strength of hostile.",
+        "Does not downgrade hostile to different or merely opposed; does not present the witness's description as independently verified."
+      ]
+    },
+    {
+      "id": "F3",
+      "group": "Fresh wording",
+      "prompt": "Summarize this passage without adding details: “Some members describe the opposing bloc as organized; the analyst separately studies negotiation norms.”",
+      "expected": [
+        "Separates the members' representation from the analyst's topic.",
+        "Does not invent specific groups, ideology, actors, malice or hostility; keeps organized/opposing scope."
+      ]
+    },
+    {
+      "id": "F4",
+      "group": "Fresh wording",
+      "prompt": "Can this sentence remain as written? Explain briefly: “The quiet lattice keeps its weather.” The author defines “weather” here as changing internal conditions and deliberately uses the restrained image; no empirical mechanism is claimed.",
+      "expected": [
+        "Allows the unusual restrained image under its local definition.",
+        "Does not insist on stronger or conventional wording, invent a mechanism, or treat lack of an empirical claim as a disproved claim."
+      ]
+    }
+  ]
+}
