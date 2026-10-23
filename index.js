@@ -13,6 +13,7 @@ const { join } = require("node:path");
 const { createDiscoveryHandler } = require("./discovery");
 const { createDriftScanner } = require("./drift-scan");
 const { skillsForMode } = require("./language-skills");
+const { reviewIdea } = require('./idea-review');
 const discoveryConfig = require("./discovery-config.json");
 
 module.exports = (app, { getRouter } = {}) => {
@@ -138,7 +139,9 @@ module.exports = (app, { getRouter } = {}) => {
 
     app.log.info(`Language skill on issue #${context.payload.issue.number}`);
 
-    const exploration = await reviewLanguage(source);
+    let exploration;
+    try { exploration = requested ? await reviewIdea(openai, discoveryModel, reviewSkills, source) : await reviewLanguage(source); }
+    catch (error) { logOpenAIError('Idea review failed', error); return; }
     if (exploration) {
       await context.octokit.issues.createComment(
         context.issue({ body: `### Optional semantic suggestions\n\n${exploration}\n\n---\n*Suggestions only. Your wording and decisions remain yours.*` })

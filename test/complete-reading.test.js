@@ -60,6 +60,7 @@ test('complete batches cover the pinned index without gaps or false distinct-sou
   }
   assert.deepEqual(first.excluded, { pathOrFormat: 4, oversized: 2, unreadable: 0 });
   assert.ok(github.reads.every(s => ['alpha', 'beta'].includes(s)));
+  assert.equal(github.reads.length, 2, 'unchanged blobs are downloaded only once across batches');
   assert.ok(github.refs.slice(2).every(ref => /^[ab]{40}$/.test(ref)));
 });
 test('private continuations and invalid snapshots stop before blob reads', async () => {

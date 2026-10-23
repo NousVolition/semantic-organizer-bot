@@ -1,4 +1,18 @@
 const { createHash } = require('node:crypto');
+// Git blob IDs are immutable. Cache only decoded public-source text after
+// current visibility checks; bound retained text to 32 MiB and 2,000 entries.
+const blobCache = new Map();
+let cachedBytes = 0;
+function remember(key, text, byteLength) {
+  const cost = text.length * 2;
+  if (cost > 32 * 1024 * 1024) return;
+  while (blobCache.size >= 2000 || cachedBytes + cost > 32 * 1024 * 1024) {
+    const oldest = blobCache.keys().next().value;
+    cachedBytes -= blobCache.get(oldest).cost;
+    blobCache.delete(oldest);
+  }
+  blobCache.set(key, { text, byteLength, cost }); cachedBytes += cost;
+}
 
 // Overlapping, contiguous windows: every character belongs to at least one
 // window, even when a source has a single very long line.
@@ -82,13 +96,19 @@ async function collectCompleteSources(octokit, config, batch, eligible, snapshot
     throw Object.assign(new Error('Reading index exceeds capacity'), { code: 'reading_capacity' });
   const documents = [];
   for (const file of catalog) {
-    const { data: blob } = await octokit.git.getBlob({ owner: config.owner, repo: file.repo, file_sha: file.sha });
-    if (blob.encoding !== 'base64') throw new Error('Unsupported source encoding');
-    const bytes = Buffer.from(blob.content, 'base64');
-    if (bytes.length > config.maximumFileBytes) throw new Error('Source exceeds configured limit');
-    let text;
-    try { text = new TextDecoder('utf-8', { fatal: true }).decode(bytes); }
-    catch { excluded.unreadable++; continue; }
+    const cacheKey = `${config.owner}/${file.repo}/${file.sha}`;
+    const cached = blobCache.get(cacheKey);
+    let text = cached?.text;
+    if (cached && cached.byteLength > config.maximumFileBytes) throw new Error('Source exceeds configured limit');
+    if (text === undefined) {
+      const { data: blob } = await octokit.git.getBlob({ owner: config.owner, repo: file.repo, file_sha: file.sha });
+      if (blob.encoding !== 'base64') throw new Error('Unsupported source encoding');
+      const bytes = Buffer.from(blob.content, 'base64');
+      if (bytes.length > config.maximumFileBytes) throw new Error('Source exceeds configured limit');
+      try { text = new TextDecoder('utf-8', { fatal: true }).decode(bytes); }
+      catch { excluded.unreadable++; continue; }
+      if (!text.includes('\0') && text.trim()) remember(cacheKey, text, bytes.length);
+    }
     if (text.includes('\0') || !text.trim()) { excluded.unreadable++; continue; }
     documents.push({ ...file, parts: completePassages(text, config.charactersPerFile) });
   }

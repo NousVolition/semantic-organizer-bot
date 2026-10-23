@@ -16,6 +16,13 @@ roles, include the whole sentence and intended reading. This is a fallible
 language review, separate from lambeq's diagram construction. It uses the API
 and replies publicly; use public material only.
 
+Explicit idea reviews use the configured comparison model by default
+(`IDEA_MODEL` can override it), with a structured response and validated
+confidence bands, reasons and exact input quotations. Incomplete or malformed
+responses are not published. This avoids letting a short freeform review treat
+the author's hesitancy as evidence against a supplied derivation. Ordinary
+opt-in text reviews retain their existing separate model setting.
+
 The owner opens an issue in this bot repository with one of these exact titles:
 
 - `[Discover language] preview` — read the first source batch and show its
@@ -139,6 +146,9 @@ Original line locations and character ranges are retained. Continuations pin
 the source commits and settings in the preceding bot report; they survive a
 service restart. A numbered batch opened directly starts from current snapshots
 and is not a continuation. Previews collect text without an OpenAI call.
+Unchanged public blobs are cached in memory by repository and immutable blob ID
+(up to 32 MiB of text / 2,000 entries). Current repository visibility is still
+checked before cache use. A restart clears the cache, not the recorded snapshots.
 
 Coverage means text made available in those batches, not a guarantee that the
 model catches every issue. Connections are compared within a batch, not across
