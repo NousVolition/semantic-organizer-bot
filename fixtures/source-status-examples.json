@@ -1,6 +1,11 @@
 {
   "version": 1,
   "description": "Synthetic semantic probes, separate from private board material. Freeze expected criteria before running; send only prompts, not expected answers. Paired controls check that supported details survive as well as unsupported details being rejected.",
+  "followupCriteria": [
+    {"id":"S1","expected":["Retains the exact already-clear phrase as stated, rather than making a variation merely for style."]},
+    {"id":"S14","expected":["Calls the counts different scopes or category membership; both still use occurrences as their counting unit."]},
+    {"id":"S16","expected":["Any analogy is explicitly limited: changing internal conditions and retained intent with altered expression are different relations."]}
+  ],
   "examples": [
     {"id":"S1","group":"Source status","prompt":"Make this sentence clearer without adding details: ‘The exception applies to the policy as stated.’","expected":["Keeps as stated or the original sentence; does not assume writing, speech, publication, signature or adoption.","Preserves the exception's applicability rather than inventing permission or a decision."]},
     {"id":"S2","group":"Source status","prompt":"Make this sentence clearer without dropping details: ‘The exception applies to the policy as written in the signed agreement.’","expected":["Preserves written and signed-agreement provenance because both are explicit.","Does not weaken the supplied medium to unknown or invent approval by additional parties."]},
