@@ -146,6 +146,9 @@ Original line locations and character ranges are retained. Continuations pin
 the source commits and settings in the preceding bot report; they survive a
 service restart. A numbered batch opened directly starts from current snapshots
 and is not a continuation. Previews collect text without an OpenAI call.
+Unchanged public blobs are cached in memory by repository and immutable blob ID
+(up to 32 MiB of text / 2,000 entries). Current repository visibility is still
+checked before cache use. A restart clears the cache, not the recorded snapshots.
 
 Coverage means text made available in those batches, not a guarantee that the
 model catches every issue. Connections are compared within a batch, not across
