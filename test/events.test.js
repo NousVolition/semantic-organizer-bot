@@ -127,7 +127,7 @@ test('owner-requested idea reviews work with automatic reviews disabled and rece
     assert.equal(body.model, 'gpt-5.4');
     assert.equal(body.reasoning_effort, 'medium');
     return body.messages.at(-1).content.includes(source);
-  }).reply(200, {choices:[{finish_reason:'stop',message:{content:JSON.stringify({items:[{quote:source,status:'exploratory',explanation:'The meaning needs context.',alternative:'',confidence:{level:'medium',band:'middle',basis:'A limited idea is supplied.',strengthen:'Provide context.',pullBack:'Avoid a universal claim.'}}]})}}]});
+  }).reply(200, {choices:[{finish_reason:'stop',message:{content:JSON.stringify({items:[{quote:source,status:'exploratory',claim:source,support:'partial',explanation:'The meaning needs context.',alternative:'',confidence:{band:'middle',basis:'A limited idea is supplied.',strengthen:'Provide context.',pullBack:'Avoid a universal claim.'}}]})}}]});
   nock('https://api.github.com').post('/repos/NousVolition/semantic-organizer-bot/issues/7/comments', b => b.body.includes('Confidence: Medium (middle)')).reply(201,{id:1});
   await receive('issues',{action:'opened',sender:{type:'User',login:'NousVolition'},repository:{name:'semantic-organizer-bot',owner:{login:'NousVolition'}},issue:{number:7,title:'[Review idea]',body:source,user:{type:'User'}}});
 });

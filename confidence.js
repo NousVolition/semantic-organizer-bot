@@ -18,4 +18,4 @@ function renderConfidence(c, safeText) {
   const label = c.level === 'not_assessed' ? 'Not assessed' : c.level[0].toUpperCase() + c.level.slice(1);
   return `\n**Confidence: ${label}${c.level === 'medium' ? ` (${c.band})` : ''}** — support for this claim as written; not a probability.\n\n**Basis:** ${safeText(c.basis, 1200)}\n\n**To strengthen:** ${safeText(c.strengthen, 1200)}\n\n**To narrow:** ${safeText(c.pullBack, 1200)}`;
 }
-module.exports = { CONFIDENCE_RULES, confidenceSchema, validConfidence, renderConfidence };
+module.exports = { CONFIDENCE_RULES: `${CONFIDENCE_RULES} Name the author's original idea being assessed. Confidence in finding an error is not support for that idea: a claim defeated by an explicit counterexample has Low support even when the criticism is certain. Do not transfer a correction's High support to the incorrect original. A coherent concept alone does not supply empirical evidence for an untested implementation.`, confidenceSchema, validConfidence, renderConfidence };

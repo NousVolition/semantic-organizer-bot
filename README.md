@@ -24,6 +24,10 @@ explicitly rather than being silently cut. Incomplete or malformed
 responses are not published. A validation failure permits one regeneration
 with a fixed diagnostic; a second failure stops, as do refusals and API errors.
 Diagnostics contain codes, not submitted text or model responses.
+Each idea review explicitly names the original idea being assessed and classifies
+its support. The code maps supported to High, partial to Medium (with a band),
+missing or contradicted to Low, and unevaluated to Not assessed. Confidence in
+finding an error must never become a High tag on the original incorrect claim.
 This avoids letting a short freeform review treat
 the author's hesitancy as evidence against a supplied derivation. Ordinary
 opt-in text reviews retain their existing separate model setting.
