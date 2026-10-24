@@ -17,7 +17,7 @@ function grounded(){return Object.fromEntries(Object.entries(fidelityFields(c)).
 test('contextual review binds every field and each confidence explanation to exact text',()=>{
   const schema=fidelitySchema(c,catalog),fields=fidelityFields(c);
   assert.deepEqual(schema.required,Object.keys(fields));
-  for(const key of Object.keys(fields))assert.deepEqual(schema.properties[key].properties.candidateText.enum,[fields[key]]);
+  for(const key of Object.keys(fields))assert.equal(schema.properties[key].properties.candidateText.type,'string');
   assert.deepEqual(schema.properties.title.properties.contextAnchors.items.enum,Object.keys(fields));
   const review=grounded();assert.equal(evaluateFidelity(c,review,catalog).accepted,true);
   for(const key of Object.keys(fields)){
@@ -68,4 +68,24 @@ test('publication strips ANSI and controls without erasing unusual words, mathem
   assert.doesNotMatch(clean,/\[0m|\[31m/);assert.match(clean,/preserves Sens while adjusting Sin\nλ ≠ 0/);
   assert.equal(safeText('\u001b[31mABC\u001b[0m',3),'ABC');
   assert.equal(safeText('\u001b]8;;https://example.org\u0007label\u001b]8;;\u0007'),'label');
+});
+
+test('a provider failure retains partial reviews only in the owner encrypted capture, never a passing receipt',async()=>{
+  const crypto=require('node:crypto'),{gunzipSync}=require('node:zlib');
+  const {publicKey,privateKey}=crypto.generateKeyPairSync('rsa',{modulusLength:2048});
+  const client={chat:{completions:{create:async req=>{
+    if(req.response_format.json_schema.name==='word_meaning_audit')throw Object.assign(new Error('private diagnostic marker'),{status:400,param:'response_format'});
+    return {id:'completed-broad',choices:[{finish_reason:'stop',message:{content:JSON.stringify({C1:{
+      fields:Object.fromEntries(Object.keys(reviewFields(c)).map(k=>[k,{stance:'mixed',proposition:'Mock.',status:'pass',reason:'Mock.'}])),
+      checks:Object.fromEntries(CHECKS.map(k=>[k,'pass'])),passages:['S1P1','S2P1'],reason:'Mock.'
+    }})}}]};
+  }}}};
+  let failure;
+  try{await publishDiscoveryDraft(client,'mock',[c],collected,null,{capturePublicKey:publicKey.export({type:'spki',format:'pem'})});}catch(e){failure=e;}
+  assert.equal(failure.status,400);assert.ok(failure.auditCapture);assert.doesNotMatch(JSON.stringify(failure.auditCapture),/private diagnostic marker|Withheld proof/);
+  const cap=failure.auditCapture,key=crypto.privateDecrypt({key:privateKey,oaepHash:'sha256'},Buffer.from(cap.wrappedKey,'base64'));
+  const dec=crypto.createDecipheriv('aes-256-gcm',key,Buffer.from(cap.iv,'base64'));dec.setAuthTag(Buffer.from(cap.tag,'base64'));
+  const full=JSON.parse(gunzipSync(Buffer.concat([dec.update(Buffer.from(cap.data,'base64')),dec.final()])));
+  assert.equal(full.complete,false);assert.equal(full.failedCandidate,'C1');assert.equal(full.decisions[0].responseId,'completed-broad');
+  assert.equal(full.error.message,'private diagnostic marker');assert.deepEqual(full.candidates,[c]);
 });

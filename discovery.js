@@ -334,7 +334,21 @@ async function publishDiscoveryDraft(openai, model, generated, collected, log, o
   // Run only for otherwise publishable drafts; a rejection cannot be rescued here.
   for (const [i,c] of candidates.entries()) {
     if (!decisions[i]?.accepted) continue;
-    const wordAudit = await require('./word-meaning-audit').auditWordMeanings(openai,comparisonModel(model),c,catalog,log);
+    let wordAudit;
+    try {
+      wordAudit = await require('./word-meaning-audit').auditWordMeanings(openai,comparisonModel(model),c,catalog,log);
+    } catch(error) {
+      // Owner-opted encrypted diagnostics retain completed reviews on a failed
+      // API request. This is explicitly NOT a completed publication receipt.
+      if(options.capturePublicKey) error.auditCapture=require('./audit-capture').encryptCapture({
+        version:1,complete:false,stage:'contextual_review',failedCandidate:`C${i+1}`,
+        commit:process.env.RENDER_GIT_COMMIT||null,inputSha256:options.inputSha256||null,
+        generation:{responseId:options.generationResponseId||null,model:options.generationModel||model,candidates:generated.length},
+        sources:collected.sources,candidates,decisions,
+        error:{status:error.status||null,code:error.code||null,param:error.param||null,message:String(error.message||'').slice(0,5000)}
+      },options.capturePublicKey);
+      throw error;
+    }
     decisions[i].wordAudit = wordAudit;
     decisions[i].checks.word_meaning = wordAudit.accepted ? 'pass' : 'fail';
     decisions[i].checks.contextual_fidelity = Object.values(wordAudit.claimFields||{}).length>0
@@ -512,6 +526,10 @@ function createDiscoveryHandler({ octokitForContext, config, openai, model, skil
           : "# Discovery could not finish\nNo complete report was produced. Check the service logs, source access, and configuration; then open a new discovery issue to retry.";
         log.error({ status: Number.isInteger(error.status) ? error.status : undefined,
           code: /^[a-z_]{1,64}$/.test(error.code || "") ? error.code : undefined }, "Source discovery failed");
+        if(error.auditCapture) {
+          const diagnostic='\n<!-- publication-error-receipt:'+Buffer.from(JSON.stringify(error.auditCapture)).toString('base64')+' -->';
+          if(body.length+diagnostic.length<60000) body+=diagnostic;
+        }
       }
       await octokit.issues.updateComment({ owner: params.owner, repo: params.repo, comment_id: comment.data.id, body: `${marker}\n${body}` });
     })().catch(() => log.error("Could not publish source discovery result")).finally(() => { jobs.delete(job); running.delete(key); });
