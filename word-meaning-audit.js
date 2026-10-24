@@ -1,5 +1,9 @@
 // A separate contextual reading of word suggestions AND all publication claims.
 const { CONTEXT_RULES, fidelityFields, fidelitySchema, evaluateFidelity } = require('./contextual-fidelity');
+const OWNER_CONTEXT = [require('./corpus-knowledge').CORPUS_GUIDANCE,
+  require('./wording-fidelity').WORDING_FIDELITY_RULES,
+  require('./semantic-lenses').SEMANTIC_LENSES,
+  require('./confidence').CONFIDENCE_RULES].join('\n\n');
 const object = properties => ({ type: 'object', properties, required: Object.keys(properties), additionalProperties: false });
 const EFFECTS = ['same_in_context', 'broader', 'narrower', 'different', 'not_a_restatement'];
 const RULES = `Read each suggested term AND its explanation against the full supplied source context. The task is semantic fidelity, not stylistic conformity.
@@ -36,10 +40,14 @@ async function auditWordMeanings(openai, model, connection, catalog, log) {
   const schema=wordSchema(words);
   schema.properties.claimFields=fidelitySchema(connection,context);
   schema.required.push('claimFields');
+  // The second reader must not silently forget the owner's definitions learned
+  // by generation and the broad reader. They guide meaning, not source facts.
+  const sharedContext='Owner language reference (not new empirical evidence):\n'+OWNER_CONTEXT
+    +'\nUse each supplied source/version and its explicit local definitions. Do not transfer example-specific measurements, counts or theorems to another source. Evidence bindings must still quote the actual supplied passages.';
   const generation = /^gpt-5/.test(model) ? { reasoning_effort:'medium',max_completion_tokens:14000 } : { temperature:0,max_tokens:8000 };
   const response = await openai.chat.completions.create({model,...generation,
     response_format:{type:'json_schema',json_schema:{name:'word_meaning_audit',strict:true,schema}},
-    messages:[{role:'system',content:RULES+'\n\n'+CONTEXT_RULES+'\nComplete claimFields for every field in the schema, including each confidence explanation. Check all clauses in each field. Copy candidateText exactly from candidateFields. sourceBindings contains exact SOURCE excerpts from passages. contextAnchors contains only the KEYS of CANDIDATE fields in candidateFields that help resolve a label; use [] if none is needed. These keys reference the full unchanged text supplied in candidateFields. Do not put source passages in contextAnchors. Source bindings may explain a limitation or contradiction; they do not automatically mean support. Mark unsupported whenever the draft adds a material assertion, even if a safer paraphrase would pass. Pass a justified local non-entailment or clearly disclosed interpretation without demanding it appear verbatim in the source.'},{role:'user',content:JSON.stringify({candidate:connection,candidateFields:fidelityFields(connection),
+    messages:[{role:'system',content:sharedContext+'\n\n'+RULES+'\n\n'+CONTEXT_RULES+'\nComplete claimFields for every field in the schema, including each confidence explanation. Check all clauses in each field. Copy candidateText exactly from candidateFields. sourceBindings contains exact SOURCE excerpts from passages. contextAnchors contains only the KEYS of CANDIDATE fields in candidateFields that help resolve a label; use [] if none is needed. These keys reference the full unchanged text supplied in candidateFields. Do not put source passages in contextAnchors. Source bindings may explain a limitation or contradiction; they do not automatically mean support. Mark unsupported whenever the draft adds a material assertion, even if a safer paraphrase would pass. Pass a justified local non-entailment or clearly disclosed interpretation without demanding it appear verbatim in the source.'},{role:'user',content:JSON.stringify({candidate:connection,candidateFields:fidelityFields(connection),
       passages:context.map(p=>({id:p.id,source:p.source.id,text:p.quote}))})}]}).catch(error=>{
         // Provider bodies can echo source text. Retain only bounded metadata.
         log?.error?.({stage:'contextual_review',status:Number.isInteger(error.status)?error.status:undefined,

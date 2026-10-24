@@ -10,6 +10,9 @@ test('single-source semantic exercises cannot pass a broad pass plus contextual 
   const client={chat:{completions:{create:async request=>{
     const stage=request.response_format.json_schema.name;stages.push(stage);
     if(stage==='word_meaning_audit'){
+      assert.ok(request.messages[0].content.includes(require('../corpus-knowledge').CORPUS_GUIDANCE));
+      assert.ok(request.messages[0].content.includes(require('../wording-fidelity').WORDING_FIDELITY_RULES));
+      assert.match(request.messages[0].content,/not new empirical evidence/);
       const response=require('./helpers/word-response')(request);
       const raw=JSON.parse(response.choices[0].message.content);
       raw.claimFields.relationship.support='unsupported';
