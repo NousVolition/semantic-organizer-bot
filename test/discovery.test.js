@@ -162,7 +162,7 @@ test("reasoning discovery uses compatible bounded parameters and requires word c
     calls++;
     const audit = request.response_format.json_schema.name === "comparison_audit";
     if (request.response_format.json_schema.name === "word_meaning_audit") {
-      assert.equal(request.model,'gpt-5.4'); assert.equal(request.max_completion_tokens,6000);
+      assert.equal(request.model,'gpt-5.4'); assert.equal(request.max_completion_tokens,14000);
       return require('./helpers/word-response')(request);
     }
     assert.equal(request.model, audit ? "gpt-5.4" : "gpt-5.4-mini");

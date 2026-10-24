@@ -21,7 +21,9 @@ test('the focused reviewer gets full context, no earlier verdict or grading key,
     const data=JSON.parse(req.messages[1].content);
     assert.deepEqual(data.candidate,candidate);assert.equal(data.passages.length,3);
     assert.doesNotMatch(JSON.stringify(req.messages),/expectedAccept|earlierVerdict/);
-    return {id:'word-real-id',choices:[{finish_reason:'stop',message:{content:JSON.stringify({word_1:row})}}]};
+    const mock=require('./helpers/word-response')(req);
+    const review=JSON.parse(mock.choices[0].message.content);review.word_1=row;
+    return {id:'word-real-id',choices:[{finish_reason:'stop',message:{content:JSON.stringify(review)}}]};
   }}}};
   const d=await auditWordMeanings(client,'gpt-5.4',candidate,catalog,{info:(...x)=>logs.push(x)});
   assert.equal(d.accepted,false);assert.equal(d.responseId,'word-real-id');assert.deepEqual(d.rawReview.word_1,row);
@@ -32,7 +34,11 @@ test('a broad pass followed by a lexical failure is withheld before rendering; s
   const collected={sources:['First source defines an invitation to consider.','Second source repeats that invitation to consider.'].map((text,i)=>({id:`S${i+1}`,repository:'example/research',path:`${i}.md`,url:`https://example.org/${i}`,excerpts:[{startLine:1,text}]}))};
   for(const status of ['fail','uncertain','pass']){
     const client={chat:{completions:{create:async req=>{
-      if(req.response_format.json_schema.name==='word_meaning_audit')return {id:'words',choices:[{finish_reason:'stop',message:{content:JSON.stringify({word_1:{...row,effect:'same_in_context',status}})}}]};
+      if(req.response_format.json_schema.name==='word_meaning_audit'){
+        const mock=require('./helpers/word-response')(req),review=JSON.parse(mock.choices[0].message.content);
+        review.word_1={...row,effect:'same_in_context',status};
+        return {id:'words',choices:[{finish_reason:'stop',message:{content:JSON.stringify(review)}}]};
+      }
       return {id:'broad',choices:[{finish_reason:'stop',message:{content:JSON.stringify({C1:{fields:Object.fromEntries(Object.keys(reviewFields(candidate)).map(k=>[k,{stance:'asserted',proposition:'Bounded.',status:'pass',reason:'Mock broad verdict.'}])),checks:Object.fromEntries(CHECKS.map(k=>[k,'pass'])),passages:['S1P1','S2P1'],reason:'Mock broad pass.'}})}}]};
     }}}};
     const report=await publishDiscoveryDraft(client,'mock',[candidate],collected);

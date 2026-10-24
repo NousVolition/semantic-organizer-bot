@@ -1,4 +1,5 @@
-// A focused, independent reading of word suggestions. Not a dictionary blacklist.
+// A separate contextual reading of word suggestions AND all publication claims.
+const { CONTEXT_RULES, fidelitySchema, evaluateFidelity } = require('./contextual-fidelity');
 const object = properties => ({ type: 'object', properties, required: Object.keys(properties), additionalProperties: false });
 const EFFECTS = ['same_in_context', 'broader', 'narrower', 'different', 'not_a_restatement'];
 const RULES = `Read each suggested term AND its explanation against the full supplied source context. The task is semantic fidelity, not stylistic conformity.
@@ -30,16 +31,23 @@ async function auditWordMeanings(openai, model, connection, catalog, log) {
   const words = connection.words || [];
   if(!words.length || words.length>3) return evaluateWords([],{});
   const sources = new Set(Object.entries(connection.evidence || {}).filter(([,id])=>id!==null).map(([s])=>s));
-  const generation = /^gpt-5/.test(model) ? { reasoning_effort:'medium',max_completion_tokens:6000 } : { temperature:0,max_tokens:3500 };
+  const context=catalog.filter(p=>sources.has(p.source.id));
+  if(!context.length) return {...evaluateWords(words,{}),claimFields:{}};
+  const schema=wordSchema(words);
+  schema.properties.claimFields=fidelitySchema(connection,context);
+  schema.required.push('claimFields');
+  const generation = /^gpt-5/.test(model) ? { reasoning_effort:'medium',max_completion_tokens:14000 } : { temperature:0,max_tokens:8000 };
   const response = await openai.chat.completions.create({model,...generation,
-    response_format:{type:'json_schema',json_schema:{name:'word_meaning_audit',strict:true,schema:wordSchema(words)}},
-    messages:[{role:'system',content:RULES},{role:'user',content:JSON.stringify({candidate:connection,
-      passages:catalog.filter(p=>sources.has(p.source.id)).map(p=>({id:p.id,source:p.source.id,text:p.quote}))})}]});
+    response_format:{type:'json_schema',json_schema:{name:'word_meaning_audit',strict:true,schema}},
+    messages:[{role:'system',content:RULES+'\n\n'+CONTEXT_RULES+'\nComplete claimFields for every field in the schema, including each confidence explanation. Check all clauses in each field. Copy candidateText exactly; bind readings to exact source excerpts and relevant contextual glosses. Source bindings may explain a limitation or contradiction; they do not automatically mean support. Mark unsupported whenever the draft adds a material assertion, even if a safer paraphrase would pass. Pass a justified local non-entailment or clearly disclosed interpretation without demanding it appear verbatim in the source.'},{role:'user',content:JSON.stringify({candidate:connection,
+      passages:context.map(p=>({id:p.id,source:p.source.id,text:p.quote}))})}]});
   const choice=response.choices?.[0];
   if(choice?.finish_reason!=='stop'||choice.message?.refusal||!choice.message?.content)
     throw Object.assign(new Error('Incomplete word meaning review'),{code:'incomplete_word_audit'});
   const rawReview=JSON.parse(choice.message.content);
-  const decision={...evaluateWords(words,rawReview),rawReview,responseId:response.id||null,model:response.model||model,usage:response.usage||null,reviewedAt:new Date().toISOString()};
+  const lexical=evaluateWords(words,rawReview),claims=evaluateFidelity(connection,rawReview.claimFields,context);
+  const decision={...lexical,accepted:lexical.accepted&&claims.accepted,claimFields:claims.fields,
+    rawReview,responseId:response.id||null,model:response.model||model,usage:response.usage||null,reviewedAt:new Date().toISOString()};
   log?.info?.({accepted:decision.accepted,words:words.length,responseId:decision.responseId},'Word meaning audit');
   return decision;
 }
