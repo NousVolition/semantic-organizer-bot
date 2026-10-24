@@ -86,6 +86,7 @@ test('corpus evaluation has matched controls, valid evidence, and no answer leak
     assert.ok(catalog.some(p=>p.id===id && p.source.id===source));
   let calls=0;
   const client={chat:{completions:{create:async req=>{
+    if(req.response_format.json_schema.name === 'word_meaning_audit') return require('./helpers/word-response')(req);
     assert.doesNotMatch(JSON.stringify(req.messages),/expectedAccept|expectedNotPass|expectedStances/);
     const {candidates,passages}=JSON.parse(req.messages[1].content);
     assert.equal(candidates.length,1);
@@ -146,6 +147,7 @@ test('the corpus evaluation requires both the asserted initial proof and the wit
   for (const [wrongField,wrongStance] of [['word_1','withheld'],['word_2','asserted']]) {
     let calls=0;
     const client={chat:{completions:{create:async req=>{
+      if(req.response_format.json_schema.name === 'word_meaning_audit') return require('./helpers/word-response')(req);
       assert.doesNotMatch(JSON.stringify(req.messages),/expectedAccept|expectedNotPass|expectedStances/);
       const {candidates}=JSON.parse(req.messages[1].content);
       const e=fixtures.examples[calls++];

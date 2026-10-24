@@ -1,5 +1,5 @@
 const { createHash } = require("node:crypto");
-const { COMPARISON_RULES, comparisonModel, auditConnections } = require("./comparison-audit");
+const { COMPARISON_RULES, comparisonModel } = require("./comparison-audit");
 const { collectCompleteSources, settingsKey, validateSnapshot, readingRecord, parseReadingRecord } = require('./complete-reading');
 const { CONFIDENCE_RULES, confidenceSchema, validConfidence, renderConfidence } = require('./confidence');
 
@@ -192,10 +192,11 @@ function coverage(collected) {
   if (collected.mode === "pinned") return ["## Sources and coverage", "All text from the selected immutable public files was supplied. These files were explicitly selected for this run; no account-wide coverage is claimed.", ...collected.sources.map(s => `- [${safeText(s.repository + "/" + s.path, 300)}](${s.url}) — full text at commit ${s.commit}`)].join("\n");
   if (collected.mode === 'complete') {
     const e = collected.excluded;
-    const lines = ['## Sources and coverage', `Complete-text batch ${collected.batch} of ${collected.totalBatches}: ${collected.selectedWindows} overlapping sections from ${collected.sources.length} files. The pinned index contains ${collected.totalWindows} sections across ${collected.readableFiles} readable, distinct text files.`,
-      'Every character of eligible readable text is assigned to a section; this batch covers only the sections below. This is input coverage, not a guarantee that the model notices every issue. Cross-file connections are compared within a batch, not across every possible pair in the account. A tail batch may include one previously read section from another file as comparison context.',
+    const lines = ['## Sources and coverage', `Complete-text batch ${collected.batch} of ${collected.totalBatches}: ${collected.selectedWindows} primary sections plus ${collected.contextWindows} context sections from ${collected.sources.length} files. The pinned index contains ${collected.totalWindows} sections across ${collected.readableFiles} readable, distinct text files.`,
+      'Every character of eligible readable text is assigned to a section; this batch covers only the sections below. Adjacent and distinctive shared-term retrieval can bring in up to four windows outside the primary batch. Overlap is removed within each supplied source. Retrieval is a lead, not evidence of a connection or exhaustive comparison of all pairs. A tail batch may include one further section from another file.',
       `${collected.duplicateFiles} identical copies deduplicated. Excluded: ${e.pathOrFormat} paths/formats, ${e.oversized} over-size or unknown-size files, ${e.unreadable} empty/binary/invalid-UTF-8 files. PDF, Word and image extraction are not enabled.`];
     for (const s of collected.sources) lines.push(`- [${safeText(`${s.repository}/${s.path}`, 300)}](${s.url}) — sections ${s.windows.join(', ')} of ${s.totalWindows}`);
+    for (const c of collected.contextSelection || []) lines.push(`- Context lead: ${safeText(c.repository+'/'+c.path,300)}, section ${c.window} — ${safeText(c.reason,80)}${c.sharedTerms.length ? '; shared wording: '+safeText(c.sharedTerms.join(', '),160) : ''}.`);
     for (const r of collected.repositories) lines.push(`- Snapshot: ${safeText(r.repo)} at \`${r.commit}\``);
     if (collected.batch < collected.totalBatches) lines.push('\nTo continue the same snapshots, open an issue titled `[Discover language] continue ISSUE_NUMBER`, replacing ISSUE_NUMBER with this report’s issue number. A preview continues with the same batch for analysis.');
     else lines.push('\nThis is the final indexed batch. Earlier batches still need to have been run for complete analysis coverage.');
@@ -315,53 +316,17 @@ async function publishDiscoveryDraft(openai, model, generated, collected, log, o
   if (!Array.isArray(generated) || generated.length > 3 || !Array.isArray(supplied) || supplied.length > 3) throw new Error('Draft exceeds bounds');
   require('./pinned-sources').validateProposals(supplied, catalog, validConfidence);
   const candidates = [...generated, ...supplied];
-  const decisions = await auditConnections(openai, model, candidates, catalog, log);
-  for (const [i,c] of candidates.entries()) {
-    const fits = (value, limit) => typeof value === 'string' && value.trim().length > 0 && value.length <= limit;
-    const formatSafe = fits(c.title,120) && fits(c.relationship,1500) && fits(c.limit,1500)
-      && Array.isArray(c.words) && c.words.length >= 1 && c.words.length <= 3
-      && c.words.every(w => fits(w?.term,90) && fits(w?.fit,500) && ['candidate','coined'].includes(w.kind));
-    // Never turn a fully reviewed sentence into a different one by clipping it.
-    if (!formatSafe && decisions[i]) { decisions[i].accepted = false; decisions[i].failed.push('publication_format'); }
-    const refs = Array.isArray(c.evidence) ? c.evidence : Object.entries(c.evidence || {}).filter(([,id]) => id !== null).map(([source,passage]) => ({ source, passage }));
-    const matched = refs.map(r => evidence(r, collected.sources, catalog)).filter(Boolean);
-    if (new Set(matched.map(r => r.source.id)).size < 2 || !['observed','interpretive','creative'].includes(c.kind)
-      || (c.confidence !== undefined && !validConfidence(c.confidence))) {
-      if (decisions[i]) { decisions[i].accepted = false; decisions[i].failed.push('publication_evidence'); }
-    }
-  }
-  // A second reader checks lexical meaning and exact evidence bindings in all fields.
-  // Run only for otherwise publishable drafts; a rejection cannot be rescued here.
-  for (const [i,c] of candidates.entries()) {
-    if (!decisions[i]?.accepted) continue;
-    let wordAudit;
-    try {
-      wordAudit = await require('./word-meaning-audit').auditWordMeanings(openai,comparisonModel(model),c,catalog,log);
-    } catch(error) {
+  const decisions = await require('./publication-audit').auditPublicationCandidates(openai,model,candidates,catalog,log,(error,{index,decisions})=>{
       // Owner-opted encrypted diagnostics retain completed reviews on a failed
       // API request. This is explicitly NOT a completed publication receipt.
       if(options.capturePublicKey) error.auditCapture=require('./audit-capture').encryptCapture({
-        version:1,complete:false,stage:'contextual_review',failedCandidate:`C${i+1}`,
+        version:1,complete:false,stage:'contextual_review',failedCandidate:`C${index+1}`,
         commit:process.env.RENDER_GIT_COMMIT||null,inputSha256:options.inputSha256||null,
         generation:{responseId:options.generationResponseId||null,model:options.generationModel||model,candidates:generated.length},
         sources:collected.sources,candidates,decisions,
         error:{status:error.status||null,code:error.code||null,param:error.param||null,message:String(error.message||'').slice(0,5000)}
       },options.capturePublicKey);
-      throw error;
-    }
-    decisions[i].wordAudit = wordAudit;
-    decisions[i].checks.word_meaning = wordAudit.accepted ? 'pass' : 'fail';
-    decisions[i].checks.contextual_fidelity = Object.values(wordAudit.claimFields||{}).length>0
-      && Object.values(wordAudit.claimFields).every(r=>r.status==='pass') ? 'pass' : 'fail';
-    if(!wordAudit.accepted) {
-      decisions[i].accepted = false;
-      decisions[i].failed.push('word_meaning');
-      decisions[i].reason += ' ' + Object.entries(wordAudit.fields).filter(([,v])=>v.status!=='pass').map(([k,v])=>`${k}: ${v.reason||'Incomplete word meaning review.'}`).join(' ');
-      const failedClaims=Object.entries(wordAudit.claimFields||{}).filter(([,v])=>v.status!=='pass');
-      if(decisions[i].checks.contextual_fidelity!=='pass') decisions[i].failed.push('contextual_fidelity');
-      decisions[i].reason += ' '+failedClaims.map(([k,v])=>`${k}: ${v.reason}`).join(' ');
-    }
-  }
+  });
   const accepted = candidates.filter((_, i) => decisions[i]?.accepted === true);
   const body = renderDiscovery({ connections: accepted,
     audit: { checked: decisions.length, withheld: candidates.length - accepted.length } }, collected, log);
@@ -403,7 +368,7 @@ async function checkComparisonExamples(openai, model, log, suite = "comparison")
   const decisions = [];
   // Keep model work bounded even as the regression corpus grows. Calls are sequential.
   for (let start = 0; start < fixtures.examples.length; start += 4)
-    decisions.push(...await auditConnections(openai, model, fixtures.examples.slice(start, start + 4).map(x => x.connection), catalog, log));
+    decisions.push(...await require('./publication-audit').auditSemanticCandidates(openai, model, fixtures.examples.slice(start, start + 4).map(x => x.connection), catalog, log));
   const matches = decisions.map((d, i) => {
     const e = fixtures.examples[i];
     return d.accepted === e.expectedAccept
@@ -413,7 +378,7 @@ async function checkComparisonExamples(openai, model, log, suite = "comparison")
   const passed = matches.filter(Boolean).length;
   const output = ["# Comparison regression check", `${passed} of ${fixtures.examples.length} expected decisions matched.`,
     `Comparison checker: ${safeText(comparisonModel(model), 100)}.`,
-    `This on-demand check uses ${supportOnly ? "synthetic grounded-support examples and corrected controls" : corpusOnly ? "synthetic corpus examples and corrected controls" : countOnly ? "synthetic count-scope examples and corrected controls" : "pinned public excerpts, historical mistakes, corrected controls and assertion-scope probes"} in ${fixtures.examples.length} independent bounded calls. Expected answers and field targets are kept out of model requests. A match requires the expected decision and any targeted failure or assertion stance. It tests the publication review, not a fresh search or a formal proof.`];
+    `This on-demand check uses ${supportOnly ? "synthetic grounded-support examples and corrected controls" : corpusOnly ? "synthetic corpus examples and corrected controls" : countOnly ? "synthetic count-scope examples and corrected controls" : "pinned public excerpts, historical mistakes, corrected controls and assertion-scope probes"} with each of the ${fixtures.examples.length} comparisons reviewed independently. Candidates that pass the broad review then receive the same lexical and contextual checks used before discovery publication. Expected answers and field targets are kept out of model requests. A match requires the expected decision and any targeted failure or assertion stance. It tests the publication review, not a fresh search or a formal proof.`];
   for (const [i, d] of decisions.entries()) {
     const example = fixtures.examples[i];
     output.push(`\n## ${safeText(example.case, 120)}: ${safeText(example.connection.title, 120)}\nExpected: ${example.expectedAccept ? "keep" : "withhold"}. Actual: ${d.accepted ? "keep" : "withhold"}. **${matches[i] ? "PASS" : "FAIL"}**\n\n${safeText(d.reason, 700)}`);
@@ -424,6 +389,9 @@ async function checkComparisonExamples(openai, model, log, suite = "comparison")
   if (!corpusOnly && !countOnly && !supportOnly) for (const source of fixtures.sources) output.push(`- [${safeText(source.path, 250)}](${source.url})`);
   const record = { version: 2, model: comparisonModel(model), passed, total: decisions.length, results: decisions.map((d, i) => ({ case: fixtures.examples[i].case,
     expectedAccept: fixtures.examples[i].expectedAccept, actualAccept: d.accepted, matched: matches[i], failed: d.failed,
+    wordAudit: d.wordAudit ? {accepted:d.wordAudit.accepted,responseId:d.wordAudit.responseId,
+      wordStatuses:Object.fromEntries(Object.entries(d.wordAudit.fields).map(([k,v])=>[k,v.status])),
+      claimStatuses:Object.fromEntries(Object.entries(d.wordAudit.claimFields||{}).map(([k,v])=>[k,v.status]))} : null,
     supportingPassages: d.supportingPassages,
     fields: Object.fromEntries(Object.entries(d.fields).map(([key, field]) => [key, { status: field.status, stance: field.stance }])) })) };
   output.push(`\n<!-- comparison-example-data:${Buffer.from(JSON.stringify(record)).toString("base64")} -->`);

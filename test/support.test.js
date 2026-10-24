@@ -34,6 +34,7 @@ test('the confidence field participates in publication gating', () => {
 test('12 support probes run separately without expected-answer leakage', async () => {
   let calls=0;
   const client={chat:{completions:{create:async r=>{
+    if(r.response_format.json_schema.name === 'word_meaning_audit') return require('./helpers/word-response')(r);
     const expected=fixture.examples[calls++];
     assert.doesNotMatch(JSON.stringify(r.messages), /expectedAccept|expectedNotPass/);
     assert.match(r.messages[0].content,/qualitative, fallible assessment/);

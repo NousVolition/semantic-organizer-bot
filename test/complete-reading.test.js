@@ -50,6 +50,9 @@ test('complete batches cover the pinned index without gaps or false distinct-sou
     assert.ok(result.selectedWindows <= 2);
     assert.ok(result.sources.length >= 2);
     assert.equal(new Set(result.sources.map(s => s.url)).size, result.sources.length);
+    assert.ok(result.contextWindows<=5);
+    for(const source of result.sources) for(let i=1;i<source.excerpts.length;i++)
+      assert.ok(source.excerpts[i].start>=source.excerpts[i-1].end,'retrieved overlap must not duplicate source characters');
     all.push(...result.sources);
   }
   for (const repo of config.repositories) {
@@ -103,6 +106,7 @@ test('saved deep-section citations can be re-reviewed with their original adjace
   github.paginate = async () => [{ id: 12, user: { type: 'Bot' }, body }];
   let calls = 0;
   const openai = { chat: { completions: { create: async request => {
+    if(request.response_format.json_schema.name === 'word_meaning_audit') return require('./helpers/word-response')(request);
     calls++;
     const data = JSON.parse(request.messages[1].content);
     assert.ok(data.passages.every(p => p.startLine > 1));

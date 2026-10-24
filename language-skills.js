@@ -2,6 +2,7 @@ const { CORPUS_GUIDANCE } = require("./corpus-knowledge");
 const { CONFIDENCE_RULES } = require("./confidence");
 const { WORDING_FIDELITY_RULES } = require("./wording-fidelity");
 const { SEMANTIC_LENSES } = require("./semantic-lenses");
+const { CONTEXT_RULES } = require('./contextual-fidelity');
 const headings = { review: "Direct text reviews", discovery: "Discovery reports" };
 
 function skillsForMode(markdown, mode) {
@@ -16,7 +17,7 @@ function skillsForMode(markdown, mode) {
   );
   if (found.length !== 2 || new Set(found).size !== 2)
     throw new Error("Language skills must define both response formats exactly once");
-  return `${selected}\n\n${CORPUS_GUIDANCE}\n\n${CONFIDENCE_RULES}\n\n${WORDING_FIDELITY_RULES}\n\n${SEMANTIC_LENSES}`;
+  return `${selected}\n\n${CORPUS_GUIDANCE}\n\n${CONFIDENCE_RULES}\n\n${WORDING_FIDELITY_RULES}\n\n${SEMANTIC_LENSES}\n\n${CONTEXT_RULES}`;
 }
 
 module.exports = { skillsForMode };

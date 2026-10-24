@@ -23,6 +23,7 @@ function state() {
       reads.push(args); return { data: { type: "file", encoding: "base64", size: texts[args.repo].length, content: Buffer.from(texts[args.repo]).toString("base64") } };
     } } };
   const openai = { chat: { completions: { create: async request => {
+    if(request.response_format.json_schema.name === 'word_meaning_audit') return require('./helpers/word-response')(request);
     calls++;
     assert.equal(request.response_format.json_schema.name, "comparison_audit");
     const candidates = JSON.parse(request.messages[1].content).candidates;
@@ -42,6 +43,28 @@ test("saved report review preserves prose and pins original commits, including s
   assert.equal(record.results[0].connection.words[0].term, "frame trace");
   assert.equal(record.results[0].decision.fields.word_1.status, "pass");
   assert.equal(record.results[0].decision.accepted, true);
+});
+
+test('saved reports expose contextual rejection even when the old broad reviewer passes',async()=>{
+  const s=state(),base=s.args.openai.chat.completions.create;
+  let focusedCalls=0;
+  s.args.openai.chat.completions.create=async request=>{
+    const response=await base(request);
+    if(request.response_format.json_schema.name==='word_meaning_audit'){
+      focusedCalls++;
+      const raw=JSON.parse(response.choices[0].message.content);
+      raw.claimFields.relationship.support='unsupported';raw.claimFields.relationship.status='fail';
+      raw.claimFields.relationship.reason='A record attribution was fused across different speakers.';
+      response.choices[0].message.content=JSON.stringify(raw);
+    }
+    return response;
+  };
+  const report=await reviewPublishedReport(s.args);
+  assert.equal(focusedCalls,1);
+  const record=JSON.parse(Buffer.from(report.match(/comparison-review-data:([A-Za-z0-9+/=]+)/)[1],'base64'));
+  assert.equal(record.results[0].decision.accepted,false);
+  assert.match(report,/Context of relationship: Needs correction/);
+  assert.match(report,/different speakers/);
 });
 
 test("tampered saved quotations and moved branch refs stop before the model runs", async () => {

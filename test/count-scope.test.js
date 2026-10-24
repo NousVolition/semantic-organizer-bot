@@ -10,6 +10,7 @@ const fixtures = require('../fixtures/count-examples.json');
 function clientForExamples({ missTarget = false } = {}) {
   const requests = [];
   const client = { chat: { completions: { create: async request => {
+    if(request.response_format.json_schema.name === 'word_meaning_audit') return require('./helpers/word-response')(request);
     const example = fixtures.examples[requests.length];
     requests.push(request);
     const { candidates, passages } = JSON.parse(request.messages[1].content);
