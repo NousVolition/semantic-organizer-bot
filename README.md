@@ -65,8 +65,9 @@ The owner opens an issue in this bot repository with one of these exact titles:
   the configured sampling budget. Citation text must match before a paid review
   runs. It reports individual verdicts without changing the original report or
   generating replacement findings. Sections already marked with a dated
-  correction are skipped. The owner-only command uses one independent model call per finding
-  for up to three saved findings and shares the discovery concurrency limit.
+  correction are skipped. The owner-only command uses one broad review per finding,
+  followed by a focused word/contextual review for each broad pass, for up to three
+  saved findings. It shares the discovery concurrency limit.
 
 Start a new complete-text scan with a preview, then use the continuation title
 shown in each report. Older sampled batch numbers do not describe this new index.
@@ -216,9 +217,10 @@ opened by `NousVolition` in this bot repository. Keep the exact template title.
   context would be needed to assess the roles. A completed HermiT result is
   scoped to the supplied axioms; their real-world truth remains **Not assessed**.
 
-**Automatic sentence parsing is currently unavailable.** The Bobcat model
-download host does not resolve, and no verified working official replacement
-was found. See [upstream issue 257](https://github.com/Quantinuum/lambeq/issues/257).
+**Automatic sentence parsing is not enabled in this bot.** Earlier setup encountered
+the model-download problem discussed in
+[upstream issue 257](https://github.com/Quantinuum/lambeq/issues/257).
+An explicit-role diagram run does not recheck that host's current availability.
 The installed lambeq diagram engine works without those pretrained weights.
 There is no silent fallback from automatic parsing to a manually typed diagram.
 Restoring Bobcat requires a trustworthy complete model and a successful real
