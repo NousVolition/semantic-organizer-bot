@@ -138,7 +138,7 @@ def run_lambeq(text, output):
             "output_type": str(diagram.cod),
             "boxes": [{"name": str(box.name), "input_type": str(box.dom),
                        "output_type": str(box.cod)} for box in diagram.boxes],
-            "limits": "A subject-verb-object diagram using the roles you supplied, not automatic sentence parsing or confirmation that these roles are correct. The noun and verb types are assigned by this explicit template. No trained semantic comparison, truth check, quantum simulation, or quantum hardware execution was performed. Bobcat automatic parsing is unavailable because the official pretrained model download is offline."}
+            "limits": "A subject-verb-object diagram using the roles you supplied, not automatic sentence parsing or confirmation that these roles are correct. The noun and verb types are assigned by this explicit template. No trained semantic comparison, truth check, quantum simulation, or quantum hardware execution was performed. Automatic parsing is not enabled in this bot; this run uses supplied word roles and does not test availability of pretrained model downloads."}
 
 
 def escaped(value):
