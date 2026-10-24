@@ -28,11 +28,9 @@ function fidelitySchema(connection,catalog) {
     sourceBindings:{type:'array',minItems:1,maxItems:6,items:object({
       passage:{type:'string',enum:catalog.map(p=>p.id)},quote:text,referent:text
     })},
-    // A field and its full text are a single schema alternative. The model cannot
-    // put a source quotation under a candidate-field key or silently repair it.
-    contextAnchors:{type:'array',maxItems:4,items:{anyOf:keys.map(k=>object({
-      field:{type:'string',enum:[k]},quote:{type:'string',enum:[fields[k]]}
-    }))}},
+    // Resolve references directly to the immutable candidateFields map. There is
+    // no model-written anchor quotation to confuse with a source or paraphrase.
+    contextAnchors:{type:'array',maxItems:4,items:{type:'string',enum:keys}},
     support:{type:'string',enum:SUPPORT},
     status:{type:'string',enum:['pass','fail','uncertain']},reason:text
   })])));
@@ -45,7 +43,7 @@ function evaluateFidelity(connection,review,catalog) {
     const bindingsValid=Array.isArray(row?.sourceBindings)&&row.sourceBindings.length>=1&&row.sourceBindings.length<=6
       &&row.sourceBindings.every(b=>nonempty(b.quote)&&nonempty(b.referent)&&catalog.some(p=>p.id===b.passage&&p.quote.includes(b.quote)));
     const anchorsValid=Array.isArray(row?.contextAnchors)&&row.contextAnchors.length<=4
-      &&row.contextAnchors.every(a=>nonempty(a.quote)&&typeof fields[a.field]==='string'&&fields[a.field].includes(a.quote));
+      &&row.contextAnchors.every(key=>Object.hasOwn(fields,key)&&typeof fields[key]==='string');
     const complete=row?.candidateText===value&&['reading','withheldObject','reason'].every(k=>nonempty(row?.[k]))
       &&SUPPORT.includes(row?.support)&&bindingsValid&&anchorsValid;
     const status=row?.support==='unsupported'?'fail':!complete?'uncertain':row.support==='uncertain'?'uncertain'

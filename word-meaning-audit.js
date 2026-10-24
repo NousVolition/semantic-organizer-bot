@@ -39,8 +39,15 @@ async function auditWordMeanings(openai, model, connection, catalog, log) {
   const generation = /^gpt-5/.test(model) ? { reasoning_effort:'medium',max_completion_tokens:14000 } : { temperature:0,max_tokens:8000 };
   const response = await openai.chat.completions.create({model,...generation,
     response_format:{type:'json_schema',json_schema:{name:'word_meaning_audit',strict:true,schema}},
-    messages:[{role:'system',content:RULES+'\n\n'+CONTEXT_RULES+'\nComplete claimFields for every field in the schema, including each confidence explanation. Check all clauses in each field. Copy candidateText exactly from candidateFields. sourceBindings contains exact SOURCE excerpts from passages. contextAnchors contains only full CANDIDATE fields from candidateFields that help resolve a label; use [] if none is needed. Do not put source passages in contextAnchors. Source bindings may explain a limitation or contradiction; they do not automatically mean support. Mark unsupported whenever the draft adds a material assertion, even if a safer paraphrase would pass. Pass a justified local non-entailment or clearly disclosed interpretation without demanding it appear verbatim in the source.'},{role:'user',content:JSON.stringify({candidate:connection,candidateFields:fidelityFields(connection),
-      passages:context.map(p=>({id:p.id,source:p.source.id,text:p.quote}))})}]});
+    messages:[{role:'system',content:RULES+'\n\n'+CONTEXT_RULES+'\nComplete claimFields for every field in the schema, including each confidence explanation. Check all clauses in each field. Copy candidateText exactly from candidateFields. sourceBindings contains exact SOURCE excerpts from passages. contextAnchors contains only the KEYS of CANDIDATE fields in candidateFields that help resolve a label; use [] if none is needed. These keys reference the full unchanged text supplied in candidateFields. Do not put source passages in contextAnchors. Source bindings may explain a limitation or contradiction; they do not automatically mean support. Mark unsupported whenever the draft adds a material assertion, even if a safer paraphrase would pass. Pass a justified local non-entailment or clearly disclosed interpretation without demanding it appear verbatim in the source.'},{role:'user',content:JSON.stringify({candidate:connection,candidateFields:fidelityFields(connection),
+      passages:context.map(p=>({id:p.id,source:p.source.id,text:p.quote}))})}]}).catch(error=>{
+        // Provider bodies can echo source text. Retain only bounded metadata.
+        log?.error?.({stage:'contextual_review',status:Number.isInteger(error.status)?error.status:undefined,
+          schemaRejected:/schema|response_format/i.test(String(error.message||'')),
+          parameter:/^[a-zA-Z0-9_.\[\]]{1,120}$/.test(error.param||'')?error.param:undefined,
+          type:/^[a-z_]{1,64}$/.test(error.type||'')?error.type:undefined},'Contextual review request failed');
+        throw error;
+      });
   const choice=response.choices?.[0];
   if(choice?.finish_reason!=='stop'||choice.message?.refusal||!choice.message?.content)
     throw Object.assign(new Error('Incomplete word meaning review'),{code:'incomplete_word_audit'});
