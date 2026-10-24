@@ -23,7 +23,9 @@ function fidelityFields(c) {
 function fidelitySchema(connection,catalog) {
   const fields=fidelityFields(connection), keys=Object.keys(fields);
   return object(Object.fromEntries(keys.map(key=>[key,object({
-    candidateText:{type:'string',enum:[fields[key]]},
+    // Arbitrary draft text belongs in the input, not in a content-dependent enum.
+    // evaluateFidelity still requires an exact match before any publication.
+    candidateText:text,
     reading:text, withheldObject:text,
     sourceBindings:{type:'array',minItems:1,maxItems:6,items:object({
       passage:{type:'string',enum:catalog.map(p=>p.id)},quote:text,referent:text

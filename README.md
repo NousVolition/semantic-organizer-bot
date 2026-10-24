@@ -424,3 +424,27 @@ Deployment references: [Probot](https://probot.github.io/docs/deployment/),
 
 ## License
 MIT
+
+## Context and review coverage
+
+Discovery publication and saved-finding review use the same broad review,
+lexical review, exact excerpt bindings, and checks on every claim field,
+including confidence. Built-in semantic exercises use both semantic readers;
+their single-source fixtures are not cross-file discovery reports. The live
+publication test workflow additionally exercises collection, generation,
+two-source validation, formatting and GitHub publication. Unit tests with supplied
+verdicts establish routing and rejection behavior, not model comprehension.
+
+Complete reading keeps its pinned coverage schedule and retrieves up to four
+extra windows per batch: adjacent context and distinctive shared-term leads,
+including earlier definitions and other documents. Selection reasons and source
+ranges are retained. Overlapping characters are supplied only once per source
+within a batch. Shared terms are retrieval hints, never evidence of a relationship.
+This bounded search can still miss aliases or connections without shared wording;
+reading every section does not mean comparing every possible pair. A changed
+reader settings key requires starting a new complete-reading sequence.
+
+Direct issue, PR and idea reviews inherit the same contextual rules, but do not
+claim to run the discovery publication gate or to search repository evidence.
+Diagrams and installed formal tools retain their separate execution contracts;
+mentioning a solver or drawing an assignment does not verify the assignment.

@@ -1,5 +1,5 @@
 const { createHash } = require("node:crypto");
-const { auditConnections } = require("./comparison-audit");
+const { auditPublicationCandidates } = require('./publication-audit');
 const { parseReadingRecord } = require('./complete-reading');
 const { validConfidence } = require('./confidence');
 
@@ -101,7 +101,7 @@ async function reviewPublishedReport({ octokit, config, reportIssue, openai, mod
       finding.connection.evidence[ref.source] = match.id;
     }
   }
-  const decisions = await auditConnections(openai, model, findings.map(f => f.connection), catalog, log);
+  const decisions = await auditPublicationCandidates(openai, model, findings.map(f => f.connection), catalog, log);
   const record = { version: 1, reportIssue, reportUrl: `https://github.com/${config.owner}/${config.controlRepository}/issues/${reportIssue}#issuecomment-${report.id}`,
     skippedCorrectedFindings: skipped,
     sources: [...sources.values()].map(({ id, repository, path, commit, url, sampled }) => ({ id, repository, path, commit, url, sampled })),
@@ -113,7 +113,7 @@ function renderReview(record, safeText) {
   const kept = record.results.filter(r => r.decision.accepted).length;
   const out = ["# Review of saved findings", `[Original report #${record.reportIssue}](${record.reportUrl})`,
     `${record.results.length} comparisons checked: ${kept} hold up under this review; ${record.results.length - kept} need qualification or more evidence.`,
-    "The existing title, explanation, limitation, confidence assessment when present and each term/fit were checked against their pinned source passages. Context is limited to the original sampled passages or recorded complete-reading sections. These are fallible model judgments, not mathematical proofs or dictionary verification."];
+    "The shared publication gate checked the existing title, explanation, limitation, confidence assessment when present and each term/fit against their pinned source passages. Context is limited to the original sampled passages or recorded complete-reading sections. These are fallible model judgments, not mathematical proofs or dictionary verification."];
   if (record.skippedCorrectedFindings.length) out.push(`Previously corrected findings skipped: ${record.skippedCorrectedFindings.join(", ")}.`);
   const label = { pass: "Pass", fail: "Needs correction", uncertain: "Uncertain" };
   for (const result of record.results) {
@@ -128,6 +128,12 @@ function renderReview(record, safeText) {
       out.push(`\n- **${safeText(word.term, 90)}: ${label[field.status]}** — ${safeText(field.reason, 450)}`);
     }
     if (c.confidence) out.push(`\n- **Original confidence assessment: ${label[d.fields.confidence.status]}** — ${safeText(d.fields.confidence.reason, 450)}`);
+    if (d.wordAudit) {
+      for (const [key, field] of Object.entries(d.wordAudit.claimFields || {}))
+        if (field.status !== 'pass') out.push(`\n- **Context of ${safeText(key)}: ${label[field.status]}** — ${safeText(field.reason, 600)}`);
+      for (const [key, field] of Object.entries(d.wordAudit.fields || {}))
+        if (field.status !== 'pass') out.push(`\n- **Meaning of ${safeText(key)}: ${label[field.status]}** — ${safeText(field.reason, 600)}`);
+    }
     for (const ref of result.citations) out.push(`\n[Source ${ref.source}](${ref.url})`);
   }
   // Structured results are base64 encoded to keep raw model text out of Markdown/mentions.

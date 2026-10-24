@@ -38,7 +38,7 @@ function completePassages(input, budget) {
 
 function settingsKey(config) {
   return createHash('sha256').update(JSON.stringify({
-    version: 1, owner: config.owner, repositories: [...new Set(config.repositories)],
+    version: 2, contextRetrieval: 'adjacent-and-distinctive-terms-v1', owner: config.owner, repositories: [...new Set(config.repositories)],
     size: config.filesPerBatch, budget: config.charactersPerFile,
     maximum: config.maximumFileBytes, priorities: config.priorityPaths || []
   })).digest('hex');
@@ -120,6 +120,8 @@ async function collectCompleteSources(octokit, config, batch, eligible, snapshot
   const totalBatches = Math.ceil(units.length / config.filesPerBatch);
   const selected = units.slice((batch - 1) * config.filesPerBatch, batch * config.filesPerBatch);
   const selectedWindows = selected.length;
+  const contextSelections = require('./context-windows').selectContext(units, selected);
+  for (const choice of contextSelections) selected.push(choice.unit);
   // Keep a second document available when only one long document remains.
   // This is at most one extra, explicitly repeated section, not a new source.
   if (selected.length && new Set(selected.map(u => u.document)).size === 1) {
@@ -135,9 +137,23 @@ async function collectCompleteSources(octokit, config, batch, eligible, snapshot
     grouped.get(key).excerpts.push(d.parts[depth]);
     grouped.get(key).windows.push(depth + 1);
   }
+  // Read source order, not retrieval rank. Supply each character at most once
+  // within a source in this batch so context overlap cannot inflate word counts.
+  for (const source of grouped.values()) {
+    const unique=[];let coveredEnd=-1;
+    for (const part of [...source.excerpts].sort((a,b)=>a.start-b.start)) {
+      const trim=Math.max(0,coveredEnd-part.start);
+      if(trim>=part.text.length)continue;
+      unique.push({...part,start:part.start+trim,startLine:part.startLine+(part.text.slice(0,trim).match(/\n/g)||[]).length,text:part.text.slice(trim)});
+      coveredEnd=Math.max(coveredEnd,part.end);
+    }
+    source.excerpts=unique;source.windows.sort((a,b)=>a-b);
+  }
   return { mode: 'complete', batch, totalFiles: catalog.length, readableFiles: documents.length, totalBatches,
     totalWindows: units.length, selectedWindows, contextWindows: selected.length - selectedWindows, duplicateFiles, excluded,
     sources: [...grouped.values()], repositories: repositories.map(({ repo, commit }) => ({ repo, commit })),
+    contextSelection: contextSelections.map(({unit,reason,sharedTerms})=>({repository:`${config.owner}/${unit.document.repo}`,
+      path:unit.document.path,window:unit.depth+1,reason,sharedTerms})),
     settingsKey: settingsKey(config) };
 }
 
@@ -145,6 +161,7 @@ function readingRecord(collected, nextBatch = collected.batch + 1) {
   return { version: 1, mode: 'complete', batch: collected.batch, nextBatch,
     totalBatches: collected.totalBatches, settingsKey: collected.settingsKey,
     repositories: collected.repositories,
+    contextSelection: collected.contextSelection || [],
     sources: collected.sources.map(s => ({ id: s.id, repository: s.repository, path: s.path, commit: s.commit,
       ranges: s.excerpts.map(p => ({ start: p.start, end: p.end, startLine: p.startLine })) })) };
 }

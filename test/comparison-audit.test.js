@@ -52,6 +52,7 @@ test('a result anchor can use adjacent proof passages without borrowing another 
   const original = JSON.stringify(candidate);
   const proofIds = ['S111P1', 'S112P1', 'S112P2', 'S112P3'];
   const client = { chat: { completions: { create: async request => {
+    if(request.response_format.json_schema.name === 'word_meaning_audit') return require('./helpers/word-response')(request);
     const { candidates, passages } = JSON.parse(request.messages[1].content);
     assert.deepEqual(candidates[0].fields, reviewFields(candidate));
     assert.equal(passages.find(p => p.id === 'S112P1').selected, true);
@@ -83,6 +84,7 @@ test('contextual headings do not bypass field failures or rewrite the supplied c
   const examples = ['withheld-proof-bounded', 'withheld-proof-overclaim'].map(name => corpus.examples.find(e => e.case === name));
   let calls = 0;
   const client = { chat: { completions: { create: async request => {
+    if(request.response_format.json_schema.name === 'word_meaning_audit') return require('./helpers/word-response')(request);
     const example = examples[calls++];
     const { candidates } = JSON.parse(request.messages[1].content);
     assert.equal(candidates[0].fields.title, 'Withheld proof');
@@ -178,6 +180,7 @@ test("regression cases retain real values, version context, and valid same-study
 test("review sees adjacent context, not expected answers, and logs only counts/categories", async () => {
   const entries = []; let calls = 0;
   const client = { chat: { completions: { create: async request => {
+    if(request.response_format.json_schema.name === 'word_meaning_audit') return require('./helpers/word-response')(request);
     const data = JSON.parse(request.messages[1].content);
     assert.ok(!request.messages[1].content.includes("expectedAccept"));
     assert.deepEqual(Object.keys(request.response_format.json_schema.schema.properties), ["C1"]);
@@ -234,6 +237,7 @@ test("incomplete, refused or malformed audit responses cannot publish the draft"
 test("an empty draft spends no review call; example checks report mismatches honestly", async () => {
   let calls = 0;
   const client = { chat: { completions: { create: async request => {
+    if(request.response_format.json_schema.name === 'word_meaning_audit') return require('./helpers/word-response')(request);
     calls++;
     return request.response_format.json_schema.name === "language_discovery" ? response({ connections: [] }) : response(requestVerdicts(request));
   } } } };
@@ -269,6 +273,7 @@ test('reproducing the retained expected decisions validates all 22 cases in inde
   assert.equal(all.filter(e => e.expectedAccept).length, 11);
   const requests = [];
   const client = { chat: { completions: { create: async request => {
+    if(request.response_format.json_schema.name === 'word_meaning_audit') return require('./helpers/word-response')(request);
     requests.push(request);
     const { candidates, passages } = JSON.parse(request.messages[1].content);
     // Expected answers and targeted failure fields are never sent to the model.
@@ -301,7 +306,7 @@ test('reproducing the retained expected decisions validates all 22 cases in inde
   assert.equal(requests.length, 22);
   assert.match(report, /22 of 22 expected decisions matched/);
   assert.match(report, /Comparison checker: gpt-5\.4\./);
-  assert.match(report, /22 independent bounded calls/);
+  assert.match(report, /22 comparisons reviewed independently/);
   assert.ok(!report.includes('**FAIL**'));
   for (const example of all) assert.ok(report.includes(example.case));
   const record = JSON.parse(Buffer.from(report.match(/comparison-example-data:([A-Za-z0-9+/=]+)/)[1], 'base64'));
@@ -320,7 +325,8 @@ test("example-check command obeys owner/repository authorization and avoids repo
   const context = { octokit, issue: () => ({ owner: "example", repo: "bot", issue_number: 1 }),
     payload: { sender: { login: "stranger", type: "User" }, repository: { owner: { login: "example" }, name: "bot" },
       issue: { number: 1, title: "[Discover language] check examples", user: { type: "User" } } } };
-  const openai = { chat: { completions: { create: async request => { calls++; return response(requestVerdicts(request)); } } } };
+  const openai = { chat: { completions: { create: async request => {
+    if(request.response_format.json_schema.name === 'word_meaning_audit') return require('./helpers/word-response')(request); calls++; return response(requestVerdicts(request)); } } } };
   const handler = createDiscoveryHandler({ octokitForContext: () => octokit, config, openai, model: "gpt-5.4-mini", log: { error() {} } });
   await handler.handle(context); assert.equal(calls, 0); assert.equal(posted.length, 0);
   context.payload.sender.login = "example"; context.payload.repository.name = "other";
@@ -334,6 +340,7 @@ test('rejecting a bad example for the wrong reason does not pass its targeted re
   const all = [...fixtures.examples, ...require('../fixtures/scope-examples.json').examples];
   let offset = 0;
   const client = { chat: { completions: { create: async request => {
+    if(request.response_format.json_schema.name === 'word_meaning_audit') return require('./helpers/word-response')(request);
     const result = requestVerdicts(request);
     for (const value of Object.values(result)) {
       if (!all[offset++].expectedAccept) value.checks.provenance = 'fail';

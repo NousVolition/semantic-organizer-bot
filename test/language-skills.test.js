@@ -26,3 +26,8 @@ test("unknown modes or missing mode sections fail clearly", () => {
   assert.throws(() => skillsForMode(skills, "other"), /Unknown/);
   assert.throws(() => skillsForMode("# Incomplete rules", "discovery"), /both response formats/);
 });
+
+test('both entry modes inherit the same contextual meaning rules',()=>{
+  const {CONTEXT_RULES}=require('../contextual-fidelity');
+  for(const mode of ['review','discovery'])assert.ok(skillsForMode(skills,mode).includes(CONTEXT_RULES));
+});
