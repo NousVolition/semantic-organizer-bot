@@ -3,7 +3,7 @@ module.exports = request => {
   const {candidate,passages}=JSON.parse(request.messages[1].content);
   const claimFields=Object.fromEntries(Object.entries(require('../../contextual-fidelity').fidelityFields(candidate)).map(([k,value])=>[k,{
     candidateText:value,reading:'Mock reading.',withheldObject:'Mock object.',
-    sourceBindings:[{passage:passages[0].id,quote:passages[0].text,referent:'Mock record.'}],contextAnchors:[],
+    sourceBindings:[{excerptId:passages[0].id,referent:'Mock record.'}],contextAnchors:[],
     support:'supported',status:'pass',reason:'Mock evidence decision.'
   }]));
   return { id:'word-review-mock', model:'mock', choices:[{finish_reason:'stop',message:{content:JSON.stringify({
