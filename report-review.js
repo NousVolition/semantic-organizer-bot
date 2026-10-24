@@ -42,7 +42,7 @@ function pinnedSource(reference, config, eligible) {
   if (url.origin !== "https://github.com" || url.search || !match || !/^#L[1-9]\d*$/.test(url.hash)) throw new Error("Unpinned source");
   const [, owner, repo, commit, encodedPath] = match;
   const path = decodeURIComponent(encodedPath);
-  if (owner !== config.owner || !config.repositories.includes(repo) || !eligible(path)
+  if (owner !== config.owner || ![...config.repositories,config.controlRepository].includes(repo) || !eligible(path)
     || path.includes("\\") || path.split("/").some(part => !part || part === "." || part === "..")) throw new Error("Source outside configured scope");
   return { id: reference.source, owner, repo, repository: `${owner}/${repo}`, path, commit,
     url: reference.url.split("#")[0] };

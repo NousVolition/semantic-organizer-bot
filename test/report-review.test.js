@@ -67,6 +67,21 @@ test('saved reports expose contextual rejection even when the old broad reviewer
   assert.match(report,/different speakers/);
 });
 
+test('saved pinned-source reports support the same public control-repository scope as discovery',async()=>{
+  const s=state();
+  s.comments[0].body=s.comments[0].body.replaceAll('example/alpha/','example/bot/');
+  const originalRead=s.args.octokit.repos.getContent;
+  s.args.octokit.repos.getContent=args=>originalRead({...args,repo:args.repo==='bot'?'alpha':args.repo});
+  const report=await reviewPublishedReport(s.args);
+  const record=JSON.parse(Buffer.from(report.match(/comparison-review-data:([A-Za-z0-9+/=]+)/)[1],'base64'));
+  assert.equal(record.results[0].decision.accepted,true);
+  assert.ok(record.sources.some(s=>s.repository==='example/bot'));
+  const blocked=state();blocked.comments[0].body=blocked.comments[0].body.replaceAll('example/alpha/','example/bot/');
+  blocked.args.octokit.repos.get=async({repo})=>({data:{private:repo==='bot'}});
+  await assert.rejects(reviewPublishedReport(blocked.args),{code:'private_source'});
+  assert.equal(blocked.reads.length,0);assert.equal(blocked.calls,0);
+});
+
 test("tampered saved quotations and moved branch refs stop before the model runs", async () => {
   for (const mutate of [body => body.replace("A record retains", "A record erases"),
     body => body.replace(sources[0].commit, "main")]) {
