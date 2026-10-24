@@ -11,13 +11,14 @@ const catalog=citationPassages(collected.sources);
 function grounded(){return Object.fromEntries(Object.entries(fidelityFields(c)).map(([k,value])=>[k,{
   candidateText:value,reading:'Transport mock preserving the actual object.',withheldObject:'A proof of dynamic stability.',
   sourceBindings:[{passage:'S2P1',quote:catalog[1].quote,referent:'The second note.'}],
-  contextAnchors:[{field:'relationship',quote:'A proof of stability is not claimed.'}],support:'supported',status:'pass',reason:'Transport mock.'
+  contextAnchors:['relationship'],support:'supported',status:'pass',reason:'Transport mock.'
 }]));}
 
 test('contextual review binds every field and each confidence explanation to exact text',()=>{
   const schema=fidelitySchema(c,catalog),fields=fidelityFields(c);
   assert.deepEqual(schema.required,Object.keys(fields));
   for(const key of Object.keys(fields))assert.deepEqual(schema.properties[key].properties.candidateText.enum,[fields[key]]);
+  assert.deepEqual(schema.properties.title.properties.contextAnchors.items.enum,Object.keys(fields));
   const review=grounded();assert.equal(evaluateFidelity(c,review,catalog).accepted,true);
   for(const key of Object.keys(fields)){
     const incomplete=structuredClone(review);delete incomplete[key];
@@ -31,7 +32,8 @@ test('repaired candidate text, fabricated evidence, false context, and contradic
     r=>r.sourceBindings[0].quote='A nonexistent source statement.',
     r=>r.sourceBindings[0].passage='S3P1',
     r=>r.sourceBindings=[],
-    r=>r.contextAnchors[0].quote='Proof exists but is concealed.',
+    r=>r.contextAnchors=['S2P1'],
+    r=>r.contextAnchors=[{field:'relationship',quote:'A substituted paraphrase.'}],
     r=>r.support='unsupported',
     r=>r.support='uncertain',
     r=>delete r.withheldObject
