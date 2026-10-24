@@ -10,7 +10,7 @@ const collected={sources:['For nonzero t, (tx)(y/t)=xy.','No proof of dynamic st
 const catalog=citationPassages(collected.sources);
 function grounded(){return Object.fromEntries(Object.entries(fidelityFields(c)).map(([k,value])=>[k,{
   candidateText:value,reading:'Transport mock preserving the actual object.',withheldObject:'A proof of dynamic stability.',
-  sourceBindings:[{passage:'S2P1',quote:catalog[1].quote,referent:'The second note.'}],
+  sourceBindings:[{excerptId:'S2P1',referent:'The second note.'}],
   contextAnchors:['relationship'],support:'supported',status:'pass',reason:'Transport mock.'
 }]));}
 
@@ -30,7 +30,7 @@ test('repaired candidate text, fabricated evidence, false context, and contradic
   for(const mutate of [
     r=>r.candidateText='A safer paraphrase.',
     r=>r.sourceBindings[0].quote='A nonexistent source statement.',
-    r=>r.sourceBindings[0].passage='S3P1',
+    r=>r.sourceBindings[0].excerptId='S3P1',
     r=>r.sourceBindings=[],
     r=>r.contextAnchors=['S2P1'],
     r=>r.contextAnchors=[{field:'relationship',quote:'A substituted paraphrase.'}],
@@ -38,6 +38,21 @@ test('repaired candidate text, fabricated evidence, false context, and contradic
     r=>r.support='uncertain',
     r=>delete r.withheldObject
   ]){const review=grounded();mutate(review.confidence_basis);assert.equal(evaluateFidelity(c,review,catalog).accepted,false);}
+});
+
+test('nonadjacent source lines stay separate and code copies their exact original text',()=>{
+  const sources=[{id:'S2P1',quote:'4. A claim was quoted.\n5. A separate record.\n9. A label was not endorsed.'}];
+  const review=grounded();
+  for(const field of Object.values(review))field.sourceBindings=[
+    {excerptId:'S2P1:L1',referent:'Record 4'},
+    {excerptId:'S2P1:L3',referent:'Record 9'}
+  ];
+  const checked=evaluateFidelity(c,review,sources);
+  assert.equal(checked.accepted,true);
+  assert.deepEqual(checked.fields.title.sourceBindings.map(b=>b.quote),['4. A claim was quoted.','9. A label was not endorsed.']);
+  assert.deepEqual(checked.fields.title.sourceBindings.map(b=>b.referent),['Record 4','Record 9']);
+  review.title.sourceBindings[0].quote='4. A claim was quoted.\n9. A label was not endorsed.';
+  assert.equal(evaluateFidelity(c,review,sources).accepted,false,'model-written quotations cannot replace bound text');
 });
 
 test('contextual confidence failure blocks actual publication even when broad and word checks pass',async()=>{
