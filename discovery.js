@@ -179,7 +179,11 @@ function evidence(reference, sources, catalog = citationPassages(sources)) {
 }
 
 function safeText(text, maximum = 1500) {
-  return String(text || "").slice(0, maximum).replace(/https?:\/\/\S+/g, "[unverified link omitted]")
+  // Strip terminal formatting before clipping/Markdown escaping; preserve real text,
+  // Unicode, tabs and newlines. These controls have no linguistic meaning here.
+  return require('node:util').stripVTControlCharacters(String(text || ""))
+    .replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f-\u009f]/g, '')
+    .slice(0, maximum).replace(/https?:\/\/\S+/g, "[unverified link omitted]")
     .replace(/@/g, "＠").replace(/[<>&]/g, char => ({ "<": "&lt;", ">": "&gt;", "&": "&amp;" }[char]))
     .replace(/[\\`*_{}\[\]()#!|]/g, "\\$&");
 }
@@ -264,7 +268,7 @@ function discoverySchema(catalog) {
 }
 
 async function generateDiscovery(openai, model, skills, collected, log, driftPairs = [], options = {}) {
-  skills = `${skills || ''}\n\n${CONFIDENCE_RULES}`;
+  skills = `${skills || ''}\n\n${CONFIDENCE_RULES}\n\n${require('./contextual-fidelity').CONTEXT_RULES}`;
   const catalog = citationPassages(collected.sources);
   if (new Set(catalog.filter(item => item.quote.length >= 15).map(item => item.source.id)).size < 2) return renderDiscovery({ connections: [] }, collected);
   const generation = /^gpt-5\.4-mini(?:-|$)/.test(model)
@@ -326,17 +330,22 @@ async function publishDiscoveryDraft(openai, model, generated, collected, log, o
       if (decisions[i]) { decisions[i].accepted = false; decisions[i].failed.push('publication_evidence'); }
     }
   }
-  // A concise second reader examines lexical changes that the broad review can miss.
+  // A second reader checks lexical meaning and exact evidence bindings in all fields.
   // Run only for otherwise publishable drafts; a rejection cannot be rescued here.
   for (const [i,c] of candidates.entries()) {
     if (!decisions[i]?.accepted) continue;
     const wordAudit = await require('./word-meaning-audit').auditWordMeanings(openai,comparisonModel(model),c,catalog,log);
     decisions[i].wordAudit = wordAudit;
     decisions[i].checks.word_meaning = wordAudit.accepted ? 'pass' : 'fail';
+    decisions[i].checks.contextual_fidelity = Object.values(wordAudit.claimFields||{}).length>0
+      && Object.values(wordAudit.claimFields).every(r=>r.status==='pass') ? 'pass' : 'fail';
     if(!wordAudit.accepted) {
       decisions[i].accepted = false;
       decisions[i].failed.push('word_meaning');
       decisions[i].reason += ' ' + Object.entries(wordAudit.fields).filter(([,v])=>v.status!=='pass').map(([k,v])=>`${k}: ${v.reason||'Incomplete word meaning review.'}`).join(' ');
+      const failedClaims=Object.entries(wordAudit.claimFields||{}).filter(([,v])=>v.status!=='pass');
+      if(decisions[i].checks.contextual_fidelity!=='pass') decisions[i].failed.push('contextual_fidelity');
+      decisions[i].reason += ' '+failedClaims.map(([k,v])=>`${k}: ${v.reason}`).join(' ');
     }
   }
   const accepted = candidates.filter((_, i) => decisions[i]?.accepted === true);
@@ -352,7 +361,7 @@ async function publishDiscoveryDraft(openai, model, generated, collected, log, o
       reason: (decisions[i]?.reason || 'Missing review.').slice(0,600),
       fields: Object.fromEntries(Object.entries(decisions[i]?.fields || {}).map(([k,v]) => [k,{ status:v.status, stance:v.stance, proposition:v.proposition, reason:v.reason.slice(0,300) }])),
       responseId: decisions[i]?.responseId || null, model: decisions[i]?.model || null, reviewedAt: decisions[i]?.reviewedAt || null,
-      wordAudit: decisions[i]?.wordAudit ? {accepted:decisions[i].wordAudit.accepted,responseId:decisions[i].wordAudit.responseId,model:decisions[i].wordAudit.model,reviewedAt:decisions[i].wordAudit.reviewedAt,statuses:Object.fromEntries(Object.entries(decisions[i].wordAudit.fields).map(([k,v])=>[k,v.status]))} : null })),
+      wordAudit: decisions[i]?.wordAudit ? {accepted:decisions[i].wordAudit.accepted,responseId:decisions[i].wordAudit.responseId,model:decisions[i].wordAudit.model,reviewedAt:decisions[i].wordAudit.reviewedAt,statuses:Object.fromEntries(Object.entries(decisions[i].wordAudit.fields).map(([k,v])=>[k,v.status])),claimStatuses:Object.fromEntries(Object.entries(decisions[i].wordAudit.claimFields||{}).map(([k,v])=>[k,v.status]))} : null })),
     readyToPublishAt: new Date().toISOString() };
   if(options.capturePublicKey) receipt.capture = require('./audit-capture').encryptCapture({version:1,commit:receipt.commit,
     inputSha256:receipt.inputSha256,generation:{...receipt.generation,usage:options.generationUsage||null},
