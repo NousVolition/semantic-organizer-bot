@@ -2,6 +2,7 @@
 // Exact excerpts are auditable support, not a claim that models formally prove entailment.
 const CONTEXT_RULES = `Read the actual draft, preserving its commitments, before deciding whether it is supported.
 - Resolve compact labels through their explicit gloss and the surrounding connection. An explanation supplies a label's meaning; a caveat does not erase an independently false sentence. "Withheld proof" with a gloss saying a claim of proof is not made is an elliptical name for that withheld claim, not a claim of an existing concealed proof. The same label with an explicit concealment assertion requires evidence of concealment. Do not silently replace either reading with the other.
+- Distinguish what a label means from what exists in the world. In a passage explaining "Withheld proof", saying that withheld proof is not a hidden stability result can gloss the label's meaning; it does not assert that no hidden result exists anywhere. Read the grammatical subject and supplied explanation. Likewise a heading summarizing a two-part comparison need not ascribe every heading word to each source. Judge the actual qualified relationship, while still checking every explicit both/each claim separately.
 - Preserve the object of withholding in EVERY field, including confidence. Not claiming a proof of stability leaves open conjecturing stability. It does not say that any stability claim is withheld, that stability is false, or that a proof exists elsewhere. The bare compact label "withheld stability proof" may be resolved by a clear gloss; an explicit sentence "withholds any claim of stability" changes the object and fails. An exact identity already proved by supplied algebra stays proved. Keep an initial-field proof distinct from its later evolution.
 - Review what was written, not a repaired paraphrase. "Absence of a cause" is stronger than absence of an established causal explanation. An unspecified role is not an explicitly excluded role. If your supported reading needs to add established, proof of, here, or as stated to an explicit sentence, mark the original claim unsupported instead of granting your repair to the author. Conversely, do not invent an assertion by treating an expressly elliptical title as an unrelated standalone sentence.
 - Bind conjunctions, pronouns and definite descriptions to their source records. A quoted allegation in record A and an unendorsed description in record B do not establish that one allegation was both quoted and unendorsed. Similar vocabulary is not referent identity. State separate records separately unless the text connects them. Preserve each speaker's strength without turning attribution, repetition, popularity or quotation into endorsement or independent evidence.
@@ -27,7 +28,11 @@ function fidelitySchema(connection,catalog) {
     sourceBindings:{type:'array',minItems:1,maxItems:6,items:object({
       passage:{type:'string',enum:catalog.map(p=>p.id)},quote:text,referent:text
     })},
-    contextAnchors:{type:'array',maxItems:4,items:object({field:{type:'string',enum:keys},quote:text})},
+    // A field and its full text are a single schema alternative. The model cannot
+    // put a source quotation under a candidate-field key or silently repair it.
+    contextAnchors:{type:'array',maxItems:4,items:{anyOf:keys.map(k=>object({
+      field:{type:'string',enum:[k]},quote:{type:'string',enum:[fields[k]]}
+    }))}},
     support:{type:'string',enum:SUPPORT},
     status:{type:'string',enum:['pass','fail','uncertain']},reason:text
   })])));
@@ -43,10 +48,10 @@ function evaluateFidelity(connection,review,catalog) {
       &&row.contextAnchors.every(a=>nonempty(a.quote)&&typeof fields[a.field]==='string'&&fields[a.field].includes(a.quote));
     const complete=row?.candidateText===value&&['reading','withheldObject','reason'].every(k=>nonempty(row?.[k]))
       &&SUPPORT.includes(row?.support)&&bindingsValid&&anchorsValid;
-    const status=!complete?'uncertain':row.support==='unsupported'?'fail':row.support==='uncertain'?'uncertain'
+    const status=row?.support==='unsupported'?'fail':!complete?'uncertain':row.support==='uncertain'?'uncertain'
       :['pass','fail','uncertain'].includes(row.status)?row.status:'uncertain';
     return [key,{...row,status,bindingsValid,anchorsValid,
-      reason:complete?row.reason:'Incomplete contextual review or an excerpt that does not match the actual draft/source.'}];
+      reason:complete?row.reason:(nonempty(row?.reason)?row.reason+' ':'')+'Incomplete contextual review or an excerpt that does not match the actual draft/source.'}];
   }));
   return {accepted:Object.keys(fields).length>0&&Object.values(decisions).every(r=>r.status==='pass'),fields:decisions};
 }

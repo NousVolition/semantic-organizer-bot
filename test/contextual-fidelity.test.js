@@ -18,6 +18,8 @@ test('contextual review binds every field and each confidence explanation to exa
   const schema=fidelitySchema(c,catalog),fields=fidelityFields(c);
   assert.deepEqual(schema.required,Object.keys(fields));
   for(const key of Object.keys(fields))assert.deepEqual(schema.properties[key].properties.candidateText.enum,[fields[key]]);
+  const alternatives=schema.properties.title.properties.contextAnchors.items.anyOf;
+  for(const option of alternatives){const field=option.properties.field.enum[0];assert.deepEqual(option.properties.quote.enum,[fields[field]]);}
   const review=grounded();assert.equal(evaluateFidelity(c,review,catalog).accepted,true);
   for(const key of Object.keys(fields)){
     const incomplete=structuredClone(review);delete incomplete[key];

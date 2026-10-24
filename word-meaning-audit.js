@@ -1,5 +1,5 @@
 // A separate contextual reading of word suggestions AND all publication claims.
-const { CONTEXT_RULES, fidelitySchema, evaluateFidelity } = require('./contextual-fidelity');
+const { CONTEXT_RULES, fidelityFields, fidelitySchema, evaluateFidelity } = require('./contextual-fidelity');
 const object = properties => ({ type: 'object', properties, required: Object.keys(properties), additionalProperties: false });
 const EFFECTS = ['same_in_context', 'broader', 'narrower', 'different', 'not_a_restatement'];
 const RULES = `Read each suggested term AND its explanation against the full supplied source context. The task is semantic fidelity, not stylistic conformity.
@@ -39,7 +39,7 @@ async function auditWordMeanings(openai, model, connection, catalog, log) {
   const generation = /^gpt-5/.test(model) ? { reasoning_effort:'medium',max_completion_tokens:14000 } : { temperature:0,max_tokens:8000 };
   const response = await openai.chat.completions.create({model,...generation,
     response_format:{type:'json_schema',json_schema:{name:'word_meaning_audit',strict:true,schema}},
-    messages:[{role:'system',content:RULES+'\n\n'+CONTEXT_RULES+'\nComplete claimFields for every field in the schema, including each confidence explanation. Check all clauses in each field. Copy candidateText exactly; bind readings to exact source excerpts and relevant contextual glosses. Source bindings may explain a limitation or contradiction; they do not automatically mean support. Mark unsupported whenever the draft adds a material assertion, even if a safer paraphrase would pass. Pass a justified local non-entailment or clearly disclosed interpretation without demanding it appear verbatim in the source.'},{role:'user',content:JSON.stringify({candidate:connection,
+    messages:[{role:'system',content:RULES+'\n\n'+CONTEXT_RULES+'\nComplete claimFields for every field in the schema, including each confidence explanation. Check all clauses in each field. Copy candidateText exactly from candidateFields. sourceBindings contains exact SOURCE excerpts from passages. contextAnchors contains only full CANDIDATE fields from candidateFields that help resolve a label; use [] if none is needed. Do not put source passages in contextAnchors. Source bindings may explain a limitation or contradiction; they do not automatically mean support. Mark unsupported whenever the draft adds a material assertion, even if a safer paraphrase would pass. Pass a justified local non-entailment or clearly disclosed interpretation without demanding it appear verbatim in the source.'},{role:'user',content:JSON.stringify({candidate:connection,candidateFields:fidelityFields(connection),
       passages:context.map(p=>({id:p.id,source:p.source.id,text:p.quote}))})}]});
   const choice=response.choices?.[0];
   if(choice?.finish_reason!=='stop'||choice.message?.refusal||!choice.message?.content)
