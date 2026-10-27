@@ -35,8 +35,11 @@ module.exports = (app, { getRouter } = {}) => {
   // This is deliberately opt-in: it downloads a public local model only when a
   // real discovery run needs a shortlist, never for previews or text reviews.
   const driftScanner = process.env.ENABLE_DRIFT_SCAN === "true" ? createDriftScanner({ log: app.log }) : null;
-  const discovery = createDiscoveryHandler({ config: discoveryConfig, openai, model: discoveryModel, skills: discoverySkills, log: app.log, driftScanner });
+  const discovery = createDiscoveryHandler({ config: discoveryConfig, openai, model: discoveryModel, skills: discoverySkills, log: app.log, driftScanner,
+    stateStoreForContext: context => require('./discovery-state').createGitHubStateStore(context.octokit,discoveryConfig,
+      process.env.DISCOVERY_STATE_SECRET || process.env.WEBHOOK_SECRET) });
   app.on("issues.opened", discovery.handle);
+  app.on("issues.reopened", discovery.handle);
 
   function logOpenAIError(message, error) {
     // API messages can include credentials or submitted text. Log only diagnostics.

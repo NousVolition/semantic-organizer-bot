@@ -85,13 +85,14 @@ function evaluateAudit(connections, review, catalog) {
   });
 }
 
-async function auditConnections(openai, model, connections, catalog, log) {
+async function auditConnections(openai, model, connections, catalog, log, checkpoint) {
   if (!connections.length) return [];
   if (connections.length > 6) throw new Error("Comparison audit exceeds bounded size");
   const decisions = [];
   // Similar good/bad candidates can contaminate one another's readings. Review independently.
   for (const [i, connection] of connections.entries()) {
-    const [decision] = await auditOneConnection(openai, comparisonModel(model), [connection], catalog, log);
+    const work = () => auditOneConnection(openai, comparisonModel(model), [connection], catalog, log);
+    const [decision] = checkpoint ? await checkpoint.run(`broad-${i}`, work) : await work();
     decisions.push({ ...decision, id: `C${i + 1}` });
   }
   return decisions;

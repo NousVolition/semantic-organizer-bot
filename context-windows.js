@@ -4,13 +4,18 @@ const STOP=new Set(('about after again against also among another because before
 function terms(text) {
   return new Set((text.normalize('NFKC').toLowerCase().match(/[\p{L}][\p{L}\p{N}_-]{3,}/gu)||[]).filter(t=>!STOP.has(t)));
 }
-function selectContext(units,primary,limit=4) {
+function indexContext(units, savedDf) {
+  const df = savedDf ? new Map(savedDf) : new Map();
+  const indexed = units.map(u => ({u, t: new Set(u.document.parts[u.depth].terms || terms(u.document.parts[u.depth].text))}));
+  if (!savedDf) for (const {t} of indexed) for (const token of t) df.set(token, (df.get(token)||0)+1);
+  return { indexed, df };
+}
+function selectContext(units,primary,limit=4,index=indexContext(units)) {
   if(!Number.isInteger(limit)||limit<0||limit>4)throw new Error('Invalid context window limit');
   if(!limit||!primary.length)return [];
-  const selected=new Set(primary),query=new Set(),df=new Map();
-  const indexed=units.map(u=>({u,t:terms(u.document.parts[u.depth].text)}));
+  const selected=new Set(primary),query=new Set();
+  const {indexed,df}=index;
   for(const {u,t} of indexed) {
-    for(const token of t)df.set(token,(df.get(token)||0)+1);
     if(selected.has(u))for(const token of t)query.add(token);
   }
   const documents=new Set(primary.map(u=>u.document));
@@ -30,4 +35,4 @@ function selectContext(units,primary,limit=4) {
   for(const r of ranked)if(r.shared.length>=2)add(r,'shared terms');
   return chosen;
 }
-module.exports={selectContext};
+module.exports={selectContext,indexContext,terms};
