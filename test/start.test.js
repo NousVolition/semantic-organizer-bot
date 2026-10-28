@@ -43,7 +43,7 @@ test("the real startup serves health and verifies signed GitHub webhooks", async
   const port = reservation.address().port;
   await new Promise((resolve) => reservation.close(resolve));
   const originalEnv = { ...process.env };
-  Object.assign(process.env, environment(), { PORT: String(port), HOST: "127.0.0.1", NODE_ENV: "production", LOG_LEVEL: "fatal" });
+  Object.assign(process.env, environment(), { PORT: String(port), HOST: "127.0.0.1", NODE_ENV: "production", LOG_LEVEL: "fatal", DISCOVERY_AUTO_RESUME:'false' });
   delete process.env.WEBHOOK_PROXY_URL;
   delete process.env.WEBHOOK_PATH;
   t.after(() => {

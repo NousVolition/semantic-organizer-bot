@@ -195,12 +195,19 @@ small diagnostic.
 
 Only the configured owner's issues in the reporting repository can trigger
 discovery. The webhook reserves a status comment before the scan proceeds.
-For new complete-reading previews, ordinary batches and continuations, **close
-and reopen the interrupted issue to resume** (or redeliver its webhook).
+New complete-reading previews, ordinary batches and continuations **resume
+automatically after a process crash**. An encrypted pending-job registry is
+saved before work begins. Startup checks it after five seconds, then every
+30 seconds while idle, and waits for the previous worker's lease to expire.
 The request title/body, settings, model choices and review rules must still match.
 The same comment is updated, and a finished report is never run again.
-Reopening requires the configured owner as sender. There is no automatic scan
-on startup or unattended recurring scan.
+Only previously owner-authorized, registered jobs are resumed; this does not
+start new source scans or advance to the next batch. Closing an issue stops
+automatic recovery. Edited requests and changed review rules need attention.
+Jobs explicitly paused by a provider, billing or validation error are not
+automatically retried. Fix the cause, then close and reopen the same issue as
+the configured owner (or redeliver its webhook). Set `DISCOVERY_AUTO_RESUME=false`
+to disable the background worker while retaining manual recovery.
 
 Recovery preserves the pinned source commits, completed indexing chunks,
 selected batch, optional Drift Scan shortlist, generated draft, each broad
@@ -213,10 +220,13 @@ or restore their matching validated result; recovery never bypasses a review.
 
 A renewable repository-wide lease prevents overlapping complete-reading jobs
 from different service instances. After a process crash, allow **three minutes**
-for the old lease to expire before reopening. GitHub compare-and-swap writes
+for the old lease to expire; the background worker waits automatically.
+GitHub compare-and-swap writes
 reject conflicting checkpoint updates, and a worker that loses its lease must
 stop before its next model step or publication. GitHub unavailability/rate
-limits can pause recovery; retry the same issue after access is restored.
+limits delay background checks, with backoff up to five minutes. Saved work is
+preserved. Jobs started before automatic registration was deployed still need
+one manual reopening if unfinished; that registers them if their inputs match.
 Old unfinished comments created before checkpoints existed cannot be recovered;
 start a new issue for those. Pinned `sources`, saved-report reviews, example
 checks and the optional sampled collector retain their previous retry behavior.
