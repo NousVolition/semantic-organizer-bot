@@ -49,10 +49,10 @@ function passages(text, budget) {
   return result;
 }
 
-async function collectSources(octokit, config, batch = 1, snapshot) {
+async function collectSources(octokit, config, batch = 1, snapshot, options = {}) {
   validateConfig(config);
   if (!Number.isInteger(batch) || batch < 1 || batch > 10000) throw new Error("Invalid batch");
-  if (config.readingMode === 'complete') return collectCompleteSources(octokit, config, batch, path => eligible(path, true), snapshot);
+  if (config.readingMode === 'complete') return collectCompleteSources(octokit, config, batch, path => eligible(path, true), snapshot, options);
   if (snapshot) throw new Error('Pinned continuation requires complete reading mode');
   const repositories = [];
   const seen = new Set();
@@ -277,6 +277,7 @@ async function generateDiscovery(openai, model, skills, collected, log, driftPai
     // tokens before completing a report; keep a finite allowance for both.
     ? { reasoning_effort: "medium", max_completion_tokens: 12000 }
     : { temperature: 0.4, max_tokens: 3500 };
+  const createDraft = async () => {
   const response = await openai.chat.completions.create({ model, ...generation,
     response_format: { type: "json_schema", json_schema: { name: "language_discovery", strict: true,
       schema: discoverySchema(catalog) } }, messages: [
@@ -306,8 +307,11 @@ async function generateDiscovery(openai, model, skills, collected, log, driftPai
     })) }, 'Invalid discovery confidence');
     throw Object.assign(new Error('Invalid confidence assessment'), { code: 'invalid_discovery_confidence' });
   }
-  return publishDiscoveryDraft(openai, model, draft.connections, collected, log,
-    { ...options, generationResponseId: response.id || null, generationModel: response.model || model, generationUsage: response.usage || null });
+  return { connections: draft.connections, responseId: response.id || null, model: response.model || model, usage: response.usage || null };
+  };
+  const saved = options.checkpoint ? await options.checkpoint.run('generation', createDraft) : await createDraft();
+  return publishDiscoveryDraft(openai, model, saved.connections, collected, log,
+    { ...options, generationResponseId: saved.responseId, generationModel: saved.model, generationUsage: saved.usage });
 }
 
 async function publishDiscoveryDraft(openai, model, generated, collected, log, options = {}) {
@@ -326,7 +330,7 @@ async function publishDiscoveryDraft(openai, model, generated, collected, log, o
         sources:collected.sources,candidates,decisions,
         error:{status:error.status||null,code:error.code||null,param:error.param||null,message:String(error.message||'').slice(0,5000)}
       },options.capturePublicKey);
-  });
+  }, options.checkpoint);
   const accepted = candidates.filter((_, i) => decisions[i]?.accepted === true);
   const body = renderDiscovery({ connections: accepted,
     audit: { checked: decisions.length, withheld: candidates.length - accepted.length } }, collected, log);
@@ -400,7 +404,7 @@ async function checkComparisonExamples(openai, model, log, suite = "comparison")
   return body;
 }
 
-function createDiscoveryHandler({ octokitForContext, config, openai, model, skills, log, driftScanner }) {
+function createDiscoveryHandler({ octokitForContext, config, openai, model, skills, log, driftScanner, stateStoreForContext }) {
   validateConfig(config);
   const jobs = new Set();
   const running = new Set();
@@ -422,9 +426,17 @@ function createDiscoveryHandler({ octokitForContext, config, openai, model, skil
       await octokit.issues.createComment({ ...params, body: "Another discovery batch is running. After it finishes, open a new discovery issue to run this batch." });
       return;
     }
-    let comment;
+    let comment, session;
+    const durable = stateStoreForContext && config.readingMode === 'complete'
+      && !/^check |^sources$/i.test(match[1] || '') && !match[3];
     try {
       const comments = await octokit.paginate(octokit.issues.listComments, { ...params, per_page: 100 });
+      if (durable) {
+        session = await require('./discovery-session').openSession({store:stateStoreForContext(context),
+          octokit,params,marker,comments,config,model,skills,driftScanner,issue});
+        if (!session) { running.delete(key); return; }
+        comment = session.comment;
+      } else {
       // The marker begins both the reserved status comment and the finished report. If a
       // restart interrupted the job before publishing, a redelivery must not start a second
       // run that would look like a fresh job once the unfinished comment is updated by hand.
@@ -434,10 +446,25 @@ function createDiscoveryHandler({ octokitForContext, config, openai, model, skil
         : match[3] ? "Reviewing the existing findings against their pinned source passages. The result will show which comparisons and word suggestions pass the new checks."
         : "Reading the configured public source repositories. This is a bounded source batch; a coverage report will show what was read.";
       comment = await octokit.issues.createComment({ ...params, body: `${marker}\n${status}` });
-    } catch (error) { running.delete(key); throw error; }
+      }
+    } catch (error) {
+      running.delete(key);
+      await session?.lease.release().catch(() => {});
+      if (durable) {
+        const message = error.code === 'checkpoint_busy' ? 'Another discovery job holds the recovery lease. After a service crash, wait three minutes, then close and reopen this issue.'
+          : error.code === 'checkpoint_changed' ? 'The request, settings or review rules changed since this job was saved. Restore those inputs or open a new discovery issue; saved results were preserved.'
+          : error.code === 'checkpoint_legacy' ? 'This older job has no recovery checkpoints. Open a new discovery issue; new complete-reading jobs will save progress.'
+          : 'Recovery storage is unavailable. Check the bot’s Contents write permission on the reporting repository and its stable state encryption secret, then close and reopen this issue. No model call was started by this attempt.';
+        await octokit.issues.createComment({...params,body:`# Discovery paused\n${message}`});
+        log?.error?.({code:/^[a-z_]+$/.test(error.code || '') ? error.code : undefined,
+          status:Number.isInteger(error.status) ? error.status : undefined},'Could not open discovery checkpoint');
+        return;
+      }
+      throw error;
+    }
     // Acknowledge the webhook after recording the job; do not hold it open for collection or generation.
     const job = (async () => {
-      let body;
+      let body, success = false;
       try {
         if (/^check (?:(?:corpus|count|support) )?examples$/i.test(match[1] || "")) {
           const suite = match[1].toLowerCase() === "check corpus examples" ? "corpus"
@@ -455,8 +482,8 @@ function createDiscoveryHandler({ octokitForContext, config, openai, model, skil
           body = await reviewPublishedReport({ octokit, config, reportIssue: Number(match[3]), openai, model, log,
             helpers: { eligible, passages, citationPassages, safeText } });
         } else {
-        let batch = Number(match[2] || 1), snapshot;
-        if (match[4]) {
+        let batch = session?.state.batch || Number(match[2] || 1), snapshot = session?.state.snapshot;
+        if (match[4] && !snapshot) {
           const previousIssue = Number(match[4]);
           if (!Number.isSafeInteger(previousIssue) || previousIssue < 1) throw new Error('Invalid continuation issue');
           const previousMarker = `<!-- semantic-discovery:${createHash('sha256').update(`${config.owner}/${config.controlRepository}#${previousIssue}`).digest('hex').slice(0, 16)} -->`;
@@ -468,30 +495,42 @@ function createDiscoveryHandler({ octokitForContext, config, openai, model, skil
           validateSnapshot(record.repositories, config);
           batch = record.nextBatch; snapshot = record.repositories;
         }
-        const collected = await collectSources(octokit, config, batch, snapshot);
+        const step = (name, work) => session ? session.checkpoint.run(name,work) : work();
+        // Cached text and completed model steps still require current public access.
+        if (session) await require('./complete-reading').verifyPublicSources(octokit,config);
+        const collected = await step('sources', () => collectSources(octokit, config, batch, snapshot, session ? {
+          store: session.store, check: session.lease.check,
+          onSnapshot: async pinned => { if (!session.state.snapshot) {
+            session.state.snapshot = pinned; session.state.batch = batch; await session.save();
+          } }
+        } : {}));
         const preview = match[1]?.toLowerCase() === "preview";
         let driftPairs = [];
         if (!preview && typeof driftScanner === "function") {
           const catalog = citationPassages(collected.sources);
           if (new Set(catalog.map(item => item.source.id)).size >= 2) {
-            try {
-              driftPairs = await driftScanner(catalog);
-            } catch (_) {
-              log?.warn?.({ provider: "huggingface", code: "unavailable" }, "Drift scan unavailable; continuing without a shortlist");
-            }
+            driftPairs = await step('drift', async () => {
+              try { return await driftScanner(catalog); }
+              catch (_) {
+                log?.warn?.({ provider: "huggingface", code: "unavailable" }, "Drift scan unavailable; continuing without a shortlist");
+                return [];
+              }
+            });
           }
         }
-        body = preview ? `# Source preview\nNo model request was made.\n\n${coverage(collected)}`
+        body = await step('report', async () => preview ? `# Source preview\nNo model request was made.\n\n${coverage(collected)}`
           : !collected.sources.length ? `# No readable sources in this batch\n\n${coverage(collected)}`
-          : await generateDiscovery(openai, model, skills, collected, log, driftPairs);
+          : await generateDiscovery(openai, model, skills, collected, log, driftPairs, {checkpoint:session?.checkpoint}));
         if (collected.mode === 'complete') body += `\n<!-- complete-reading:${Buffer.from(JSON.stringify(readingRecord(collected, preview ? collected.batch : collected.batch + 1))).toString('base64')} -->`;
         }
+        if (session) await require('./complete-reading').verifyPublicSources(octokit,config);
+        success = true;
       } catch (error) {
         const quota = ["credit_balance_exhausted", "insufficient_quota"].includes(error.code) || error.type === "insufficient_quota";
-        body = quota ? "# Discovery paused\nThe OpenAI API account has no available credit. No generated findings were published. After billing is ready, open a new discovery issue to retry."
+        body = quota ? "# Discovery paused\nThe OpenAI API account has no available credit. No generated findings were published. Retry after billing is ready."
           : error.code === "private_source" ? "# Discovery stopped\nA configured source is private. This public reporting setup cannot read or publish private-source material. Use a separately approved private reporting setup."
           : error.code === 'reading_capacity' ? '# Reading index exceeds capacity\nThe complete index exceeds 2,000 eligible files or 50 MB. No tail was silently omitted. Narrow the configured public source set or increase capacity deliberately before retrying.'
-          : "# Discovery could not finish\nNo complete report was produced. Check the service logs, source access, and configuration; then open a new discovery issue to retry.";
+          : "# Discovery could not finish\nNo complete report was produced. Check the service logs, source access, and configuration before retrying.";
         log.error({ status: Number.isInteger(error.status) ? error.status : undefined,
           code: /^[a-z_]{1,64}$/.test(error.code || "") ? error.code : undefined }, "Source discovery failed");
         if(error.auditCapture) {
@@ -499,8 +538,13 @@ function createDiscoveryHandler({ octokitForContext, config, openai, model, skil
           if(body.length+diagnostic.length<60000) body+=diagnostic;
         }
       }
-      await octokit.issues.updateComment({ owner: params.owner, repo: params.repo, comment_id: comment.data.id, body: `${marker}\n${body}` });
-    })().catch(() => log.error("Could not publish source discovery result")).finally(() => { jobs.delete(job); running.delete(key); });
+      if (session) {
+        await session.finish(body,success);
+      } else await octokit.issues.updateComment({ owner: params.owner, repo: params.repo, comment_id: comment.data.id, body: `${marker}\n${body}` });
+    })().catch(() => log.error("Could not publish source discovery result")).finally(async () => {
+      await session?.lease.release().catch(() => {});
+      jobs.delete(job); running.delete(key);
+    });
     jobs.add(job);
   }
   return { handle, waitForIdle: () => Promise.all([...jobs]) };

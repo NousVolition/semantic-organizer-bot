@@ -156,9 +156,13 @@ Original line locations and character ranges are retained. Continuations pin
 the source commits and settings in the preceding bot report; they survive a
 service restart. A numbered batch opened directly starts from current snapshots
 and is not a continuation. Previews collect text without an OpenAI call.
-Unchanged public blobs are cached in memory by repository and immutable blob ID
-(up to 32 MiB of text / 2,000 entries). Current repository visibility is still
-checked before cache use. A restart clears the cache, not the recorded snapshots.
+Complete-reading indexes retain the file catalog, text windows and term index.
+One assembled index is kept in memory; encrypted checkpoints on the reporting
+repository's `semantic-bot-state` branch survive service replacement. The catalog
+is keyed by source commits and settings. Indexed chunks of at most 16 files are
+keyed by immutable blob IDs, paths and window settings, so unchanged chunks can
+also be reused across source revisions. Current source visibility is checked
+before cached text is used and again before a resumed report is published.
 
 Coverage means text made available in those batches, not a guarantee that the
 model catches every issue. Connections are compared within a batch, not across
@@ -189,12 +193,58 @@ example checks, and report reviews never load the model. If the optional model
 cannot load or run, discovery continues without a shortlist and logs only a
 small diagnostic.
 
-Only the configured owner's new issues in the reporting repository can trigger
-discovery. One job runs per service instance. The webhook records a status
-comment and returns before the scan finishes. A completed or recorded job is not
-repeated by webhook redelivery. Jobs execute in the web process: a restart can
-interrupt one, leaving its status comment unfinished. Open a new discovery issue
-to retry after correcting the problem. There is no unattended recurring scan.
+Only the configured owner's issues in the reporting repository can trigger
+discovery. The webhook reserves a status comment before the scan proceeds.
+For new complete-reading previews, ordinary batches and continuations, **close
+and reopen the interrupted issue to resume** (or redeliver its webhook).
+The request title/body, settings, model choices and review rules must still match.
+The same comment is updated, and a finished report is never run again.
+Reopening requires the configured owner as sender. There is no automatic scan
+on startup or unattended recurring scan.
+
+Recovery preserves the pinned source commits, completed indexing chunks,
+selected batch, optional Drift Scan shortlist, generated draft, each broad
+review, each focused review, and the final report. It resumes at the first
+unfinished step. Indexing can repeat an unfinished chunk of at most 16 files.
+A model call interrupted before its response is saved may need to run again;
+the bot cannot guarantee exactly-once billing across that boundary. Storage
+failures stop subsequent paid work. All existing publication checks still run
+or restore their matching validated result; recovery never bypasses a review.
+
+A renewable repository-wide lease prevents overlapping complete-reading jobs
+from different service instances. After a process crash, allow **three minutes**
+for the old lease to expire before reopening. GitHub compare-and-swap writes
+reject conflicting checkpoint updates, and a worker that loses its lease must
+stop before its next model step or publication. GitHub unavailability/rate
+limits can pause recovery; retry the same issue after access is restored.
+Old unfinished comments created before checkpoints existed cannot be recovered;
+start a new issue for those. Pinned `sources`, saved-report reviews, example
+checks and the optional sampled collector retain their previous retry behavior.
+
+### Recovery storage setup
+
+1. Grant the installed GitHub App **Contents: Read & write**, accepting the new
+   installation permissions. The application writes state only in the reporting
+   repository, although GitHub grants this permission across installed repositories.
+2. Keep a stable encryption secret in Render. By default the bot derives its
+   state key from the existing `WEBHOOK_SECRET` (at least 16 characters). Set
+   `DISCOVERY_STATE_SECRET` instead if webhook-secret rotation must be independent.
+   Keep this secret backed up; changing it makes existing checkpoints unreadable.
+   Do not place either secret in GitHub or an issue.
+3. Deploy this version, then open a preview. The bot creates the separate orphan
+   `semantic-bot-state` branch on first use. It contains compressed, authenticated
+   AES-256-GCM ciphertext and no workflows. Do not merge it into the source branch
+   or select it as Render's deploy branch. A paid Render disk is not needed.
+
+The branch stores unreleased drafts and source indexes encrypted, not as public
+findings. Checkpoints are retained until explicitly removed; Git history also
+retains older encrypted revisions, so deleting a file does not erase its history.
+State storage uses GitHub API quota and repository space. Missing write access,
+an unavailable/changed encryption key or corrupt data pauses work with a status
+message rather than silently discarding saved progress or falling back to memory.
+The OpenAI API key remains in the existing environment and is never stored in
+the state branch. Setup reference: [GitHub repository contents permissions and
+conflict behavior](https://docs.github.com/en/rest/repos/contents#create-or-update-file-contents).
 
 ## Run HermiT or lambeq
 
@@ -366,7 +416,7 @@ Do not commit `.env` or private key files.
 
 - Issues: Read & write
 - Pull requests: Read & write
-- Contents: Read
+- Contents: Read & write (encrypted recovery state in the reporting repository)
 - Metadata: Read
 
 Subscribe to: `push`, `pull_request`, `issues`

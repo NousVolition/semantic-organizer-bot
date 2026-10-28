@@ -1,8 +1,8 @@
 // One gate for discovery, saved findings and on-demand comparison examples.
 const {auditConnections,comparisonModel}=require('./comparison-audit');
 const {validConfidence}=require('./confidence');
-async function auditPublicationCandidates(openai,model,candidates,catalog,log,onError) {
-  const decisions = await auditConnections(openai, model, candidates, catalog, log);
+async function auditPublicationCandidates(openai,model,candidates,catalog,log,onError,checkpoint) {
+  const decisions = await auditConnections(openai, model, candidates, catalog, log, checkpoint);
   for (const [i,c] of candidates.entries()) {
     const fits = (value, limit) => typeof value === 'string' && value.trim().length > 0 && value.length <= limit;
     const formatSafe = fits(c.title,120) && fits(c.relationship,1500) && fits(c.limit,1500)
@@ -17,7 +17,7 @@ async function auditPublicationCandidates(openai,model,candidates,catalog,log,on
       if (decisions[i]) { decisions[i].accepted = false; decisions[i].failed.push('publication_evidence'); }
     }
   }
-  return applyFocusedChecks(openai,model,candidates,catalog,log,decisions,onError);
+  return applyFocusedChecks(openai,model,candidates,catalog,log,decisions,onError,checkpoint);
 }
 
 // Historical single-source exercises do not become cross-file discoveries.
@@ -28,14 +28,15 @@ async function auditSemanticCandidates(openai,model,candidates,catalog,log) {
   return applyFocusedChecks(openai,model,candidates,catalog,log,decisions);
 }
 
-async function applyFocusedChecks(openai,model,candidates,catalog,log,decisions,onError) {
+async function applyFocusedChecks(openai,model,candidates,catalog,log,decisions,onError,checkpoint) {
   // A prior rejection cannot be rescued. A broad pass is provisional until
   // auditWordMeanings supplies both lexical and all-field contextual decisions.
   for (const [i,c] of candidates.entries()) {
     if (!decisions[i]?.accepted) continue;
     let wordAudit;
     try {
-      wordAudit = await require('./word-meaning-audit').auditWordMeanings(openai,comparisonModel(model),c,catalog,log);
+      const work = () => require('./word-meaning-audit').auditWordMeanings(openai,comparisonModel(model),c,catalog,log);
+      wordAudit = checkpoint ? await checkpoint.run(`focused-${i}`, work) : await work();
     } catch(error) {
       if (onError) onError(error, {index:i, decisions});
       throw error;
