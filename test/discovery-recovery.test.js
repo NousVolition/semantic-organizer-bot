@@ -11,7 +11,7 @@ function fixture(count = 2) {
   const files = new Map(), comments = [], calls = {trees:0,blobs:[],writes:0,commits:0};
   const api = {
     repos: {
-      get: async ({repo}) => ({data:{private:repo === privateRepo,default_branch:'main'}}),
+      get: async ({repo}) => ({data:{name:repo,full_name:`example/${repo}`,owner:{login:'example'},private:repo === privateRepo,default_branch:'main'}}),
       getCommit: async ({repo,ref}) => ({data:{sha:(repo === 'alpha' ? 'a' : 'b').repeat(40),commit:{tree:{sha:repo}}}}),
       getContent: async p => {
         assert.equal(p.repo,'bot'); assert.equal(p.ref,BRANCH);
@@ -37,6 +37,7 @@ function fixture(count = 2) {
       }
     },
     issues: {
+      get: async ({issue_number}) => ({data:{...context(issue_number).payload.issue,state:'open'}}),
       listComments() {},
       createComment: async p => { const c = {id:++seq,user:{type:'Bot'},body:p.body,issue:p.issue_number}; comments.push(c); return {data:c}; },
       updateComment: async p => { if (failUpdate) throw new Error('publication disconnected'); const c = comments.find(c=>c.id===p.comment_id); c.body=p.body; return {data:c}; }
@@ -73,6 +74,100 @@ test('encrypted GitHub state round-trips across fresh stores, fails on tampering
   assert.throws(()=>codec('a-different-test-secret','scope').decode(encoded,'path'),{code:'checkpoint_unreadable'});
   const value=JSON.parse(Buffer.from(encoded,'base64')); value.data='AAAA';
   assert.throws(()=>crypt.decode(Buffer.from(JSON.stringify(value)).toString('base64'),'path'),{code:'checkpoint_unreadable'});
+});
+
+test('startup worker resumes a crashed job after lease expiry without a reopened event and fences the old worker',async()=>{
+  const {createRecoveryWorker,PENDING}=require('../discovery-recovery');
+  const f=fixture(),m=modelFixture();m.recover();
+  let reached,release,focused=0;
+  const blocked=new Promise(resolve=>{reached=resolve;});
+  const gate=new Promise(resolve=>{release=resolve;});
+  const create=m.openai.chat.completions.create;
+  m.openai.chat.completions.create=async request=>{
+    if(request.response_format.json_schema.name==='word_meaning_audit' && ++focused===2) {reached();await gate;}
+    return create(request);
+  };
+  const old=handler(f,m.openai);await old.handle(f.context());await blocked;
+  const store=f.store(),fresh=handler(f,m.openai);
+  const worker=createRecoveryWorker({getClient:async()=>({store,octokit:f.api}),config,handler:fresh,log});
+  await worker.tick();
+  assert.equal(m.calls.focused,1,'live lease prevents a second worker');
+  await store.update('discovery/lease',value=>({...value,expires:0}));
+  const reads=f.calls.blobs.length;
+  await worker.tick();
+  assert.deepEqual(m.calls,{generation:1,broad:2,focused:2});
+  assert.equal(f.calls.blobs.length,reads);
+  assert.equal(f.comments.length,1);assert.match(f.comments[0].body,/discovery-complete:v1/);
+  assert.deepEqual((await store.get(PENDING)).jobs,{});
+  const report=f.comments[0].body;release();await old.waitForIdle();
+  assert.equal(f.comments[0].body,report,'late old response must not overwrite the resumed report');
+  await worker.tick();assert.equal(m.calls.generation,1);
+});
+
+test('startup registry can recover the crash gap before the first job checkpoint',async()=>{
+  const {createRecoveryWorker,rememberJob,PENDING}=require('../discovery-recovery');
+  const f=fixture(),m=modelFixture();m.recover();const store=f.store();
+  await rememberJob(store,f.context().payload.issue);
+  await createRecoveryWorker({getClient:async()=>({store,octokit:f.api}),config,handler:handler(f,m.openai),log}).tick();
+  assert.equal(m.calls.generation,1);assert.match(f.comments[0].body,/discovery-complete:v1/);
+  assert.deepEqual((await store.get(PENDING)).jobs,{});
+});
+
+test('automatic recovery does not restart paused jobs, closed issues or edited requests',async()=>{
+  const {createRecoveryWorker,rememberJob,PENDING,jobKey}=require('../discovery-recovery');
+  for(const scenario of ['paused','closed','edited']) {
+    const f=fixture(),m=modelFixture(),store=f.store();
+    await rememberJob(store,f.context().payload.issue);
+    if(scenario==='paused')await store.set(jobKey(config,1),{status:'paused'});
+    f.api.issues.get=async()=>({data:{...f.context().payload.issue,state:scenario==='closed'?'closed':'open',body:scenario==='edited'?'Changed request':''}});
+    const worker=createRecoveryWorker({getClient:async()=>({store,octokit:f.api}),config,handler:handler(f,m.openai),log});
+    await worker.tick();await worker.tick();
+    assert.equal(m.calls.generation,0,scenario);
+    assert.equal(f.comments.length,scenario==='edited'?1:0,'blocked jobs must not spam comments');
+    const pending=(await store.get(PENDING)).jobs;
+    if(scenario==='paused')assert.deepEqual(pending,{});
+    else assert.ok(pending[1].blocked);
+  }
+});
+
+test('ordinary provider failure pauses the job without an automatic paid retry loop',async()=>{
+  const {createRecoveryWorker,PENDING}=require('../discovery-recovery');
+  const f=fixture(),m=modelFixture(),store=f.store();
+  await run(handler(f,m.openai),f.context());const calls={...m.calls};
+  await createRecoveryWorker({getClient:async()=>({store,octokit:f.api}),config,handler:handler(f,m.openai),log}).tick();
+  assert.deepEqual(m.calls,calls);assert.deepEqual((await store.get(PENDING)).jobs,{});
+});
+
+test('automatic recovery retries a disconnected final publication without another model call',async()=>{
+  const {createRecoveryWorker,PENDING}=require('../discovery-recovery');
+  const f=fixture(),m=modelFixture();m.recover();f.failUpdate(true);
+  await run(handler(f,m.openai),f.context());const calls={...m.calls};f.failUpdate(false);
+  const store=f.store();
+  await createRecoveryWorker({getClient:async()=>({store,octokit:f.api}),config,handler:handler(f,m.openai),log}).tick();
+  assert.deepEqual(m.calls,calls);assert.equal(f.comments.length,1);assert.match(f.comments[0].body,/discovery-complete:v1/);
+  assert.deepEqual((await store.get(PENDING)).jobs,{});
+});
+
+test('recovery scheduler backs off failed storage checks, prevents overlap and stops cleanly',async()=>{
+  const {createRecoveryWorker}=require('../discovery-recovery');
+  const timers=[];let calls=0,cleared;
+  const worker=createRecoveryWorker({config,handler:{},log,getClient:async()=>{calls++;throw new Error('offline');},
+    schedule:(callback,delay)=>{const token={callback,delay,unref(){}};timers.push(token);return token;},cancel:token=>{cleared=token;}});
+  worker.start();worker.start();assert.equal(timers.length,1);assert.equal(timers[0].delay,5000);
+  await timers[0].callback();assert.equal(timers[1].delay,60000);
+  await timers[1].callback();assert.equal(timers[2].delay,120000);
+  worker.stop();assert.equal(cleared,timers[2]);assert.equal(calls,2);
+});
+
+test('a removed issue cannot starve other pending jobs and an overlapping tick cannot run twice',async()=>{
+  const {createRecoveryWorker,rememberJob,PENDING}=require('../discovery-recovery');
+  const f=fixture(),m=modelFixture();m.recover();const store=f.store();
+  await rememberJob(store,f.context(1).payload.issue);await rememberJob(store,f.context(2).payload.issue);
+  f.api.issues.get=async ({issue_number})=>{if(issue_number===1)throw missing();return {data:{...f.context(2).payload.issue,state:'open'}};};
+  const worker=createRecoveryWorker({getClient:async()=>({store,octokit:f.api}),config,handler:handler(f,m.openai),log});
+  await Promise.all([worker.tick(),worker.tick()]);
+  assert.equal(m.calls.generation,1);assert.equal(f.comments.length,1);
+  assert.equal((await store.get(PENDING)).jobs[1].blocked,'issue_unavailable');
 });
 
 test('lease excludes overlapping workers, expires after a crash, and fences the old worker',async()=>{

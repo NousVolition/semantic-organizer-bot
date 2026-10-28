@@ -36,10 +36,27 @@ module.exports = (app, { getRouter } = {}) => {
   // real discovery run needs a shortlist, never for previews or text reviews.
   const driftScanner = process.env.ENABLE_DRIFT_SCAN === "true" ? createDriftScanner({ log: app.log }) : null;
   const discovery = createDiscoveryHandler({ config: discoveryConfig, openai, model: discoveryModel, skills: discoverySkills, log: app.log, driftScanner,
-    stateStoreForContext: context => require('./discovery-state').createGitHubStateStore(context.octokit,discoveryConfig,
+    stateStoreForContext: context => context.recoveryStore || require('./discovery-state').createGitHubStateStore(context.octokit,discoveryConfig,
       process.env.DISCOVERY_STATE_SECRET || process.env.WEBHOOK_SECRET) });
   app.on("issues.opened", discovery.handle);
   app.on("issues.reopened", discovery.handle);
+
+  if (discoveryConfig.readingMode === 'complete' && process.env.DISCOVERY_AUTO_RESUME !== 'false') {
+    let client;
+    const worker=require('./discovery-recovery').createRecoveryWorker({config:discoveryConfig,handler:discovery,log:app.log,
+      getClient:async()=>{
+        const octokit=await (client ||= (async()=>{
+          const appClient=await app.auth();
+          const {data:installation}=await appClient.apps.getRepoInstallation({owner:discoveryConfig.owner,repo:discoveryConfig.controlRepository});
+          return app.auth(installation.id);
+        })().catch(error=>{client=undefined;throw error;}));
+        // A new store avoids retaining a rejected initialization promise across
+        // temporary GitHub outages. Octokit refreshes its installation token.
+        return {octokit,store:require('./discovery-state').createGitHubStateStore(octokit,discoveryConfig,
+          process.env.DISCOVERY_STATE_SECRET || process.env.WEBHOOK_SECRET)};
+      }});
+    worker.start();
+  }
 
   function logOpenAIError(message, error) {
     // API messages can include credentials or submitted text. Log only diagnostics.

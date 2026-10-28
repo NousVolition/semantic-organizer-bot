@@ -14,11 +14,13 @@ const originalModel = process.env.OPENAI_MODEL;
 const originalPushReviews = process.env.ENABLE_PUSH_REVIEWS;
 const originalTextReviews = process.env.ENABLE_TEXT_REVIEWS;
 const originalDriftScan = process.env.ENABLE_DRIFT_SCAN;
+const originalAutoResume = process.env.DISCOVERY_AUTO_RESUME;
 beforeEach(async () => {
   unmatched = [];
   nock.emitter.on("no match", recordUnmatched);
   nock.disableNetConnect();
   process.env.OPENAI_API_KEY = "test-key";
+  process.env.DISCOVERY_AUTO_RESUME = 'false';
   delete process.env.OPENAI_MODEL;
   delete process.env.ENABLE_PUSH_REVIEWS;
   delete process.env.ENABLE_DRIFT_SCAN;
@@ -41,6 +43,8 @@ afterEach(() => {
   else process.env.ENABLE_TEXT_REVIEWS = originalTextReviews;
   if (originalDriftScan === undefined) delete process.env.ENABLE_DRIFT_SCAN;
   else process.env.ENABLE_DRIFT_SCAN = originalDriftScan;
+  if (originalAutoResume === undefined) delete process.env.DISCOVERY_AUTO_RESUME;
+  else process.env.DISCOVERY_AUTO_RESUME = originalAutoResume;
   assert.deepEqual(pending, []);
   assert.deepEqual(unmatched, []);
 });

@@ -423,6 +423,7 @@ function createDiscoveryHandler({ octokitForContext, config, openai, model, skil
     const params = context.issue();
     if (running.size > 1) {
       running.delete(key);
+      if(context.automaticRecovery) throw Object.assign(new Error('Discovery is busy'),{code:'checkpoint_busy'});
       await octokit.issues.createComment({ ...params, body: "Another discovery batch is running. After it finishes, open a new discovery issue to run this batch." });
       return;
     }
@@ -451,6 +452,7 @@ function createDiscoveryHandler({ octokitForContext, config, openai, model, skil
       running.delete(key);
       await session?.lease.release().catch(() => {});
       if (durable) {
+        if(context.automaticRecovery) throw error;
         const message = error.code === 'checkpoint_busy' ? 'Another discovery job holds the recovery lease. After a service crash, wait three minutes, then close and reopen this issue.'
           : error.code === 'checkpoint_changed' ? 'The request, settings or review rules changed since this job was saved. Restore those inputs or open a new discovery issue; saved results were preserved.'
           : error.code === 'checkpoint_legacy' ? 'This older job has no recovery checkpoints. Open a new discovery issue; new complete-reading jobs will save progress.'
