@@ -485,7 +485,10 @@ Deployment references: [Probot](https://probot.github.io/docs/deployment/),
 [GPT-4o mini](https://developers.openai.com/api/docs/models/gpt-4o-mini).
 
 ## License
-MIT
+
+Copyright © 2026 Nous Volition. All rights reserved. See the [copyright notice](LICENSE) for the terms that apply to reuse of the original work in this repository.
+
+Copies distributed under the [earlier MIT declaration](https://github.com/NousVolition/semantic-organizer-bot/blob/3202e9582f9e312837f31c55f285cbe650c5f070/README.md#license) retain their MIT permissions.
 
 ## Context and review coverage
 

@@ -4,7 +4,7 @@
   "private": true,
   "description": "GitHub App that organizes or updates semantics in repositories",
   "author": "Nous Volition",
-  "license": "MIT",
+  "license": "UNLICENSED",
   "scripts": {
     "start": "node start.js",
     "dev": "probot run ./index.js",
