@@ -7,6 +7,8 @@ direction and wording with the author. It does not edit source files.
 
 For specific tasks, use [language discovery across repositories](#discover-language-across-repositories), [HermiT ontology checks and lambeq word-role diagrams](#run-hermit-or-lambeq), or [the editable language rulebook](#program-the-language-skills).
 
+[Open the Semantic Organizer command and task guide](semantic-organizer-command-guide.md) for exact commands, source formats and recovery links.
+
 ## Discover language across repositories
 
 To review one of your ideas directly, open an issue here titled `[Review idea]`
