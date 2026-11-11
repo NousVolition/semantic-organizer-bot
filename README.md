@@ -1,9 +1,11 @@
 # Semantic Organizer Bot
 
-A GitHub App that explores source documents for language and connections:
+**Semantic Organizer Bot by [NousVolition](https://github.com/NousVolition)** is a GitHub App built with Probot that explores source documents for language and connections:
 recurring ideas, unusual metaphors, shifts of meaning, and possible names for
 concepts still forming. It offers possibilities and their limits, leaving the
 direction and wording with the author. It does not edit source files.
+
+For specific tasks, use [language discovery across repositories](#discover-language-across-repositories), [HermiT ontology checks and lambeq word-role diagrams](#run-hermit-or-lambeq), or [the editable language rulebook](#program-the-language-skills).
 
 ## Discover language across repositories
 
@@ -484,9 +486,16 @@ Deployment references: [Probot](https://probot.github.io/docs/deployment/),
 [Render free service limits](https://render.com/docs/free), and
 [GPT-4o mini](https://developers.openai.com/api/docs/models/gpt-4o-mini).
 
+
+## Related NousVolition projects
+
+- [Hug and SIMS Lean proofs](https://github.com/NousVolition/hug-sims-lean-proofs) — formal proofs, numerical studies and verification records.
+- [Streams and Rocks](https://github.com/NousVolition/Nous-Volition) — fluid dynamics, SIMS and community studies.
+- [SIMS evolving guard studies](https://github.com/NousVolition/My-Sources-Project-ALL) — original framework, asymmetric interaction tests and source archive.
+
 ## License
 
-Copyright © 2026 Nous Volition. All rights reserved. See the [copyright notice](LICENSE) for the terms that apply to reuse of the original work in this repository.
+Copyright © 2026 NousVolition. All rights reserved. See the [copyright notice](LICENSE) for the terms that apply to reuse of the original work in this repository.
 
 Copies distributed under the [earlier MIT declaration](https://github.com/NousVolition/semantic-organizer-bot/blob/3202e9582f9e312837f31c55f285cbe650c5f070/README.md#license) retain their MIT permissions.
 
